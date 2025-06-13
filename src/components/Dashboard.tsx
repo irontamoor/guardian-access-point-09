@@ -2,27 +2,45 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, UserCheck, UserPlus, Car, TrendingUp, Calendar, Download, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, UserCheck, UserPlus, Car, TrendingUp, Calendar, Download, AlertCircle, LogOut } from 'lucide-react';
+import { useVMSData } from '@/hooks/useVMSData';
 
 interface DashboardProps {
   onBack: () => void;
+  onLogout: () => void;
+  adminData: { username: string; role: string };
 }
 
-const Dashboard = ({ onBack }: DashboardProps) => {
+const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const { students, staff, visitors, pickups, recentActivity } = useVMSData();
+
+  const presentStudents = students.filter(s => s.status === 'present').length;
+  const presentStaff = staff.filter(s => s.status === 'present').length;
+  const activeVisitors = visitors.filter(v => v.status === 'active').length;
+  const pendingPickups = pickups.filter(p => p.status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={onBack}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-600">Welcome, {adminData.username}</span>
+            <Button variant="outline" onClick={onLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
         
         <div className="flex items-center justify-between">
           <div>
@@ -55,10 +73,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">247</div>
+              <div className="text-2xl font-bold text-blue-600">{presentStudents}</div>
               <div className="text-xs text-gray-500 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                +12 from yesterday
+                of {students.length} total
               </div>
             </CardContent>
           </Card>
@@ -71,10 +89,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">28</div>
+              <div className="text-2xl font-bold text-green-600">{presentStaff}</div>
               <div className="text-xs text-gray-500 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                +2 from yesterday
+                of {staff.length} total
               </div>
             </CardContent>
           </Card>
@@ -87,10 +105,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">12</div>
+              <div className="text-2xl font-bold text-purple-600">{activeVisitors}</div>
               <div className="text-xs text-gray-500 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                +5 from yesterday
+                currently in building
               </div>
             </CardContent>
           </Card>
@@ -103,16 +121,16 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">8</div>
+              <div className="text-2xl font-bold text-orange-600">{pendingPickups}</div>
               <div className="text-xs text-gray-500 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                -3 from yesterday
+                awaiting completion
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Activity & Alerts */}
+        {/* Recent Activity & Security Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activity */}
           <Card>
@@ -125,14 +143,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { type: 'student', name: 'Emma Johnson', action: 'Signed In', time: '8:15 AM', status: 'success' },
-                  { type: 'visitor', name: 'John Anderson', action: 'Registered', time: '10:30 AM', status: 'info' },
-                  { type: 'staff', name: 'Sarah Miller', action: 'Signed In', time: '7:45 AM', status: 'success' },
-                  { type: 'parent', name: 'David Chen', action: 'Pickup Request', time: '3:20 PM', status: 'warning' },
-                  { type: 'student', name: 'Sofia Rodriguez', action: 'Signed Out', time: '3:30 PM', status: 'info' },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className={`w-2 h-2 rounded-full ${
                       activity.status === 'success' ? 'bg-green-500' :
                       activity.status === 'warning' ? 'bg-orange-500' : 'bg-blue-500'
@@ -159,86 +171,41 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="font-medium text-red-800">Visitor Badge Expired</div>
-                  <div className="text-sm text-red-600">VIS1234 - John Anderson badge expired at 2:00 PM</div>
-                  <div className="text-xs text-red-500 mt-1">30 minutes ago</div>
-                </div>
-                
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="font-medium text-yellow-800">Unscheduled Pickup</div>
-                  <div className="text-sm text-yellow-600">Parent pickup request without prior notification</div>
-                  <div className="text-xs text-yellow-500 mt-1">1 hour ago</div>
+                  <div className="font-medium text-yellow-800">Pending Pickups</div>
+                  <div className="text-sm text-yellow-600">{pendingPickups} parent pickup requests awaiting completion</div>
+                  <div className="text-xs text-yellow-500 mt-1">Requires attention</div>
                 </div>
                 
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="font-medium text-blue-800">System Update</div>
-                  <div className="text-sm text-blue-600">VMS system successfully updated to v2.1.0</div>
-                  <div className="text-xs text-blue-500 mt-1">2 hours ago</div>
+                  <div className="font-medium text-blue-800">System Status</div>
+                  <div className="text-sm text-blue-600">VMS system running normally - all modules operational</div>
+                  <div className="text-xs text-blue-500 mt-1">Real-time monitoring active</div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Detailed Reports */}
+        {/* Live Status Boards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Student Attendance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Student Attendance</CardTitle>
-              <CardDescription>By grade level</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { grade: 'Kindergarten', present: 42, total: 45 },
-                  { grade: 'Grade 1-3', present: 89, total: 95 },
-                  { grade: 'Grade 4-6', present: 76, total: 82 },
-                  { grade: 'Grade 7-9', present: 54, total: 58 },
-                  { grade: 'Grade 10-12', present: 38, total: 42 },
-                ].map((grade, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{grade.grade}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">{grade.present}/{grade.total}</span>
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${(grade.present / grade.total) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Staff Status */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Staff Status</CardTitle>
-              <CardDescription>By department</CardDescription>
+              <CardDescription>Current staff on-site</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { dept: 'Administration', present: 5, total: 6 },
-                  { dept: 'Teaching Staff', present: 18, total: 20 },
-                  { dept: 'Support Staff', present: 3, total: 3 },
-                  { dept: 'Maintenance', present: 2, total: 2 },
-                ].map((dept, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{dept.dept}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">{dept.present}/{dept.total}</span>
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${(dept.present / dept.total) * 100}%` }}
-                        />
-                      </div>
+                {staff.filter(s => s.status === 'present').map((staffMember) => (
+                  <div key={staffMember.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-900">{staffMember.name}</div>
+                      <div className="text-sm text-gray-500">{staffMember.id} • {staffMember.department}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-green-600">Present</div>
+                      <div className="text-xs text-gray-500">Since {staffMember.check_in_time}</div>
                     </div>
                   </div>
                 ))}
@@ -246,30 +213,44 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Active Visitors */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-              <CardDescription>Common administrative tasks</CardDescription>
+              <CardTitle className="text-lg">Active Visitors</CardTitle>
+              <CardDescription>Visitors currently in building</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="h-4 w-4 mr-2" />
-                  Generate Daily Report
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Send Security Alert
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage User Accounts
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  View Schedule
-                </Button>
+              <div className="space-y-3">
+                {visitors.filter(v => v.status === 'active').map((visitor) => (
+                  <div key={visitor.id} className="p-3 bg-purple-50 rounded-lg">
+                    <div className="font-medium text-gray-900">{visitor.name}</div>
+                    <div className="text-sm text-gray-500">{visitor.company}</div>
+                    <div className="text-xs text-gray-400">
+                      {visitor.badge_id} • Host: {visitor.host_name} • Since: {visitor.check_in_time}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pickup Queue */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Pickup Queue</CardTitle>
+              <CardDescription>Pending parent pickups</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pickups.filter(p => p.status === 'pending').map((pickup) => (
+                  <div key={pickup.id} className="p-3 bg-orange-50 rounded-lg">
+                    <div className="font-medium text-gray-900">{pickup.parent_name}</div>
+                    <div className="text-sm text-gray-500">Student: {pickup.student_name}</div>
+                    <div className="text-xs text-gray-400">
+                      Car: {pickup.car_registration} • Requested: {pickup.request_time}
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

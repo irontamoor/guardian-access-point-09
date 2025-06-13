@@ -8,16 +8,28 @@ import StaffSignIn from '@/components/StaffSignIn';
 import VisitorSignIn from '@/components/VisitorSignIn';
 import ParentPickup from '@/components/ParentPickup';
 import Dashboard from '@/components/Dashboard';
+import AdminLogin from '@/components/AdminLogin';
 
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [adminData, setAdminData] = useState<{ username: string; role: string } | null>(null);
 
   // Update time every second
   useState(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   });
+
+  const handleAdminLogin = (loginData: { username: string; role: string }) => {
+    setAdminData(loginData);
+    setActiveView('admin');
+  };
+
+  const handleAdminLogout = () => {
+    setAdminData(null);
+    setActiveView('dashboard');
+  };
 
   const renderView = () => {
     switch (activeView) {
@@ -30,7 +42,18 @@ const Index = () => {
       case 'parents':
         return <ParentPickup onBack={() => setActiveView('dashboard')} />;
       case 'admin':
-        return <Dashboard onBack={() => setActiveView('dashboard')} />;
+        if (!adminData) {
+          return <AdminLogin onLogin={handleAdminLogin} />;
+        }
+        return (
+          <Dashboard 
+            onBack={() => setActiveView('dashboard')} 
+            onLogout={handleAdminLogout}
+            adminData={adminData}
+          />
+        );
+      case 'admin-login':
+        return <AdminLogin onLogin={handleAdminLogin} />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -171,7 +194,7 @@ const Index = () => {
               <div className="text-center">
                 <Button 
                   variant="outline" 
-                  onClick={() => setActiveView('admin')}
+                  onClick={() => setActiveView('admin-login')}
                   className="inline-flex items-center space-x-2"
                 >
                   <Users className="h-4 w-4" />
