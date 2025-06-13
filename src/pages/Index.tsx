@@ -167,29 +167,6 @@ const Index = () => {
                 </Card>
               </div>
 
-              {/* Quick Stats */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Activity</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">247</div>
-                    <div className="text-sm text-gray-500">Students Present</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">28</div>
-                    <div className="text-sm text-gray-500">Staff Checked In</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">12</div>
-                    <div className="text-sm text-gray-500">Active Visitors</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">8</div>
-                    <div className="text-sm text-gray-500">Pending Pickups</div>
-                  </div>
-                </div>
-              </div>
-
               {/* Admin Access */}
               <div className="text-center">
                 <Button 
@@ -200,6 +177,9 @@ const Index = () => {
                   <Users className="h-4 w-4" />
                   <span>Admin Dashboard</span>
                 </Button>
+                <p className="text-sm text-gray-500 mt-2">
+                  Access detailed reports, activity logs, and management tools
+                </p>
               </div>
             </div>
           </div>
