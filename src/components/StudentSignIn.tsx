@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Scan, UserCheck, UserX, BookOpen, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,7 +13,6 @@ interface StudentSignInProps {
 
 const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const [studentId, setStudentId] = useState('');
-  const [selectedGrade, setSelectedGrade] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
 
@@ -35,7 +33,6 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
     });
     
     setStudentId('');
-    setSelectedGrade('');
   };
 
   const handleSignOut = () => {
@@ -55,14 +52,12 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
     });
     
     setStudentId('');
-    setSelectedGrade('');
   };
 
   const simulateBarcodeScan = () => {
     setIsScanning(true);
     setTimeout(() => {
       setStudentId('STU' + Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
-      setSelectedGrade('Grade 5');
       setIsScanning(false);
       toast({
         title: "Barcode Scanned",
@@ -100,7 +95,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
               <UserCheck className="h-5 w-5 text-blue-600" />
               <span>Student Information</span>
             </CardTitle>
-            <CardDescription>Enter student details or scan ID card</CardDescription>
+            <CardDescription>Enter student ID or scan ID card</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -122,30 +117,6 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
                   <Scan className={`h-4 w-4 ${isScanning ? 'animate-pulse' : ''}`} />
                 </Button>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="grade">Grade/Class</Label>
-              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Kindergarten">Kindergarten</SelectItem>
-                  <SelectItem value="Grade 1">Grade 1</SelectItem>
-                  <SelectItem value="Grade 2">Grade 2</SelectItem>
-                  <SelectItem value="Grade 3">Grade 3</SelectItem>
-                  <SelectItem value="Grade 4">Grade 4</SelectItem>
-                  <SelectItem value="Grade 5">Grade 5</SelectItem>
-                  <SelectItem value="Grade 6">Grade 6</SelectItem>
-                  <SelectItem value="Grade 7">Grade 7</SelectItem>
-                  <SelectItem value="Grade 8">Grade 8</SelectItem>
-                  <SelectItem value="Grade 9">Grade 9</SelectItem>
-                  <SelectItem value="Grade 10">Grade 10</SelectItem>
-                  <SelectItem value="Grade 11">Grade 11</SelectItem>
-                  <SelectItem value="Grade 12">Grade 12</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="flex space-x-3 pt-4">

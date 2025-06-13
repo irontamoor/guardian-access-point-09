@@ -17,6 +17,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
     parentName: '',
     studentName: '',
     studentId: '',
+    carRegistration: '',
     pickupType: '',
     notes: ''
   });
@@ -27,10 +28,10 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
   };
 
   const handleRequestPickup = () => {
-    if (!pickupData.parentName || !pickupData.studentName || !pickupData.studentId) {
+    if (!pickupData.parentName || !pickupData.studentName || !pickupData.studentId || !pickupData.carRegistration) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including car registration",
         variant: "destructive"
       });
       return;
@@ -47,16 +48,17 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       parentName: '',
       studentName: '',
       studentId: '',
+      carRegistration: '',
       pickupType: '',
       notes: ''
     });
   };
 
   const handleDropOff = () => {
-    if (!pickupData.studentName || !pickupData.studentId) {
+    if (!pickupData.studentName || !pickupData.studentId || !pickupData.carRegistration) {
       toast({
         title: "Error",
-        description: "Please provide student information",
+        description: "Please provide student information and car registration",
         variant: "destructive"
       });
       return;
@@ -72,6 +74,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       parentName: '',
       studentName: '',
       studentId: '',
+      carRegistration: '',
       pickupType: '',
       notes: ''
     });
@@ -145,6 +148,16 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
                   onChange={(e) => handleInputChange('studentId', e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="carRegistration">Car Registration *</Label>
+              <Input
+                id="carRegistration"
+                placeholder="Enter car registration number"
+                value={pickupData.carRegistration}
+                onChange={(e) => handleInputChange('carRegistration', e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">

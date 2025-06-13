@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, UserCheck, UserX, Briefcase, Clock, Badge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,7 +13,6 @@ interface StaffSignInProps {
 
 const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const [employeeId, setEmployeeId] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
   const { toast } = useToast();
 
   const handleSignIn = () => {
@@ -34,7 +32,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
     });
     
     setEmployeeId('');
-    setSelectedDepartment('');
   };
 
   const handleSignOut = () => {
@@ -54,7 +51,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
     });
     
     setEmployeeId('');
-    setSelectedDepartment('');
   };
 
   return (
@@ -85,7 +81,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
               <Badge className="h-5 w-5 text-green-600" />
               <span>Employee Information</span>
             </CardTitle>
-            <CardDescription>Enter your employee details to sign in or out</CardDescription>
+            <CardDescription>Enter your employee ID to sign in or out</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -96,29 +92,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="administration">Administration</SelectItem>
-                  <SelectItem value="elementary">Elementary Education</SelectItem>
-                  <SelectItem value="middle">Middle School</SelectItem>
-                  <SelectItem value="high">High School</SelectItem>
-                  <SelectItem value="special-education">Special Education</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="food-service">Food Service</SelectItem>
-                  <SelectItem value="transportation">Transportation</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="counseling">Counseling</SelectItem>
-                  <SelectItem value="library">Library</SelectItem>
-                  <SelectItem value="technology">Technology</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="flex space-x-3 pt-4">
