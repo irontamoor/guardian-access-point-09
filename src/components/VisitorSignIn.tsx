@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, UserPlus, Shield, Bell, Printer, Camera } from 'lucide-react';
+import { ArrowLeft, UserPlus, Shield, Printer, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface VisitorSignInProps {
@@ -201,66 +201,35 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
           </CardContent>
         </Card>
 
-        {/* Visitor Badge Preview & Actions */}
-        <div className="space-y-6">
-          {/* Badge Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Printer className="h-5 w-5 text-purple-600" />
-                <span>Visitor Badge</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-purple-50 border-2 border-dashed border-purple-300 rounded-lg p-4 text-center">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-sm font-semibold text-purple-600 mb-2">VISITOR</div>
-                  <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-                    <Camera className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div className="font-medium">{visitorData.name || 'Visitor Name'}</div>
-                    <div className="text-gray-600">{visitorData.company || 'Company'}</div>
-                    <div className="text-xs text-gray-500">Badge: VIS####</div>
-                    <div className="text-xs text-gray-500">Host: {visitorData.hostName || 'Host Name'}</div>
-                  </div>
+        {/* Visitor Badge Preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Printer className="h-5 w-5 text-purple-600" />
+              <span>Visitor Badge</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-purple-50 border-2 border-dashed border-purple-300 rounded-lg p-4 text-center">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="text-sm font-semibold text-purple-600 mb-2">VISITOR</div>
+                <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <Camera className="h-8 w-8 text-gray-400" />
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="font-medium">{visitorData.name || 'Visitor Name'}</div>
+                  <div className="text-gray-600">{visitorData.company || 'Company'}</div>
+                  <div className="text-xs text-gray-500">Badge: VIS####</div>
+                  <div className="text-xs text-gray-500">Host: {visitorData.hostName || 'Host Name'}</div>
                 </div>
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                <Printer className="h-4 w-4 mr-2" />
-                Print Badge
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Current Visitors */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5 text-purple-600" />
-                <span>Active Visitors</span>
-              </CardTitle>
-              <CardDescription>Visitors currently in the building</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: 'John Anderson', company: 'ABC Corp', badge: 'VIS1234', host: 'Dr. Smith', time: '10:30 AM' },
-                  { name: 'Mary Johnson', company: 'Tech Solutions', badge: 'VIS1235', host: 'Ms. Brown', time: '11:15 AM' },
-                  { name: 'David Wilson', company: 'Delivery Co', badge: 'VIS1236', host: 'Front Office', time: '2:00 PM' },
-                ].map((visitor, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-900">{visitor.name}</div>
-                    <div className="text-sm text-gray-500">{visitor.company}</div>
-                    <div className="text-xs text-gray-400">
-                      {visitor.badge} • Host: {visitor.host} • Since: {visitor.time}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <Button className="w-full mt-4" variant="outline">
+              <Printer className="h-4 w-4 mr-2" />
+              Print Badge
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

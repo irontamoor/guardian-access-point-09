@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, UserCheck, UserX, Briefcase, Clock, Badge } from 'lucide-react';
+import { ArrowLeft, UserCheck, UserX, Briefcase, Badge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface StaffSignInProps {
@@ -73,7 +73,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         <p className="text-gray-600">Employee attendance and time tracking system</p>
       </div>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-md mx-auto">
         {/* Sign In/Out Form */}
         <Card className="border-l-4 border-l-green-500">
           <CardHeader>
@@ -110,53 +110,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
                 <UserX className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Staff Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-green-600" />
-              <span>Staff Status</span>
-            </CardTitle>
-            <CardDescription>Current staff attendance overview</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { id: 'EMP001', name: 'Sarah Miller', dept: 'Elementary', status: 'Present', time: '7:45 AM' },
-                { id: 'EMP002', name: 'David Thompson', dept: 'Administration', status: 'Present', time: '8:00 AM' },
-                { id: 'EMP003', name: 'Lisa Garcia', dept: 'Middle School', status: 'Present', time: '7:55 AM' },
-                { id: 'EMP004', name: 'Robert Kim', dept: 'Maintenance', status: 'Present', time: '7:30 AM' },
-                { id: 'EMP005', name: 'Maria Santos', dept: 'Food Service', status: 'Present', time: '6:45 AM' },
-              ].map((staff, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{staff.name}</div>
-                    <div className="text-sm text-gray-500">{staff.id} • {staff.dept}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-green-600">{staff.status}</div>
-                    <div className="text-xs text-gray-500">Since {staff.time}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary Stats */}
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-green-600">28</div>
-                  <div className="text-sm text-gray-600">Present</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-400">3</div>
-                  <div className="text-sm text-gray-600">Absent</div>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
