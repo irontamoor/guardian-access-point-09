@@ -7,13 +7,14 @@ import StudentSignIn from '@/components/StudentSignIn';
 import StaffSignIn from '@/components/StaffSignIn';
 import VisitorSignIn from '@/components/VisitorSignIn';
 import ParentPickup from '@/components/ParentPickup';
-import Dashboard from '@/components/Dashboard';
-import AdminLogin from '@/components/AdminLogin';
+import AdminAuth from '@/components/AdminAuth';
+import AdminDashboardTabs from '@/components/AdminDashboardTabs';
+import type { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [adminData, setAdminData] = useState<{ username: string; role: string } | null>(null);
+  const [authenticatedUser, setAuthenticatedUser] = useState<User | null>(null);
 
   // Update time every second
   useState(() => {
@@ -21,13 +22,13 @@ const Index = () => {
     return () => clearInterval(timer);
   });
 
-  const handleAdminLogin = (loginData: { username: string; role: string }) => {
-    setAdminData(loginData);
+  const handleAuthSuccess = (user: User) => {
+    setAuthenticatedUser(user);
     setActiveView('admin');
   };
 
-  const handleAdminLogout = () => {
-    setAdminData(null);
+  const handleLogout = () => {
+    setAuthenticatedUser(null);
     setActiveView('dashboard');
   };
 
@@ -42,18 +43,18 @@ const Index = () => {
       case 'parents':
         return <ParentPickup onBack={() => setActiveView('dashboard')} />;
       case 'admin':
-        if (!adminData) {
-          return <AdminLogin onLogin={handleAdminLogin} />;
+        if (!authenticatedUser) {
+          return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
         }
         return (
-          <Dashboard 
+          <AdminDashboardTabs
             onBack={() => setActiveView('dashboard')} 
-            onLogout={handleAdminLogout}
-            adminData={adminData}
+            onLogout={handleLogout}
+            adminData={{ username: authenticatedUser.email || 'Admin', role: 'admin' }}
           />
         );
       case 'admin-login':
-        return <AdminLogin onLogin={handleAdminLogin} />;
+        return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -178,7 +179,7 @@ const Index = () => {
                   <span>Admin Dashboard</span>
                 </Button>
                 <p className="text-sm text-gray-500 mt-2">
-                  Access detailed reports, activity logs, and management tools
+                  Access user management, attendance editing, and system settings
                 </p>
               </div>
             </div>

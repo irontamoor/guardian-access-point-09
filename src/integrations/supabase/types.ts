@@ -9,16 +9,200 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendance_edits: {
+        Row: {
+          admin_user_id: string
+          attendance_record_id: string
+          edit_reason: string
+          edited_at: string
+          id: string
+          new_status: Database["public"]["Enums"]["attendance_status"]
+          old_status: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Insert: {
+          admin_user_id: string
+          attendance_record_id: string
+          edit_reason: string
+          edited_at?: string
+          id?: string
+          new_status: Database["public"]["Enums"]["attendance_status"]
+          old_status?: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Update: {
+          admin_user_id?: string
+          attendance_record_id?: string
+          edit_reason?: string
+          edited_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["attendance_status"]
+          old_status?: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_edits_attendance_record_id_fkey"
+            columns: ["attendance_record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_records: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          user_id: string
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          user_id: string
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "system_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      system_users: {
+        Row: {
+          created_at: string
+          email: string | null
+          employee_id: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["user_status"]
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"]
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"]
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_role_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_role_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "system_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      attendance_status: "in" | "out"
+      user_role: "admin" | "staff" | "student" | "parent" | "visitor"
+      user_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +317,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      attendance_status: ["in", "out"],
+      user_role: ["admin", "staff", "student", "parent", "visitor"],
+      user_status: ["active", "inactive", "suspended"],
+    },
   },
 } as const
