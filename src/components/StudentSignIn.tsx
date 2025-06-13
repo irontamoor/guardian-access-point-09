@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Scan, UserCheck, UserX, BookOpen, Clock } from 'lucide-react';
+import { ArrowLeft, Scan, UserCheck, UserX, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface StudentSignInProps {
@@ -87,7 +87,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         <p className="text-gray-600">Track student arrivals and departures safely and efficiently</p>
       </div>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-md mx-auto">
         {/* Sign In/Out Form */}
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader>
@@ -135,40 +135,6 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
                 <UserX className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <span>Recent Activity</span>
-            </CardTitle>
-            <CardDescription>Latest student check-ins and check-outs</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { id: 'STU1234', name: 'Emma Johnson', grade: 'Grade 5', action: 'Signed In', time: '8:15 AM', status: 'in' },
-                { id: 'STU5678', name: 'Michael Chen', grade: 'Grade 7', action: 'Signed Out', time: '3:30 PM', status: 'out' },
-                { id: 'STU9012', name: 'Sofia Rodriguez', grade: 'Grade 3', action: 'Signed In', time: '8:45 AM', status: 'in' },
-                { id: 'STU3456', name: 'James Wilson', grade: 'Grade 6', action: 'Signed In', time: '8:22 AM', status: 'in' },
-              ].map((record, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{record.name}</div>
-                    <div className="text-sm text-gray-500">{record.id} • {record.grade}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-sm font-medium ${record.status === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                      {record.action}
-                    </div>
-                    <div className="text-xs text-gray-500">{record.time}</div>
-                  </div>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
