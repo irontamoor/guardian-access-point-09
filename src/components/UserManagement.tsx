@@ -82,11 +82,11 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user
+        // Create new user - id is now always required!
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
-            id: formData.id || undefined, // use provided id if any
+            id: formData.id, // Must always be provided
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
@@ -300,12 +300,13 @@ const UserManagement = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="id">ID</Label>
+                <Label htmlFor="id">ID<span className="text-red-600">*</span></Label>
                 <Input
                   id="id"
                   value={formData.id}
                   onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
-                  placeholder="Enter ID (leave blank to auto-generate)"
+                  placeholder="Enter unique ID"
+                  required
                   disabled={!!editingUser} // Prevent editing id on update
                 />
               </div>
