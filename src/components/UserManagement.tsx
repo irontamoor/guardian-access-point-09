@@ -68,8 +68,6 @@ const UserManagement = () => {
             last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone || null,
-            employee_id: formData.employee_id || null,
-            student_id: formData.student_id || null,
             role: formData.role,
             status: formData.status,
             updated_at: new Date().toISOString()
@@ -92,8 +90,6 @@ const UserManagement = () => {
             last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone || null,
-            employee_id: formData.employee_id || null,
-            student_id: formData.student_id || null,
             role: formData.role,
             status: formData.status
           })
@@ -307,7 +303,6 @@ const UserManagement = () => {
                 </div>
               )}
 
-              {/* Employee & student ids */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="employee_id">Employee ID</Label>
@@ -326,8 +321,6 @@ const UserManagement = () => {
                   />
                 </div>
               </div>
-
-              {/* Board type removed */}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
