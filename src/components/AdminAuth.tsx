@@ -7,7 +7,7 @@ import { Shield, Lock, UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import * as md5 from 'js-md5';
+import md5 from 'js-md5';
 
 interface AdminAuthProps {
   onAuthSuccess: (user: User) => void;
@@ -25,7 +25,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
 
   // Function to hash password with MD5
   const hashPasswordMD5 = (password: string): string => {
-    return md5.default(password);
+    return md5(password);
   };
 
   useEffect(() => {
