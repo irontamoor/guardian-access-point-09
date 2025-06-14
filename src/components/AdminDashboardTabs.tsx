@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -7,6 +8,7 @@ import SystemSettings from './SystemSettings';
 import Dashboard from './Dashboard';
 import AdminActivityDashboard from './AdminActivityDashboard';
 import UserInfoBox from './UserInfoBox';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface AdminDashboardTabsProps {
   onBack: () => void;
@@ -26,21 +28,42 @@ const AdminOverviewTab = ({
       : (adminData.admin_id || "");
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <Dashboard
-            adminData={{
-              username,
-              role: adminData.role,
-            }}
-            onBack={() => {}}
-            onLogout={() => {}}
-          />
-        </div>
-        <div className="space-y-6">
-          <AdminActivityDashboard />
-        </div>
+    <div className="w-full mx-auto max-w-7xl px-2 md:px-8 py-2 space-y-8">
+      {/* Page Heading */}
+      <div className="text-center space-y-2 mb-2 mt-2">
+        <h2 className="text-3xl font-bold text-gray-900 mb-1 animate-fade-in">
+          Admin Overview
+        </h2>
+        <p className="text-gray-600 text-base max-w-2xl mx-auto animate-fade-in">
+          Welcome to your overview — view today's key stats and live activity on one page.
+        </p>
+      </div>
+      {/* Responsive Grid */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
+        <Card className="shadow-lg border border-blue-100 bg-white/90 animate-fade-in hover-scale transition-all">
+          <CardContent className="p-0 md:p-0 lg:p-0">
+            <Dashboard
+              adminData={{
+                username,
+                role: adminData.role,
+              }}
+              onBack={() => {}}
+              onLogout={() => {}}
+            />
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg border border-blue-100 bg-white/90 flex flex-col animate-fade-in hover-scale transition-all">
+          <CardContent className="p-6 pt-4 md:p-6">
+            {/* Activity Dashboard Heading */}
+            <div className="mb-4">
+              <h3 className="text-2xl font-semibold text-indigo-700">Live Activity</h3>
+              <p className="text-gray-500 text-sm">
+                Who’s currently present and real-time updates.
+              </p>
+            </div>
+            <AdminActivityDashboard />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -132,3 +155,4 @@ const AdminDashboardTabs = ({
 };
 
 export default AdminDashboardTabs;
+
