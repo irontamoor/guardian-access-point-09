@@ -26,6 +26,7 @@ const UserManagement = () => {
     phone: '',
     employee_id: '',
     student_id: '',
+    board_type: '' as '' | 'day' | 'full' | 'weekly',
     role: 'student' as UserRole,
     status: 'active' as UserStatus,
     password: ''
@@ -56,7 +57,6 @@ const UserManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       if (editingUser) {
         // Update existing user
@@ -69,6 +69,7 @@ const UserManagement = () => {
             phone: formData.phone,
             employee_id: formData.employee_id || null,
             student_id: formData.student_id || null,
+            board_type: formData.role === 'student' ? (formData.board_type || null) : null,
             role: formData.role,
             status: formData.status,
             updated_at: new Date().toISOString()
@@ -83,7 +84,7 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user - first create in system_users
+        // Create new user
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
@@ -93,6 +94,7 @@ const UserManagement = () => {
             phone: formData.phone,
             employee_id: formData.employee_id || null,
             student_id: formData.student_id || null,
+            board_type: formData.role === 'student' ? (formData.board_type || null) : null,
             role: formData.role,
             status: formData.status
           })
@@ -164,6 +166,7 @@ const UserManagement = () => {
       phone: '',
       employee_id: '',
       student_id: '',
+      board_type: '',
       role: 'student',
       status: 'active',
       password: ''
@@ -180,6 +183,7 @@ const UserManagement = () => {
       phone: user.phone || '',
       employee_id: user.employee_id || '',
       student_id: user.student_id || '',
+      board_type: user.board_type || '',
       role: user.role,
       status: user.status,
       password: ''
@@ -291,6 +295,7 @@ const UserManagement = () => {
                 </div>
               )}
 
+              {/* Employee & student ids */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="employee_id">Employee ID</Label>
@@ -309,11 +314,32 @@ const UserManagement = () => {
                   />
                 </div>
               </div>
+              
+              {/* Board type - only for students */}
+              {formData.role === 'student' && (
+                <div className="space-y-2">
+                  <Label htmlFor="board_type">Board Type</Label>
+                  <select
+                    id="board_type"
+                    className="w-full border rounded px-3 py-2 bg-white"
+                    value={formData.board_type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, board_type: e.target.value as 'day' | 'full' | 'weekly' }))}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select Board Type
+                    </option>
+                    <option value="day">Day Board</option>
+                    <option value="full">Full Board</option>
+                    <option value="weekly">Weekly Board</option>
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
+                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value, board_type: value === 'student' ? prev.board_type : '' }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
