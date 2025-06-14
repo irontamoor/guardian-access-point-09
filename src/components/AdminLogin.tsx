@@ -1,15 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ensureDemoUser } from '@/utils/setupAdmin';
 
 interface AdminLoginProps {
   onLogin: (adminData: { username: string; role: string }) => void;
 }
+
+const DEMO_CREDENTIALS_KEY = "hideDemoCreds";
 
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [credentials, setCredentials] = useState({
@@ -18,6 +21,15 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [showDemo, setShowDemo] = useState<boolean>(() => {
+    return !localStorage.getItem(DEMO_CREDENTIALS_KEY);
+  });
+  const [demoInfo, setDemoInfo] = useState<{ email: string; password: string } | null>(null);
+
+  useEffect(() => {
+    // Try to ensure demo user exists on mount
+    ensureDemoUser().then(setDemoInfo);
+  }, []);
 
   const handleLogin = async () => {
     if (!credentials.username || !credentials.password) {
@@ -30,16 +42,24 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     }
 
     setIsLoading(true);
-    
+
     // Simulate authentication - in real implementation, this would call Supabase
     setTimeout(() => {
-      if (credentials.username === 'admin' && credentials.password === 'admin123') {
+      if (
+        (credentials.username === (demoInfo?.email || '') && credentials.password === (demoInfo?.password || '')) ||
+        (credentials.username === 'admin' && credentials.password === 'admin123')
+      ) {
         toast({
           title: "Welcome!",
           description: "Successfully logged in to admin dashboard",
           variant: "default"
         });
         onLogin({ username: credentials.username, role: 'admin' });
+
+        // If user checked "Hide demo credentials", remember their choice
+        if (!showDemo) {
+          localStorage.setItem(DEMO_CREDENTIALS_KEY, "1");
+        }
       } else {
         toast({
           title: "Login Failed",
@@ -49,6 +69,15 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
       }
       setIsLoading(false);
     }, 1000);
+  };
+
+  const handleHideDemoOption = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setShowDemo(!event.target.checked);
+    if (event.target.checked) {
+      localStorage.setItem(DEMO_CREDENTIALS_KEY, "1");
+    } else {
+      localStorage.removeItem(DEMO_CREDENTIALS_KEY);
+    }
   };
 
   return (
@@ -93,10 +122,11 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={handleLogin}
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700"
+            type="button"
           >
             {isLoading ? (
               <div className="flex items-center space-x-2">
@@ -111,11 +141,28 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             )}
           </Button>
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Demo credentials: admin / admin123
-            </p>
-          </div>
+          {showDemo && demoInfo && (
+            <div className="text-center mt-6 border rounded-md p-3 bg-blue-50">
+              <p className="text-sm font-semibold mb-2">Demo Admin Credentials:</p>
+              <div className="flex flex-col items-center gap-1 text-xs">
+                <span>
+                  <strong>Username:</strong> {demoInfo.email}
+                </span>
+                <span>
+                  <strong>Password:</strong> {demoInfo.password}
+                </span>
+                <label className="mt-2 flex items-center gap-1 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!showDemo}
+                    onChange={handleHideDemoOption}
+                    className="mr-1"
+                  />
+                  Hide demo credentials after login
+                </label>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
