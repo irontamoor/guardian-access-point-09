@@ -18,46 +18,67 @@ interface AdminDashboardTabsProps {
 
 const AdminOverviewTab = ({
   adminData,
+  onLogout,
 }: {
   adminData: { username?: string; admin_id?: string; role: string; email?: string; first_name?: string; last_name?: string };
+  onLogout: () => void;
 }) => {
-  // Ensure required fields for Dashboard: username (string), role (string)
   const username =
     typeof adminData.username === "string" && adminData.username.length > 0
       ? adminData.username
       : (adminData.admin_id || "");
-
+  // Compose name for display
+  const fullName =
+    (adminData.first_name || adminData.last_name)
+      ? `${adminData.first_name || ""} ${adminData.last_name || ""}`.trim()
+      : username;
   return (
-    <div className="w-full mx-auto max-w-7xl px-2 md:px-8 py-2 space-y-8">
+    <div className="w-full mx-auto max-w-7xl px-2 md:px-8 py-2 space-y-6">
+      {/* Top Info Row */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-3">
+        <div />
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end">
+            <span className="font-semibold text-gray-900 text-base truncate">{fullName || "—"}</span>
+            <span className="text-xs text-blue-600 font-medium">{adminData.role}</span>
+          </div>
+          <button
+            onClick={onLogout}
+            className="ml-2 px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold border border-red-200 transition"
+            aria-label="Logout"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
       {/* Page Heading */}
-      <div className="text-center space-y-2 mb-2 mt-2">
+      <div className="text-center space-y-2 mb-2 mt-3">
         <h2 className="text-3xl font-bold text-gray-900 mb-1 animate-fade-in">
           Admin Overview
         </h2>
         <p className="text-gray-600 text-base max-w-2xl mx-auto animate-fade-in">
-          Welcome to your overview — view today's key stats and live activity on one page.
+          View today's key stats and live activity.
         </p>
       </div>
       {/* Responsive Grid */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
-        <Card className="shadow-lg border border-blue-100 bg-white/90 animate-fade-in hover-scale transition-all">
-          <CardContent className="p-0 md:p-0 lg:p-0">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card className="shadow-md border border-blue-100 bg-white/90 animate-fade-in transition-all">
+          <CardContent className="p-0">
             <Dashboard
               adminData={{
                 username,
                 role: adminData.role,
               }}
               onBack={() => {}}
-              onLogout={() => {}}
+              onLogout={onLogout}
             />
           </CardContent>
         </Card>
-        <Card className="shadow-lg border border-blue-100 bg-white/90 flex flex-col animate-fade-in hover-scale transition-all">
-          <CardContent className="p-6 pt-4 md:p-6">
-            {/* Activity Dashboard Heading */}
-            <div className="mb-4">
-              <h3 className="text-2xl font-semibold text-indigo-700">Live Activity</h3>
-              <p className="text-gray-500 text-sm">
+        <Card className="shadow-md border border-blue-100 bg-white/90 flex flex-col animate-fade-in transition-all">
+          <CardContent className="p-5">
+            <div className="mb-3">
+              <h3 className="text-xl font-semibold text-indigo-700 mb-1">Live Activity</h3>
+              <p className="text-gray-500 text-xs">
                 Who’s currently present and real-time updates.
               </p>
             </div>
@@ -76,7 +97,6 @@ const AdminDashboardTabs = ({
 }: AdminDashboardTabsProps) => {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Use role from adminData prop for access check
   const isAdminOrReader = adminData?.role === "admin" || adminData?.role === "reader";
 
   const fullName =
@@ -123,7 +143,7 @@ const AdminDashboardTabs = ({
         <div className="max-w-7xl mx-auto p-6">
           <TabsContent value="overview" className="mt-0">
             {isAdminOrReader ? (
-              <AdminOverviewTab adminData={adminData} />
+              <AdminOverviewTab adminData={adminData} onLogout={onLogout} />
             ) : (
               <div className="text-center text-gray-400 py-10">
                 You do not have access to view the overview dashboard.
@@ -155,4 +175,3 @@ const AdminDashboardTabs = ({
 };
 
 export default AdminDashboardTabs;
-
