@@ -13,7 +13,9 @@ import type { User } from '@supabase/supabase-js';
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [authenticatedUser, setAuthenticatedUser] = useState<User | null>(null);
+
+  // Store admin session in local state only
+  const [adminUser, setAdminUser] = useState<any | null>(null);
 
   // Update time every second
   useState(() => {
@@ -21,13 +23,14 @@ const Index = () => {
     return () => clearInterval(timer);
   });
 
-  const handleAuthSuccess = (user: User) => {
-    setAuthenticatedUser(user);
+  // Handle login with adminData (from AdminLogin, system_users lookup)
+  const handleAuthSuccess = (adminData: any) => {
+    setAdminUser(adminData);
     setActiveView('admin');
   };
 
   const handleLogout = () => {
-    setAuthenticatedUser(null);
+    setAdminUser(null);
     setActiveView('dashboard');
   };
 
@@ -42,7 +45,7 @@ const Index = () => {
       case 'parents':
         return <ParentPickup onBack={() => setActiveView('dashboard')} />;
       case 'admin':
-        if (!authenticatedUser) {
+        if (!adminUser) {
           return (
             <AdminLogin onLogin={handleAuthSuccess} />
           );
@@ -51,7 +54,7 @@ const Index = () => {
           <AdminDashboardTabs
             onBack={() => setActiveView('dashboard')}
             onLogout={handleLogout}
-            adminData={{ username: authenticatedUser.email || 'Admin', role: 'admin' }}
+            adminData={{ ...adminUser }}
           />
         );
       case 'admin-login':
