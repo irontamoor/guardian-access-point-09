@@ -45,13 +45,19 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
       const userId = userResult.user.id;
       setCurrentUserEmail(userResult.user.email || null);
 
-      // Get user roles from assignments table (dynamic!)
-      const { data: roles } = await supabase
-        .from("user_role_assignments")
-        .select("role")
-        .eq("user_id", userId);
+      // Fetch roles from both user_role_assignments and user_roles
+      const [{ data: assignments }, { data: appRoles }] = await Promise.all([
+        supabase.from("user_role_assignments").select("role").eq("user_id", userId),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+      ]);
 
-      setUserRoles((roles || []).map((r) => r.role));
+      // Merge and deduplicate roles
+      const rolesArray = [
+        ...(assignments || []).map((r) => r.role),
+        ...(appRoles || []).map((r) => r.role)
+      ];
+      const dedupedRoles = Array.from(new Set(rolesArray));
+      setUserRoles(dedupedRoles);
     };
     fetchRoles();
   }, []);
