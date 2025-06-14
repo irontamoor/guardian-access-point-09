@@ -38,7 +38,8 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
     fetchRoles();
   }, []);
 
-  const showActivityTab = userRoles.includes("admin") || userRoles.includes("reader");
+  // Only allow the activity tab for admins now
+  const showActivityTab = userRoles.includes("admin");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -97,3 +98,4 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
 };
 
 export default AdminDashboardTabs;
+
