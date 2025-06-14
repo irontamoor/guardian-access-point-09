@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Scan, UserCheck, UserX, BookOpen } from 'lucide-react';
+import { ArrowLeft, UserCheck, UserX, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface StudentSignInProps {
@@ -13,7 +13,6 @@ interface StudentSignInProps {
 
 const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const [studentId, setStudentId] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
 
   const handleSignIn = () => {
@@ -54,19 +53,6 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
     setStudentId('');
   };
 
-  const simulateBarcodeScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setStudentId('STU' + Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
-      setIsScanning(false);
-      toast({
-        title: "Barcode Scanned",
-        description: "Student information loaded",
-        variant: "default"
-      });
-    }, 2000);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4">
       {/* Header */}
@@ -95,28 +81,18 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
               <UserCheck className="h-5 w-5 text-blue-600" />
               <span>Student Information</span>
             </CardTitle>
-            <CardDescription>Enter student ID or scan ID card</CardDescription>
+            <CardDescription>Enter student ID</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="studentId">Student ID</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="studentId"
-                  placeholder="Enter student ID"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  variant="outline" 
-                  onClick={simulateBarcodeScan}
-                  disabled={isScanning}
-                  className="px-3"
-                >
-                  <Scan className={`h-4 w-4 ${isScanning ? 'animate-pulse' : ''}`} />
-                </Button>
-              </div>
+              <Input
+                id="studentId"
+                placeholder="Enter student ID"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                className="w-full"
+              />
             </div>
 
             <div className="flex space-x-3 pt-4">

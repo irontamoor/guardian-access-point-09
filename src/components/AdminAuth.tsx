@@ -4,27 +4,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User as UserIcon, UserPlus } from 'lucide-react';
+import { Shield, Lock, UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 
 interface AdminAuthProps {
   onAuthSuccess: (user: User) => void;
 }
 
 const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [credentials, setCredentials] = useState({
     email: '',
-    password: '',
-    firstName: '',
-    lastName: ''
+    password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
+
+  // Function to hash password with MD5
+  const hashPasswordMD5 = (password: string): string => {
+    return createHash('md5').update(password).digest('hex');
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -62,9 +65,12 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     setIsLoading(true);
     
     try {
+      // Hash the password with MD5 before sending
+      const hashedPassword = hashPasswordMD5(credentials.password);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
-        password: credentials.password,
+        password: hashedPassword,
       });
 
       if (error) throw error;
@@ -78,52 +84,6 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
       toast({
         title: "Login Failed",
         description: error.message || "Invalid credentials",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!credentials.email || !credentials.password || !credentials.firstName || !credentials.lastName) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            first_name: credentials.firstName,
-            last_name: credentials.lastName
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Account Created!",
-        description: "Please check your email to verify your account",
-        variant: "default"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Signup Failed",
-        description: error.message || "Failed to create account",
         variant: "destructive"
       });
     } finally {
@@ -145,37 +105,14 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
-            {isLogin ? 'Admin Login' : 'Create Admin Account'}
+            Admin Login
           </CardTitle>
           <CardDescription>
-            {isLogin ? 'Please sign in to access the admin system' : 'Create a new admin account'}
+            Please sign in to access the admin system
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-4">
-            {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    placeholder="Enter first name"
-                    value={credentials.firstName}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, firstName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    placeholder="Enter last name"
-                    value={credentials.lastName}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, lastName: e.target.value }))}
-                  />
-                </div>
-              </>
-            )}
-            
+          <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -214,26 +151,16 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
               {isLoading ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>{isLogin ? 'Signing in...' : 'Creating account...'}</span>
+                  <span>Signing in...</span>
                 </div>
               ) : (
                 <>
-                  {isLogin ? <Shield className="h-4 w-4 mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  <Shield className="h-4 w-4 mr-2" />
+                  Sign In
                 </>
               )}
             </Button>
           </form>
-
-          <div className="text-center">
-            <Button
-              variant="ghost"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm"
-            >
-              {isLogin ? "Need to create an account?" : "Already have an account?"}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
