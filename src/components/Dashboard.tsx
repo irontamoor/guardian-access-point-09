@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, UserCheck, UserPlus, Car, TrendingUp, Calendar, Download, AlertCircle, LogOut } from 'lucide-react';
+import { ArrowLeft, Users, UserCheck, TrendingUp, Calendar, Download, AlertCircle, LogOut } from 'lucide-react';
 import { useVMSData } from '@/hooks/useVMSData';
 
 interface DashboardProps {
@@ -13,12 +12,10 @@ interface DashboardProps {
 
 const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const { students, staff, visitors, pickups, recentActivity } = useVMSData();
+  const { students, staff, recentActivity } = useVMSData();
 
   const presentStudents = students.filter(s => s.status === 'present').length;
   const presentStaff = staff.filter(s => s.status === 'present').length;
-  const activeVisitors = visitors.filter(v => v.status === 'active').length;
-  const pendingPickups = pickups.filter(p => p.status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4">
@@ -96,38 +93,7 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Active Visitors</CardTitle>
-                <UserPlus className="h-4 w-4 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{activeVisitors}</div>
-              <div className="text-xs text-gray-500 flex items-center mt-1">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                currently in building
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Pending Pickups</CardTitle>
-                <Car className="h-4 w-4 text-orange-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{pendingPickups}</div>
-              <div className="text-xs text-gray-500 flex items-center mt-1">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                awaiting completion
-              </div>
-            </CardContent>
-          </Card>
+          {/* REMOVED visitors & pickups columns */}
         </div>
 
         {/* Recent Activity & Security Alerts */}
@@ -171,12 +137,12 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Placeholder alerts */}
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="font-medium text-yellow-800">Pending Pickups</div>
-                  <div className="text-sm text-yellow-600">{pendingPickups} parent pickup requests awaiting completion</div>
-                  <div className="text-xs text-yellow-500 mt-1">Requires attention</div>
+                  <div className="font-medium text-yellow-800">No Active Alerts</div>
+                  <div className="text-sm text-yellow-600">Everything is operating normally.</div>
+                  <div className="text-xs text-yellow-500 mt-1">No action required</div>
                 </div>
-                
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="font-medium text-blue-800">System Status</div>
                   <div className="text-sm text-blue-600">VMS system running normally - all modules operational</div>
@@ -188,7 +154,7 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
         </div>
 
         {/* Live Status Boards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Staff Status */}
           <Card>
             <CardHeader>
@@ -213,41 +179,23 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Active Visitors */}
+          {/* Student Status */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Active Visitors</CardTitle>
-              <CardDescription>Visitors currently in building</CardDescription>
+              <CardTitle className="text-lg">Student Status</CardTitle>
+              <CardDescription>Current students present</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {visitors.filter(v => v.status === 'active').map((visitor) => (
-                  <div key={visitor.id} className="p-3 bg-purple-50 rounded-lg">
-                    <div className="font-medium text-gray-900">{visitor.name}</div>
-                    <div className="text-sm text-gray-500">{visitor.company}</div>
-                    <div className="text-xs text-gray-400">
-                      {visitor.badge_id} • Host: {visitor.host_name} • Since: {visitor.check_in_time}
+                {students.filter(s => s.status === 'present').map((student) => (
+                  <div key={student.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-900">{student.name}</div>
+                      <div className="text-sm text-gray-500">{student.id} • {student.grade}</div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pickup Queue */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Pickup Queue</CardTitle>
-              <CardDescription>Pending parent pickups</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {pickups.filter(p => p.status === 'pending').map((pickup) => (
-                  <div key={pickup.id} className="p-3 bg-orange-50 rounded-lg">
-                    <div className="font-medium text-gray-900">{pickup.parent_name}</div>
-                    <div className="text-sm text-gray-500">Student: {pickup.student_name}</div>
-                    <div className="text-xs text-gray-400">
-                      Car: {pickup.car_registration} • Requested: {pickup.request_time}
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-blue-600">Present</div>
+                      <div className="text-xs text-gray-500">Since {student.check_in_time}</div>
                     </div>
                   </div>
                 ))}
