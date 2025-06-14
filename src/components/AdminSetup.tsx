@@ -24,6 +24,13 @@ const AdminSetup = () => {
           description: "Admin user created successfully. You can now log in.",
           variant: "default"
         });
+      } else if (result.resetEmail) {
+        toast({
+          title: "Password Reset Email Sent",
+          description: "A password reset email was sent to admin@school.com since the account already exists.",
+          variant: "default"
+        });
+        setLastError("Admin user already exists. Password reset email sent.");
       } else {
         setLastError(result.error || "Failed to setup admin user");
         toast({
@@ -113,3 +120,4 @@ const AdminSetup = () => {
 };
 
 export default AdminSetup;
+

@@ -1,17 +1,11 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
-// Remove any possible orphaned Supabase auth accounts with the same email first
-export const deleteSupabaseUserByEmail = async (email: string) => {
-  // Only service_role can do this directly; since we can't use secrets here, we rely on attempting sign up even if one exists (Supabase will throw an error if email exists)
-  // Instead, we signal user to manually remove if error is email already registered
-  return;
-};
-
 /**
- * Creates the default admin in system_users and in Supabase Auth.
- * Returns { success: boolean, error?: string }
+ * Creates (or updates) the default admin in system_users and in Supabase Auth.
+ * If the user exists, triggers a password reset email to admin@school.com.
  */
-export const createAdminAuth = async (): Promise<{ success: boolean; error?: string }> => {
+export const createAdminAuth = async (): Promise<{ success: boolean; error?: string; resetEmail?: boolean }> => {
   const adminEmail = "admin@school.com";
   const adminPassword = "admin123";
 
@@ -32,7 +26,7 @@ export const createAdminAuth = async (): Promise<{ success: boolean; error?: str
       return { success: false, error: `System user insert failed: ${userTableError.message}` };
     }
 
-    // 2. Attempt to sign up the same admin in Supabase Auth (idempotent, but signup fails if email already exists)
+    // 2. Try to sign up
     const { error: signUpError } = await supabase.auth.signUp({
       email: adminEmail,
       password: adminPassword,
@@ -41,13 +35,25 @@ export const createAdminAuth = async (): Promise<{ success: boolean; error?: str
       }
     });
 
-    if (signUpError && !signUpError.message.includes("already registered")) {
-      // If error is not "already registered"
-      return { success: false, error: `Supabase auth failed: ${signUpError.message}` };
+    if (!signUpError) {
+      // Signup worked; user may need to confirm email from invite
+      return { success: true };
     }
-    // If "already registered", that's fine, continue.
 
-    return { success: true };
+    // If the error says 'already registered', fire password reset email
+    if (signUpError.message && signUpError.message.toLowerCase().includes("already registered")) {
+      // Send password reset email to admin@school.com
+      const { error: pwResetError } = await supabase.auth.resetPasswordForEmail(adminEmail, {
+        redirectTo: window.location.origin + "/"
+      });
+      if (pwResetError) {
+        return { success: false, error: pwResetError.message };
+      }
+      return { success: false, resetEmail: true, error: "User already registered; password reset email sent." };
+    }
+
+    // Any other error
+    return { success: false, error: `Supabase auth failed: ${signUpError.message}` };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
