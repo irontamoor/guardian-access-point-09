@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       toast({
         title: "Not Required",
         description: "On Board staff do not need to sign out each day.",
-        variant: "info"
+        variant: "default"
       });
       return;
     }
