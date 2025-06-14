@@ -202,7 +202,7 @@ export type Database = {
     Enums: {
       attendance_status: "in" | "out"
       board_type: "day" | "full" | "weekly"
-      user_role: "admin" | "staff" | "student" | "parent" | "visitor"
+      user_role: "admin" | "staff" | "student" | "parent" | "visitor" | "reader"
       user_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
@@ -321,7 +321,7 @@ export const Constants = {
     Enums: {
       attendance_status: ["in", "out"],
       board_type: ["day", "full", "weekly"],
-      user_role: ["admin", "staff", "student", "parent", "visitor"],
+      user_role: ["admin", "staff", "student", "parent", "visitor", "reader"],
       user_status: ["active", "inactive", "suspended"],
     },
   },
