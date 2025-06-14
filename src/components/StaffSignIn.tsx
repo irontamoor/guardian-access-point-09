@@ -1,9 +1,9 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, UserCheck, UserX, Briefcase, Badge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,7 +13,6 @@ interface StaffSignInProps {
 
 const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const [employeeId, setEmployeeId] = useState('');
-  const [staffType, setStaffType] = useState<'day' | 'onboard'>('day');
   const { toast } = useToast();
 
   const handleSignIn = () => {
@@ -28,23 +27,14 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
 
     toast({
       title: "Welcome!",
-      description: `Employee ${employeeId} (${staffType === 'onboard' ? 'On Board' : 'Day'}) signed in successfully`,
+      description: `Employee ${employeeId} signed in successfully`,
       variant: "default"
     });
-    
+
     setEmployeeId('');
   };
 
   const handleSignOut = () => {
-    if (staffType === 'onboard') {
-      toast({
-        title: "Not Required",
-        description: "On Board staff do not need to sign out each day.",
-        variant: "default"
-      });
-      return;
-    }
-
     if (!employeeId) {
       toast({
         title: "Error",
@@ -59,7 +49,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       description: `Employee ${employeeId} signed out successfully`,
       variant: "default"
     });
-    
+
     setEmployeeId('');
   };
 
@@ -91,7 +81,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
               <Badge className="h-5 w-5 text-green-600" />
               <span>Employee Information</span>
             </CardTitle>
-            <CardDescription>Enter your employee ID and select type</CardDescription>
+            <CardDescription>Enter your employee ID</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -102,24 +92,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Staff Type</Label>
-              <RadioGroup
-                value={staffType}
-                onValueChange={val => setStaffType(val as 'day' | 'onboard')}
-                className="flex space-x-6 pt-1"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="day" id="staff-type-day" />
-                  <Label htmlFor="staff-type-day">Day</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="onboard" id="staff-type-onboard" />
-                  <Label htmlFor="staff-type-onboard">On Board</Label>
-                </div>
-              </RadioGroup>
             </div>
 
             <div className="flex space-x-3 pt-4">
@@ -134,8 +106,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
                 onClick={handleSignOut}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                disabled={staffType === 'onboard'}
-                title={staffType === 'onboard' ? "On Board staff do not need to sign out" : ""}
               >
                 <UserX className="h-4 w-4 mr-2" />
                 Sign Out
