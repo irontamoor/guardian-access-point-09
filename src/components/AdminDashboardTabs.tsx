@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -46,7 +45,7 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
       const userId = userResult.user.id;
       setCurrentUserEmail(userResult.user.email || null);
 
-      // Get user roles
+      // Get user roles from assignments table (dynamic!)
       const { data: roles } = await supabase
         .from("user_role_assignments")
         .select("role")
@@ -57,11 +56,10 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
     fetchRoles();
   }, []);
 
-  // Determines if user is admin, reader, or admin@admin.com
+  // Only allow access if user explicitly has role "admin" or "reader" per DB
   const isAdminOrReader =
     userRoles.includes("admin") ||
-    userRoles.includes("reader") ||
-    (currentUserEmail === "admin@admin.com");
+    userRoles.includes("reader");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
