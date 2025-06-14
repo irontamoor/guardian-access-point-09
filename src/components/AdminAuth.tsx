@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { Shield, Lock, UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import md5 from 'js-md5';
 
 interface AdminAuthProps {
   onAuthSuccess: (user: User) => void;
@@ -22,11 +22,6 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
-
-  // Function to hash password with MD5
-  const hashPasswordMD5 = (password: string): string => {
-    return md5(password);
-  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -64,12 +59,9 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     setIsLoading(true);
     
     try {
-      // Hash the password with MD5 before sending
-      const hashedPassword = hashPasswordMD5(credentials.password);
-      
       const { error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
-        password: hashedPassword,
+        password: credentials.password,
       });
 
       if (error) throw error;

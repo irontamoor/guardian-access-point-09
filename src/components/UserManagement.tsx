@@ -10,7 +10,6 @@ import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import md5 from 'js-md5';
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -32,11 +31,6 @@ const UserManagement = () => {
     password: ''
   });
   const { toast } = useToast();
-
-  // Function to hash password with MD5
-  const hashPasswordMD5 = (password: string): string => {
-    return md5(password);
-  };
 
   useEffect(() => {
     loadUsers();
@@ -107,13 +101,11 @@ const UserManagement = () => {
 
         if (userError) throw userError;
 
-        // If password is provided, create auth user with MD5 hashed password
+        // If password is provided, create auth user with plain password
         if (formData.password) {
-          const hashedPassword = hashPasswordMD5(formData.password);
-          
           const { error: authError } = await supabase.auth.signUp({
             email: formData.email,
-            password: hashedPassword,
+            password: formData.password,
             options: {
               emailRedirectTo: `${window.location.origin}/`,
               data: {
@@ -296,7 +288,6 @@ const UserManagement = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="Leave blank for users without auth access"
                   />
-                  <p className="text-xs text-gray-500">Password will be hashed with MD5</p>
                 </div>
               )}
 
