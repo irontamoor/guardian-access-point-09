@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import StudentSignIn from '@/components/StudentSignIn';
 import StaffSignIn from '@/components/StaffSignIn';
 import VisitorSignIn from '@/components/VisitorSignIn';
 import ParentPickup from '@/components/ParentPickup';
-import AdminAuth from '@/components/AdminAuth';
+import AdminLogin from '@/components/AdminLogin';
 import AdminDashboardTabs from '@/components/AdminDashboardTabs';
 import type { User } from '@supabase/supabase-js';
 
@@ -44,17 +43,19 @@ const Index = () => {
         return <ParentPickup onBack={() => setActiveView('dashboard')} />;
       case 'admin':
         if (!authenticatedUser) {
-          return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
+          return (
+            <AdminLogin onLogin={handleAuthSuccess} />
+          );
         }
         return (
           <AdminDashboardTabs
-            onBack={() => setActiveView('dashboard')} 
+            onBack={() => setActiveView('dashboard')}
             onLogout={handleLogout}
             adminData={{ username: authenticatedUser.email || 'Admin', role: 'admin' }}
           />
         );
       case 'admin-login':
-        return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
+        return <AdminLogin onLogin={handleAuthSuccess} />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
