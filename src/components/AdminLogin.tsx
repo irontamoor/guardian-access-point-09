@@ -6,8 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Use a fixed list of allowed admin IDs for demonstration
-const ALLOWED_ADMIN_IDS = ['admin123', 'masteradmin', 'schooladmin'];
+// Removed all hardcoded allowed IDs.
 
 const DUMMY_ADMIN_USER = {
   id: 'admin-dummy',
@@ -40,21 +39,12 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Only allow login if adminId matches allowed list
-      if (ALLOWED_ADMIN_IDS.includes(adminId.trim().toLowerCase())) {
-        toast({
-          title: "Welcome!",
-          description: `Admin ${adminId} logged in`,
-          variant: "default"
-        });
-        onLogin({ ...DUMMY_ADMIN_USER, admin_id: adminId, email: `${adminId}@admin.local` });
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid Admin ID",
-          variant: "destructive"
-        });
-      }
+      // No allowed IDs: login always fails.
+      toast({
+        title: "Login Failed",
+        description: "Invalid Admin ID",
+        variant: "destructive"
+      });
       setIsLoading(false);
     }, 700);
   };
