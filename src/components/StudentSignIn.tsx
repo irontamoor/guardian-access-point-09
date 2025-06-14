@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, UserCheck, UserX, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,6 +14,7 @@ interface StudentSignInProps {
 
 const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const [studentId, setStudentId] = useState('');
+  const [studentType, setStudentType] = useState<'day' | 'onboard'>('day');
   const { toast } = useToast();
 
   const handleSignIn = () => {
@@ -27,7 +29,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
 
     toast({
       title: "Success!",
-      description: `Student ${studentId} signed in successfully`,
+      description: `Student ${studentId} (${studentType === 'onboard' ? 'On Board' : 'Day'}) signed in successfully`,
       variant: "default"
     });
     
@@ -35,6 +37,15 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   };
 
   const handleSignOut = () => {
+    if (studentType === 'onboard') {
+      toast({
+        title: "Not Required",
+        description: "On Board students do not need to sign out each day.",
+        variant: "info"
+      });
+      return;
+    }
+
     if (!studentId) {
       toast({
         title: "Error",
@@ -81,7 +92,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
               <UserCheck className="h-5 w-5 text-blue-600" />
               <span>Student Information</span>
             </CardTitle>
-            <CardDescription>Enter student ID</CardDescription>
+            <CardDescription>Enter student ID and status</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -93,6 +104,24 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Student Type</Label>
+              <RadioGroup
+                value={studentType}
+                onValueChange={val => setStudentType(val as 'day' | 'onboard')}
+                className="flex space-x-6 pt-1"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="day" id="student-type-day" />
+                  <Label htmlFor="student-type-day">Day</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="onboard" id="student-type-onboard" />
+                  <Label htmlFor="student-type-onboard">On Board</Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="flex space-x-3 pt-4">
@@ -107,6 +136,8 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
                 onClick={handleSignOut}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                disabled={studentType === 'onboard'}
+                title={studentType === 'onboard' ? "On Board students do not need to sign out" : ""}
               >
                 <UserX className="h-4 w-4 mr-2" />
                 Sign Out
