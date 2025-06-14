@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Remove any possible orphaned Supabase auth accounts with the same email first
@@ -27,7 +26,7 @@ export const createAdminAuth = async (): Promise<{ success: boolean; error?: str
         status: "active",
         employee_id: "EMP001"
       }
-    ], { ignoreDuplicates: true });
+    ]);
 
     if (userTableError && userTableError.code !== "23505" && !userTableError.message.includes("duplicate")) {
       return { success: false, error: `System user insert failed: ${userTableError.message}` };
