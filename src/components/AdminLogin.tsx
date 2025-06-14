@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -138,18 +137,6 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
               </>
             )}
           </Button>
-
-          <div className="text-center mt-6 border rounded-md p-3 bg-blue-50">
-            <p className="text-sm font-semibold mb-2">Admin Credentials:</p>
-            <div className="flex flex-col items-center gap-1 text-xs">
-              <span>
-                <strong>Email:</strong> admin@admin.com
-              </span>
-              <span>
-                <strong>Password:</strong> admin
-              </span>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
