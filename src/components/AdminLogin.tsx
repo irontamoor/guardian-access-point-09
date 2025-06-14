@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,15 +20,6 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [showDemo, setShowDemo] = useState<boolean>(() => {
-    return !localStorage.getItem(DEMO_CREDENTIALS_KEY);
-  });
-  const [demoInfo, setDemoInfo] = useState<{ email: string; password: string } | null>(null);
-
-  useEffect(() => {
-    // Try to ensure demo user exists on mount
-    ensureDemoUser().then(setDemoInfo);
-  }, []);
 
   const handleLogin = async () => {
     if (!credentials.username || !credentials.password) {
@@ -43,11 +33,10 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 
     setIsLoading(true);
 
-    // Simulate authentication - in real implementation, this would call Supabase
     setTimeout(() => {
       if (
-        (credentials.username === (demoInfo?.email || '') && credentials.password === (demoInfo?.password || '')) ||
-        (credentials.username === 'admin' && credentials.password === 'admin123')
+        credentials.username === 'admin@admin.com' &&
+        credentials.password === 'admin'
       ) {
         toast({
           title: "Welcome!",
@@ -55,11 +44,6 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
           variant: "default"
         });
         onLogin({ username: credentials.username, role: 'admin' });
-
-        // If user checked "Hide demo credentials", remember their choice
-        if (!showDemo) {
-          localStorage.setItem(DEMO_CREDENTIALS_KEY, "1");
-        }
       } else {
         toast({
           title: "Login Failed",
@@ -69,15 +53,6 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
       }
       setIsLoading(false);
     }, 1000);
-  };
-
-  const handleHideDemoOption = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setShowDemo(!event.target.checked);
-    if (event.target.checked) {
-      localStorage.setItem(DEMO_CREDENTIALS_KEY, "1");
-    } else {
-      localStorage.removeItem(DEMO_CREDENTIALS_KEY);
-    }
   };
 
   return (
@@ -94,12 +69,12 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Username (email)</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="username"
-                placeholder="Enter admin username"
+                placeholder="Enter admin email"
                 value={credentials.username}
                 onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                 className="pl-10"
@@ -141,28 +116,17 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             )}
           </Button>
 
-          {showDemo && demoInfo && (
-            <div className="text-center mt-6 border rounded-md p-3 bg-blue-50">
-              <p className="text-sm font-semibold mb-2">Demo Admin Credentials:</p>
-              <div className="flex flex-col items-center gap-1 text-xs">
-                <span>
-                  <strong>Username:</strong> {demoInfo.email}
-                </span>
-                <span>
-                  <strong>Password:</strong> {demoInfo.password}
-                </span>
-                <label className="mt-2 flex items-center gap-1 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!showDemo}
-                    onChange={handleHideDemoOption}
-                    className="mr-1"
-                  />
-                  Hide demo credentials after login
-                </label>
-              </div>
+          <div className="text-center mt-6 border rounded-md p-3 bg-blue-50">
+            <p className="text-sm font-semibold mb-2">Admin Credentials:</p>
+            <div className="flex flex-col items-center gap-1 text-xs">
+              <span>
+                <strong>Email:</strong> admin@admin.com
+              </span>
+              <span>
+                <strong>Password:</strong> admin
+              </span>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
