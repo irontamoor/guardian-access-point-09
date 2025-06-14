@@ -10,6 +10,7 @@ import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { useEnumValues } from "@/hooks/useEnumValues";
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -19,24 +20,22 @@ const UserManagement = () => {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  // Use a local list since dynamic fetch (supabase.rpc) is not available
-  const allRoles: UserRole[] = ['student', 'staff', 'admin', 'parent', 'visitor', 'reader'];
+  const { values: allRoles, loading: loadingRoles } = useEnumValues("app_role");
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    employee_id: '',
-    student_id: '',
-    role: 'student' as UserRole,
-    status: 'active' as UserStatus,
-    password: ''
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    employee_id: "",
+    student_id: "",
+    role: "student" as UserRole,
+    status: "active" as UserStatus,
+    password: "",
   });
   const { toast } = useToast();
 
   useEffect(() => {
     loadUsers();
-    // Removed fetchAllRoles because enum_values RPC does not exist
   }, []);
 
   const loadUsers = async () => {
@@ -157,15 +156,15 @@ const UserManagement = () => {
 
   const resetForm = () => {
     setFormData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      employee_id: '',
-      student_id: '',
-      role: 'student',
-      status: 'active',
-      password: ''
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      employee_id: "",
+      student_id: "",
+      role: "student",
+      status: "active",
+      password: ""
     });
     setEditingUser(null);
   };
@@ -181,7 +180,7 @@ const UserManagement = () => {
       student_id: user.student_id || '',
       role: user.role,
       status: user.status,
-      password: ''
+      password: ""
     });
     setIsOpen(true);
   };
@@ -222,7 +221,24 @@ const UserManagement = () => {
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingUser(null); setIsOpen(true); setFormData({ first_name: '', last_name: '', email: '', phone: '', employee_id: '', student_id: '', role: 'student', status: 'active', password: '' }); }}>
+            <Button
+              onClick={() => {
+                setEditingUser(null);
+                setIsOpen(true);
+                setFormData({
+                  first_name: "",
+                  last_name: "",
+                  email: "",
+                  phone: "",
+                  employee_id: "",
+                  student_id: "",
+                  role: allRoles[0] as UserRole || "student",
+                  status: "active",
+                  password: "",
+                });
+              }}
+              disabled={loadingRoles}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -316,11 +332,16 @@ const UserManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value: UserRole) => setFormData((prev) => ({ ...prev, role: value }))}
+                    disabled={loadingRoles}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {loadingRoles && <div className="px-4 py-2">Loading...</div>}
                       {allRoles.map((role) => (
                         <SelectItem key={role} value={role}>
                           {role.charAt(0).toUpperCase() + role.slice(1)}

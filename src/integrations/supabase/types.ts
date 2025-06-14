@@ -189,17 +189,54 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_admin_role: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }
     Enums: {
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "staff"
+        | "student"
+        | "parent"
+        | "visitor"
+        | "reader"
       attendance_status: "in" | "out"
       board_type: "day" | "full" | "weekly"
       user_role: "admin" | "staff" | "student" | "parent" | "visitor" | "reader"
@@ -319,6 +356,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "staff",
+        "student",
+        "parent",
+        "visitor",
+        "reader",
+      ],
       attendance_status: ["in", "out"],
       board_type: ["day", "full", "weekly"],
       user_role: ["admin", "staff", "student", "parent", "visitor", "reader"],
