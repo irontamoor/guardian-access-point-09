@@ -14,7 +14,7 @@ export function useEnumValues(enumName: "app_role") {
     setLoading(true);
     // Only support 'app_role' for now; expand logic if more enums needed.
     if (enumName === "app_role") {
-      setValues(Constants.public.Enums.app_role);
+      setValues(Constants.public.Enums.app_role.slice());
     } else {
       setValues([]);
     }
