@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, MessageSquare, UserCheck, UserX } from 'lucide-react';
@@ -41,7 +40,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
             {record.system_users.first_name} {record.system_users.last_name}
           </TableCell>
           <TableCell>
-            {record.system_users.employee_id || record.system_users.student_id || '-'}
+            {record.system_users.id || '-'}
           </TableCell>
           <TableCell>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${

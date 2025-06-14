@@ -14,6 +14,7 @@ interface UserStatus {
   name: string;
   role: string;
   inStatus: boolean;
+  // departmentOrGrade renamed to just "id"
   departmentOrGrade?: string;
 }
 
@@ -56,7 +57,7 @@ const AdminActivityDashboard = () => {
             name: `${stu.first_name} ${stu.last_name}`,
             role: "student",
             inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: stu.student_id || "",
+            departmentOrGrade: stu.id, // only show ID
           };
         })
         .filter((s) => s.inStatus);
@@ -73,7 +74,7 @@ const AdminActivityDashboard = () => {
             name: `${staff.first_name} ${staff.last_name}`,
             role: "staff",
             inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: staff.employee_id || "",
+            departmentOrGrade: staff.id, // only show ID
           };
         })
         .filter((s) => s.inStatus);
@@ -103,7 +104,7 @@ const AdminActivityDashboard = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Grade/ID</TableHead>
+                <TableHead>ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -152,7 +153,7 @@ const AdminActivityDashboard = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Employee ID</TableHead>
+                <TableHead>ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

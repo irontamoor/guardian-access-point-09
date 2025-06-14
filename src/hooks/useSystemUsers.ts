@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -13,7 +14,7 @@ export const parseStudent = (user: Database["public"]["Tables"]["system_users"][
 export const parseStaff = (user: Database["public"]["Tables"]["system_users"]["Row"]) => ({
   id: user.id,
   name: `${user.first_name} ${user.last_name}`,
-  department: user.employee_id ? `ID: ${user.employee_id}` : "",
+  department: "", // Removed employee_id, use empty string or id as needed
   status: "absent" as "absent" | "present",
 });
 

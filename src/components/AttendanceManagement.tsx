@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,8 +28,7 @@ interface AttendanceRecord {
   system_users: {
     first_name: string;
     last_name: string;
-    employee_id?: string;
-    student_id?: string;
+    id: string;
     role: UserRole;
   };
 }
@@ -66,8 +66,7 @@ const AttendanceManagement = () => {
           system_users (
             first_name,
             last_name,
-            employee_id,
-            student_id,
+            id,
             role
           )
         `)
