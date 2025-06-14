@@ -26,7 +26,6 @@ const UserManagement = () => {
     phone: '',
     employee_id: '',
     student_id: '',
-    board_type: '' as '' | 'day' | 'full' | 'weekly',
     role: 'student' as UserRole,
     status: 'active' as UserStatus,
     password: ''
@@ -66,10 +65,9 @@ const UserManagement = () => {
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
-            phone: formData.phone,
+            phone: formData.phone || null,
             employee_id: formData.employee_id || null,
             student_id: formData.student_id || null,
-            board_type: formData.role === 'student' ? (formData.board_type || null) : null,
             role: formData.role,
             status: formData.status,
             updated_at: new Date().toISOString()
@@ -91,10 +89,9 @@ const UserManagement = () => {
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
-            phone: formData.phone,
+            phone: formData.phone || null,
             employee_id: formData.employee_id || null,
             student_id: formData.student_id || null,
-            board_type: formData.role === 'student' ? (formData.board_type || null) : null,
             role: formData.role,
             status: formData.status
           })
@@ -118,11 +115,8 @@ const UserManagement = () => {
           });
 
           if (authError) {
-            // If auth creation fails, we should clean up the system user
-            await supabase
-              .from('system_users')
-              .delete()
-              .eq('id', newUser.id);
+            // If auth creation fails, clean up the system user
+            await supabase.from('system_users').delete().eq('id', newUser.id);
             throw authError;
           }
         }
@@ -166,7 +160,6 @@ const UserManagement = () => {
       phone: '',
       employee_id: '',
       student_id: '',
-      board_type: '',
       role: 'student',
       status: 'active',
       password: ''
@@ -183,7 +176,6 @@ const UserManagement = () => {
       phone: user.phone || '',
       employee_id: user.employee_id || '',
       student_id: user.student_id || '',
-      board_type: user.board_type || '',
       role: user.role,
       status: user.status,
       password: ''
@@ -279,6 +271,7 @@ const UserManagement = () => {
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Optional"
                 />
               </div>
 
@@ -314,32 +307,13 @@ const UserManagement = () => {
                   />
                 </div>
               </div>
-              
-              {/* Board type - only for students */}
-              {formData.role === 'student' && (
-                <div className="space-y-2">
-                  <Label htmlFor="board_type">Board Type</Label>
-                  <select
-                    id="board_type"
-                    className="w-full border rounded px-3 py-2 bg-white"
-                    value={formData.board_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, board_type: e.target.value as 'day' | 'full' | 'weekly' }))}
-                    required
-                  >
-                    <option value="" disabled>
-                      Select Board Type
-                    </option>
-                    <option value="day">Day Board</option>
-                    <option value="full">Full Board</option>
-                    <option value="weekly">Weekly Board</option>
-                  </select>
-                </div>
-              )}
+
+              {/* Board type removed */}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value, board_type: value === 'student' ? prev.board_type : '' }))}>
+                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 export interface Student {
   id: string;
   name: string;
-  grade: string;
+  grade: string; // Keep as empty string if needed; no board_type
   status: 'present' | 'absent';
   check_in_time?: string;
   check_out_time?: string;
@@ -92,7 +92,7 @@ export const useVMSData = () => {
         getAttendanceMap()
       ]);
 
-      // Students
+      // Students (no longer any board_type)
       const studentsList: Student[] = studentRows.map(u => {
         const att = attendanceMap[u.id];
         return {

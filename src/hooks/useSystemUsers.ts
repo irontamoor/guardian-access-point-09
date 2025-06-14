@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -7,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 export const parseStudent = (user: Database["public"]["Tables"]["system_users"]["Row"]) => ({
   id: user.id,
   name: `${user.first_name} ${user.last_name}`,
-  grade: user.board_type ? `Board: ${user.board_type}` : "",
+  grade: "",  // Placeholder if UI expects it, otherwise you can remove wherever used
   status: "absent" as "absent" | "present",
 });
 

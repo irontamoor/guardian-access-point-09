@@ -117,7 +117,6 @@ export type Database = {
       }
       system_users: {
         Row: {
-          board_type: Database["public"]["Enums"]["board_type"] | null
           created_at: string
           email: string | null
           employee_id: string | null
@@ -131,7 +130,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          board_type?: Database["public"]["Enums"]["board_type"] | null
           created_at?: string
           email?: string | null
           employee_id?: string | null
@@ -145,7 +143,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          board_type?: Database["public"]["Enums"]["board_type"] | null
           created_at?: string
           email?: string | null
           employee_id?: string | null
