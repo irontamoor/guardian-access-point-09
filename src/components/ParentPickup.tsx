@@ -28,10 +28,11 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
   };
 
   const handleRequestPickup = () => {
-    if (!pickupData.parentName || !pickupData.studentName || !pickupData.studentId || !pickupData.carRegistration) {
+    // "Car Registration" is now optional, so do not require it here
+    if (!pickupData.parentName || !pickupData.studentName || !pickupData.studentId) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields including car registration",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
@@ -42,7 +43,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       description: `${pickupData.studentName} will be notified. Please wait in the designated area.`,
       variant: "default"
     });
-    
+
     // Reset form
     setPickupData({
       parentName: '',
@@ -55,10 +56,11 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
   };
 
   const handleDropOff = () => {
-    if (!pickupData.studentName || !pickupData.studentId || !pickupData.carRegistration) {
+    // "Car Registration" is now optional, so do not require it here
+    if (!pickupData.studentName || !pickupData.studentId) {
       toast({
         title: "Error",
-        description: "Please provide student information and car registration",
+        description: "Please provide student information",
         variant: "destructive"
       });
       return;
@@ -69,7 +71,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       description: `${pickupData.studentName} has been safely dropped off`,
       variant: "default"
     });
-    
+
     setPickupData({
       parentName: '',
       studentName: '',
@@ -143,7 +145,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="carRegistration">Car Registration *</Label>
+              <Label htmlFor="carRegistration">Car Registration (optional)</Label>
               <Input
                 id="carRegistration"
                 placeholder="Enter car registration number"
