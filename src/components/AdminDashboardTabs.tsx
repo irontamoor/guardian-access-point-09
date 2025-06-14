@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -7,6 +6,7 @@ import AttendanceManagement from './AttendanceManagement';
 import SystemSettings from './SystemSettings';
 import Dashboard from './Dashboard';
 import AdminActivityDashboard from './AdminActivityDashboard';
+import UserInfoBox from './UserInfoBox';
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -48,13 +48,17 @@ const AdminDashboardTabs = ({
     role?: string;
     id?: string;
   } | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
 
   useEffect(() => {
     const fetchAuthAndProfile = async () => {
+      setIsUserLoading(true);
       // Get current authenticated user
       const { data: userResult, error: userError } = await supabase.auth.getUser();
-      if (userError || !userResult?.user) return;
-
+      if (userError || !userResult?.user) {
+        setIsUserLoading(false);
+        return;
+      }
       const userId = userResult.user.id;
       const userEmail = userResult.user.email || null;
       setCurrentUserEmail(userEmail);
@@ -74,7 +78,6 @@ const AdminDashboardTabs = ({
       setUserRoles(dedupedRoles);
 
       // Fetch profile/user details (from system_users)
-      // Using user email to match system_users
       if (userEmail) {
         const { data: userDetails } = await supabase
           .from("system_users")
@@ -83,51 +86,29 @@ const AdminDashboardTabs = ({
           .maybeSingle();
         setCurrentUserDetails(userDetails || null);
       }
+      setIsUserLoading(false);
     };
     fetchAuthAndProfile();
   }, []);
 
-  // Only allow access if user explicitly has role "admin" or "reader" per DB (no email hardcoding)
+  // Only allow access if user explicitly has role "admin" or "reader"
   const isAdminOrReader =
     userRoles.includes("admin") || userRoles.includes("reader");
 
-  // User info bar (top right)
-  const UserInfo = () => {
-    if (!currentUserDetails && !currentUserEmail) return null;
-    return (
-      <div className="absolute top-2 right-4 z-20 flex items-center gap-5 bg-white/70 rounded-md px-4 py-2 shadow border border-blue-100">
-        <div>
-          <div className="font-medium text-gray-900">
-            {currentUserDetails
-              ? `${currentUserDetails.first_name || ""} ${currentUserDetails.last_name || ""}`.trim() ||
-                currentUserDetails.email
-              : currentUserEmail}
-          </div>
-          <div className="text-xs text-gray-600">
-            {currentUserDetails?.email || currentUserEmail}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-blue-600 font-semibold flex flex-wrap gap-x-2">
-            {userRoles.length
-              ? userRoles.map((r) => (
-                  <span
-                    key={r}
-                    className="inline-block bg-blue-50 border border-blue-200 rounded px-2 py-0.5 mr-1"
-                  >
-                    {r}
-                  </span>
-                ))
-              : <span className="text-gray-400">No roles assigned</span>}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Render user info at all times (DB-driven, not hardcoded)
+  const fullName =
+    currentUserDetails?.first_name || currentUserDetails?.last_name
+      ? `${currentUserDetails?.first_name || ""} ${currentUserDetails?.last_name || ""}`.trim()
+      : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative">
-      <UserInfo />
+      <UserInfoBox
+        name={fullName}
+        email={currentUserDetails?.email || currentUserEmail}
+        roles={userRoles}
+        isLoading={isUserLoading}
+      />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="bg-white border-b shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
