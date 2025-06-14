@@ -21,14 +21,29 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
     pickupType: '',
     notes: ''
   });
+  const [notesError, setNotesError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const isOtherPicked = pickupData.pickupType === "other";
 
   const handleInputChange = (field: string, value: string) => {
     setPickupData(prev => ({ ...prev, [field]: value }));
+    if (field === "notes" && value.trim() !== "") {
+      setNotesError(null);
+    }
+  };
+
+  const validateNotes = () => {
+    if (pickupData.pickupType === "other" && !pickupData.notes.trim()) {
+      setNotesError("Notes are required when 'Other' pickup type is selected.");
+      return false;
+    }
+    setNotesError(null);
+    return true;
   };
 
   const handleRequestPickup = () => {
-    // "Car Registration" is now optional, so do not require it here
+    // Car Registration is optional
     if (!pickupData.parentName || !pickupData.studentName || !pickupData.studentId) {
       toast({
         title: "Error",
@@ -37,6 +52,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       });
       return;
     }
+    if (!validateNotes()) return;
 
     toast({
       title: "Pickup Request Submitted!",
@@ -53,10 +69,11 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       pickupType: '',
       notes: ''
     });
+    setNotesError(null);
   };
 
   const handleDropOff = () => {
-    // "Car Registration" is now optional, so do not require it here
+    // Car Registration is optional
     if (!pickupData.studentName || !pickupData.studentId) {
       toast({
         title: "Error",
@@ -65,6 +82,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       });
       return;
     }
+    if (!validateNotes()) return;
 
     toast({
       title: "Drop-off Complete!",
@@ -80,6 +98,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       pickupType: '',
       notes: ''
     });
+    setNotesError(null);
   };
 
   return (
@@ -166,18 +185,26 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
                   <SelectItem value="medical">Medical Appointment</SelectItem>
                   <SelectItem value="emergency">Emergency Pickup</SelectItem>
                   <SelectItem value="dropoff">Drop-off Only</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Additional Notes</Label>
+              <Label htmlFor="notes">
+                Additional Notes
+                {isOtherPicked && <span className="text-red-600 ml-1">*</span>}
+              </Label>
               <Input
                 id="notes"
-                placeholder="Any special instructions or notes"
+                placeholder={isOtherPicked ? "Describe details for 'Other' pickup type" : "Any special instructions or notes"}
                 value={pickupData.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
+                className={isOtherPicked && notesError ? "border-red-500" : ""}
               />
+              {notesError && (
+                <div className="text-red-600 text-sm mt-1">{notesError}</div>
+              )}
             </div>
 
             <div className="flex space-x-3 pt-4">
@@ -231,3 +258,4 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
 };
 
 export default ParentPickup;
+
