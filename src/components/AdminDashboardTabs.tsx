@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -79,6 +78,20 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="bg-white border-b shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* DEBUG VIEW: Show user email and roles if admin */}
+            {userRoles.includes('admin') && (
+              <div className="my-2 px-3 py-2 rounded bg-yellow-50 text-yellow-700 text-xs flex gap-4">
+                <span>
+                  <strong>Logged-in as:</strong> {currentUserEmail}
+                </span>
+                <span>
+                  <strong>Roles:</strong> {userRoles.join(', ') || 'none'}
+                </span>
+                <span>
+                  <strong>Access:</strong> {isAdminOrReader ? "YES" : "NO"}
+                </span>
+              </div>
+            )}
             <TabsList className="grid w-full max-w-2xl grid-cols-6 h-14">
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <BarChart3 className="h-4 w-4" />
