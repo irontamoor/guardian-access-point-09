@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Shield, Lock, UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import { createHash } from 'crypto';
+import md5 from 'js-md5';
 
 interface AdminAuthProps {
   onAuthSuccess: (user: User) => void;
@@ -26,7 +25,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
 
   // Function to hash password with MD5
   const hashPasswordMD5 = (password: string): string => {
-    return createHash('md5').update(password).digest('hex');
+    return md5(password);
   };
 
   useEffect(() => {

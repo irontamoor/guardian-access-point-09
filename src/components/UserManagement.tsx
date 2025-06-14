@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { createHash } from 'crypto';
+import md5 from 'js-md5';
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -36,7 +35,7 @@ const UserManagement = () => {
 
   // Function to hash password with MD5
   const hashPasswordMD5 = (password: string): string => {
-    return createHash('md5').update(password).digest('hex');
+    return md5(password);
   };
 
   useEffect(() => {
