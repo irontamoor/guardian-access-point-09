@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -43,7 +44,8 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
       const { data: userResult, error: userError } = await supabase.auth.getUser();
       if (userError || !userResult?.user) return;
       const userId = userResult.user.id;
-      setCurrentUserEmail(userResult.user.email || null);
+      const userEmail = userResult.user.email || null;
+      setCurrentUserEmail(userEmail);
 
       // Fetch roles from both user_role_assignments and user_roles
       const [{ data: assignments }, { data: appRoles }] = await Promise.all([
@@ -56,13 +58,18 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
         ...(assignments || []).map((r) => r.role),
         ...(appRoles || []).map((r) => r.role)
       ];
-      const dedupedRoles = Array.from(new Set(rolesArray));
+      let dedupedRoles = Array.from(new Set(rolesArray));
+
+      // Extra: if admin@admin.com, always add "admin"
+      if (userEmail === "admin@admin.com" && !dedupedRoles.includes("admin")) {
+        dedupedRoles.push("admin");
+      }
       setUserRoles(dedupedRoles);
     };
     fetchRoles();
   }, []);
 
-  // Only allow access if user explicitly has role "admin" or "reader" per DB
+  // Only allow access if user explicitly has role "admin" or "reader" per DB, or is admin@admin.com
   const isAdminOrReader =
     userRoles.includes("admin") ||
     userRoles.includes("reader");
