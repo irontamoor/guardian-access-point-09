@@ -7,8 +7,26 @@ import { Label } from '@/components/ui/label';
 import { Shield, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Define a dummy Supabase-like User object type for local admin login
+const DUMMY_ADMIN_USER = {
+  id: 'local-admin',
+  aud: 'authenticated',
+  email: 'admin@admin.com',
+  role: 'admin',
+  created_at: '',
+  confirmed_at: '',
+  email_confirmed_at: '',
+  phone: null,
+  phone_confirmed_at: '',
+  user_metadata: {},
+  app_metadata: {},
+  identities: [],
+  last_sign_in_at: '',
+  // add any other fields if your app checks for them
+};
+
 interface AdminLoginProps {
-  onLogin: (adminData: { username: string; role: string }) => void;
+  onLogin: (adminData: any) => void;
 }
 
 const HARDCODED_ADMIN = {
@@ -37,7 +55,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Only check against hardcoded admin, allow login even if DB is down
+      // Client-side only: check hardcoded creds
       if (
         credentials.username === HARDCODED_ADMIN.username &&
         credentials.password === HARDCODED_ADMIN.password
@@ -47,7 +65,8 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
           description: "Successfully logged in to admin dashboard",
           variant: "default"
         });
-        onLogin({ username: credentials.username, role: 'admin' });
+        // Pass a dummy Supabase-like user object as expected by the parent
+        onLogin({ ...DUMMY_ADMIN_USER });
       } else {
         toast({
           title: "Login Failed",
@@ -138,4 +157,3 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 };
 
 export default AdminLogin;
-
