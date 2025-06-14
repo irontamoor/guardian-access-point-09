@@ -10,11 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Clock, Edit, MessageSquare, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type AttendanceStatus = Database['public']['Enums']['attendance_status'];
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface AttendanceRecord {
   id: string;
   user_id: string;
-  status: string;
+  status: AttendanceStatus;
   check_in_time?: string;
   check_out_time?: string;
   created_at: string;
@@ -24,14 +28,14 @@ interface AttendanceRecord {
     last_name: string;
     employee_id?: string;
     student_id?: string;
-    role: string;
+    role: UserRole;
   };
 }
 
 interface AttendanceEdit {
   id: string;
-  old_status?: string;
-  new_status: string;
+  old_status?: AttendanceStatus;
+  new_status: AttendanceStatus;
   edit_reason: string;
   edited_at: string;
 }
@@ -99,7 +103,7 @@ const AttendanceManagement = () => {
       if (!user) throw new Error('Not authenticated');
 
       const oldStatus = attendanceRecords.find(r => r.id === editingRecord.id)?.status;
-      const newStatus = editingRecord.status;
+      const newStatus = editingRecord.status as AttendanceStatus;
 
       // Update attendance record
       const { error: updateError } = await supabase
@@ -117,13 +121,13 @@ const AttendanceManagement = () => {
       // Log the edit
       const { error: logError } = await supabase
         .from('attendance_edits')
-        .insert([{
+        .insert({
           attendance_record_id: editingRecord.id,
           admin_user_id: user.id,
           old_status: oldStatus,
           new_status: newStatus,
           edit_reason: editReason
-        }]);
+        });
 
       if (logError) throw logError;
 
@@ -189,7 +193,7 @@ const AttendanceManagement = () => {
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={editingRecord.status}
-                  onValueChange={(value) => setEditingRecord(prev => prev ? ({ ...prev, status: value }) : null)}
+                  onValueChange={(value: AttendanceStatus) => setEditingRecord(prev => prev ? ({ ...prev, status: value }) : null)}
                 >
                   <SelectTrigger>
                     <SelectValue />

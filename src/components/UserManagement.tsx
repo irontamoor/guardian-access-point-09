@@ -6,9 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserPlus, Edit, Trash2, Users, Badge } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
+type UserStatus = Database['public']['Enums']['user_status'];
 
 interface SystemUser {
   id: string;
@@ -18,8 +22,8 @@ interface SystemUser {
   last_name: string;
   email?: string;
   phone?: string;
-  role: string;
-  status: string;
+  role: UserRole;
+  status: UserStatus;
   created_at: string;
 }
 
@@ -37,8 +41,8 @@ const UserManagement = () => {
     phone: '',
     employee_id: '',
     student_id: '',
-    role: 'student',
-    status: 'active'
+    role: 'student' as UserRole,
+    status: 'active' as UserStatus
   });
 
   useEffect(() => {
@@ -68,26 +72,22 @@ const UserManagement = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      const { data: userData, error } = await supabase
         .from('system_users')
-        .insert([newUser]);
+        .insert(newUser)
+        .select('id')
+        .single();
 
       if (error) throw error;
 
       // Create role assignment
-      const { data: userData } = await supabase
-        .from('system_users')
-        .select('id')
-        .eq('email', newUser.email)
-        .single();
-
       if (userData) {
         await supabase
           .from('user_role_assignments')
-          .insert([{
+          .insert({
             user_id: userData.id,
             role: newUser.role
-          }]);
+          });
       }
 
       toast({
@@ -103,8 +103,8 @@ const UserManagement = () => {
         phone: '',
         employee_id: '',
         student_id: '',
-        role: 'student',
-        status: 'active'
+        role: 'student' as UserRole,
+        status: 'active' as UserStatus
       });
       setShowAddForm(false);
       fetchUsers();
@@ -262,7 +262,7 @@ const UserManagement = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={newUser.role} onValueChange={(value) => setNewUser(prev => ({ ...prev, role: value }))}>
+                  <Select value={newUser.role} onValueChange={(value: UserRole) => setNewUser(prev => ({ ...prev, role: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -277,7 +277,7 @@ const UserManagement = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={newUser.status} onValueChange={(value) => setNewUser(prev => ({ ...prev, status: value }))}>
+                  <Select value={newUser.status} onValueChange={(value: UserStatus) => setNewUser(prev => ({ ...prev, status: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -354,7 +354,7 @@ const UserManagement = () => {
                   <TableCell>{user.employee_id || user.student_id || '-'}</TableCell>
                   <TableCell>
                     {editingUser?.id === user.id ? (
-                      <Select value={editingUser.role} onValueChange={(value) => setEditingUser(prev => prev ? ({ ...prev, role: value }) : null)}>
+                      <Select value={editingUser.role} onValueChange={(value: UserRole) => setEditingUser(prev => prev ? ({ ...prev, role: value }) : null)}>
                         <SelectTrigger className="w-24">
                           <SelectValue />
                         </SelectTrigger>
@@ -380,7 +380,7 @@ const UserManagement = () => {
                   </TableCell>
                   <TableCell>
                     {editingUser?.id === user.id ? (
-                      <Select value={editingUser.status} onValueChange={(value) => setEditingUser(prev => prev ? ({ ...prev, status: value }) : null)}>
+                      <Select value={editingUser.status} onValueChange={(value: UserStatus) => setEditingUser(prev => prev ? ({ ...prev, status: value }) : null)}>
                         <SelectTrigger className="w-24">
                           <SelectValue />
                         </SelectTrigger>
