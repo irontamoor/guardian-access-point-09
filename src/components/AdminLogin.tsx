@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,10 @@ interface AdminLoginProps {
   onLogin: (adminData: { username: string; role: string }) => void;
 }
 
-const DEMO_CREDENTIALS_KEY = "hideDemoCreds";
+const HARDCODED_ADMIN = {
+  username: 'admin@admin.com',
+  password: 'admin',
+};
 
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [credentials, setCredentials] = useState({
@@ -33,9 +37,10 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     setTimeout(() => {
+      // Only check against hardcoded admin, allow login even if DB is down
       if (
-        credentials.username === 'admin@admin.com' &&
-        credentials.password === 'admin'
+        credentials.username === HARDCODED_ADMIN.username &&
+        credentials.password === HARDCODED_ADMIN.password
       ) {
         toast({
           title: "Welcome!",
@@ -51,7 +56,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         });
       }
       setIsLoading(false);
-    }, 1000);
+    }, 700);
   };
 
   return (
@@ -133,3 +138,4 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 };
 
 export default AdminLogin;
+
