@@ -26,8 +26,7 @@ const UserManagement = () => {
     last_name: "",
     email: "",
     phone: "",
-    employee_id: "",
-    student_id: "",
+    id: "",
     role: "student" as UserRole,
     status: "active" as UserStatus,
     password: "",
@@ -70,7 +69,8 @@ const UserManagement = () => {
             phone: formData.phone || null,
             role: formData.role,
             status: formData.status,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            // id is primary key and can't be edited
           })
           .eq('id', editingUser.id);
 
@@ -86,6 +86,7 @@ const UserManagement = () => {
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
+            id: formData.id || undefined, // use provided id if any
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
@@ -98,7 +99,6 @@ const UserManagement = () => {
 
         if (userError) throw userError;
 
-        // If password is provided, create auth user with plain password
         if (formData.password) {
           const { error: authError } = await supabase.auth.signUp({
             email: formData.email,
@@ -113,7 +113,6 @@ const UserManagement = () => {
           });
 
           if (authError) {
-            // If auth creation fails, clean up the system user
             await supabase.from('system_users').delete().eq('id', newUser.id);
             throw authError;
           }
@@ -156,8 +155,7 @@ const UserManagement = () => {
       last_name: "",
       email: "",
       phone: "",
-      employee_id: "",
-      student_id: "",
+      id: "",
       role: "student",
       status: "active",
       password: ""
@@ -172,8 +170,7 @@ const UserManagement = () => {
       last_name: user.last_name,
       email: user.email || '',
       phone: user.phone || '',
-      employee_id: user.employee_id || '',
-      student_id: user.student_id || '',
+      id: user.id || '',
       role: user.role,
       status: user.status,
       password: ""
@@ -226,8 +223,7 @@ const UserManagement = () => {
                   last_name: "",
                   email: "",
                   phone: "",
-                  employee_id: "",
-                  student_id: "",
+                  id: "",
                   role: allRoles[0] as UserRole || "student",
                   status: "active",
                   password: "",
@@ -303,23 +299,15 @@ const UserManagement = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="employee_id">Employee ID</Label>
-                  <Input
-                    id="employee_id"
-                    value={formData.employee_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, employee_id: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="student_id">Student ID</Label>
-                  <Input
-                    id="student_id"
-                    value={formData.student_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, student_id: e.target.value }))}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="id">ID</Label>
+                <Input
+                  id="id"
+                  value={formData.id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
+                  placeholder="Enter ID (leave blank to auto-generate)"
+                  disabled={!!editingUser} // Prevent editing id on update
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -401,7 +389,7 @@ const UserManagement = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell className="capitalize">{user.role}</TableCell>
                     <TableCell className="capitalize">{user.status}</TableCell>
-                    <TableCell>{user.employee_id || user.student_id}</TableCell>
+                    <TableCell>{user.id}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
