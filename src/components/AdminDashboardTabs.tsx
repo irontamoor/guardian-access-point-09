@@ -18,18 +18,33 @@ const AdminOverviewTab = ({
   adminData,
 }: {
   adminData: { username?: string; admin_id?: string; role: string; email?: string; first_name?: string; last_name?: string };
-}) => (
-  <div className="space-y-8">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <Dashboard adminData={adminData} onBack={() => {}} onLogout={() => {}} />
-      </div>
-      <div className="space-y-6">
-        <AdminActivityDashboard />
+}) => {
+  // Ensure required fields for Dashboard: username (string), role (string)
+  const username =
+    typeof adminData.username === "string" && adminData.username.length > 0
+      ? adminData.username
+      : (adminData.admin_id || "");
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <Dashboard
+            adminData={{
+              username,
+              role: adminData.role,
+            }}
+            onBack={() => {}}
+            onLogout={() => {}}
+          />
+        </div>
+        <div className="space-y-6">
+          <AdminActivityDashboard />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AdminDashboardTabs = ({
   onBack,
