@@ -93,16 +93,13 @@ const UnifiedAdminDashboard = ({
   );
 };
 
-// --- LiveActivityDashboard (for dashboards tab) ---
+// --- LiveActivityDashboard (no placeholders, only real data) ---
 const LiveActivityDashboard = () => {
   const { students, staff } = useVMSData();
 
   // Calculate present students and present staff
   const presentStudents = students.filter(s => s.status === "present");
   const presentStaff = staff.filter(s => s.status === "present");
-
-  // Simulated visitor data placeholder
-  const presentVisitors: { id: string; name: string }[] = []; // Replace with actual logic when implemented
 
   // Simulated queue: reusing 'student' marked as present, treat as "pickup queue"
   // In a real app, queue logic would be more complex
@@ -130,7 +127,7 @@ const LiveActivityDashboard = () => {
                     <span className="ml-2 text-xs text-gray-400">ID: {stu.id}</span>
                   </span>
                   <span className="text-xs text-blue-600 font-semibold">
-                    {"Present"}
+                    Present
                   </span>
                 </li>
               ))}
@@ -154,30 +151,8 @@ const LiveActivityDashboard = () => {
                     <span className="ml-2 text-xs text-gray-400">ID: {staff.id}</span>
                   </span>
                   <span className="text-xs text-green-600 font-semibold">
-                    {"Present"}
+                    Present
                   </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      {/* Visitors Present */}
-      <div>
-        <div className="font-bold text-lg mb-2">Visitors Present</div>
-        <div className="bg-white rounded-lg shadow p-4 min-h-[120px]">
-          {/* Placeholder for future visitor implementation */}
-          {presentVisitors.length === 0 ? (
-            <div className="text-gray-500 text-sm text-center py-4">
-              Visitor presence not yet implemented.
-            </div>
-          ) : (
-            <ul className="divide-y">
-              {presentVisitors.map(visitor => (
-                <li key={visitor.id} className="py-2 flex justify-between">
-                  <span className="font-medium">{visitor.name}</span>
-                  <span className="text-xs text-purple-600 font-semibold">{"Present"}</span>
                 </li>
               ))}
             </ul>
@@ -189,7 +164,6 @@ const LiveActivityDashboard = () => {
       <div>
         <div className="font-bold text-lg mb-2">Pickup Queue</div>
         <div className="bg-white rounded-lg shadow p-4 min-h-[120px]">
-          {/* Simulate all present students as being in the queue */}
           {pickupQueue.length === 0 ? (
             <div className="text-gray-500 text-sm text-center py-4">No students in pickup queue.</div>
           ) : (

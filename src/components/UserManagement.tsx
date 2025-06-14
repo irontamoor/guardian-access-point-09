@@ -233,10 +233,12 @@ const UserManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                {allRoles.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </SelectItem>
+                {allRoles
+                  .filter(role => role !== "moderator")
+                  .map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -353,10 +355,12 @@ const UserManagement = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {loadingRoles && <div className="px-4 py-2">Loading...</div>}
-                        {allRoles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role.charAt(0).toUpperCase() + role.slice(1)}
-                          </SelectItem>
+                        {allRoles
+                          .filter(role => role !== "moderator")
+                          .map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role.charAt(0).toUpperCase() + role.slice(1)}
+                            </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
