@@ -323,6 +323,7 @@ const UserManagement = () => {
                       <SelectItem value="student">Student</SelectItem>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="visitor">Visitor</SelectItem>
+                      <SelectItem value="reader">Reader</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
