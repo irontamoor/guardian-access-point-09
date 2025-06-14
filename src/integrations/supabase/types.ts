@@ -117,12 +117,14 @@ export type Database = {
       }
       system_users: {
         Row: {
+          admin_id: string | null
           created_at: string
           email: string | null
           employee_id: string | null
           first_name: string
           id: string
           last_name: string
+          password: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           status: Database["public"]["Enums"]["user_status"]
@@ -130,12 +132,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_id?: string | null
           created_at?: string
           email?: string | null
           employee_id?: string | null
           first_name: string
           id?: string
           last_name: string
+          password?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: Database["public"]["Enums"]["user_status"]
@@ -143,12 +147,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_id?: string | null
           created_at?: string
           email?: string | null
           employee_id?: string | null
           first_name?: string
           id?: string
           last_name?: string
+          password?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: Database["public"]["Enums"]["user_status"]

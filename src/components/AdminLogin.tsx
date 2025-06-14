@@ -1,21 +1,12 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, User } from 'lucide-react';
+import { Shield, User, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Removed all hardcoded allowed IDs.
-
-const DUMMY_ADMIN_USER = {
-  id: 'admin-dummy',
-  aud: 'authenticated',
-  admin_id: '',
-  role: 'admin',
-  created_at: '',
-  // other fields can be added as required
-};
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminLoginProps {
   onLogin: (adminData: any) => void;
@@ -23,14 +14,15 @@ interface AdminLoginProps {
 
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [adminId, setAdminId] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleLogin = async () => {
-    if (!adminId) {
+    if (!adminId || !password) {
       toast({
         title: "Error",
-        description: "Please enter your Admin ID",
+        description: "Please enter both Admin ID and password.",
         variant: "destructive"
       });
       return;
@@ -38,15 +30,55 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      // No allowed IDs: login always fails.
+    try {
+      const { data: adminUser, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('admin_id', adminId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!adminUser || adminUser.password !== password) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid Admin ID or password",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Successful login
       toast({
-        title: "Login Failed",
-        description: "Invalid Admin ID",
+        title: "Login Successful",
+        description: `Welcome, ${adminUser.first_name}!`,
+        variant: "default"
+      });
+
+      // Simulate successful authentication -- you can enrich adminData as desired.
+      setTimeout(() => {
+        onLogin({
+          id: adminUser.id,
+          admin_id: adminUser.admin_id,
+          email: adminUser.email,
+          role: 'admin',
+          first_name: adminUser.first_name,
+        });
+        setIsLoading(false);
+      }, 500);
+
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: "An error occurred during login. " + (err.message || ""),
         variant: "destructive"
       });
       setIsLoading(false);
-    }, 700);
+    }
   };
 
   return (
@@ -59,7 +91,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Admin Access</CardTitle>
-          <CardDescription>Please enter your Admin ID to access the dashboard</CardDescription>
+          <CardDescription>Please enter your Admin ID and password to access the dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -73,6 +105,20 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
                 onChange={(e) => setAdminId(e.target.value)}
                 className="pl-10"
                 autoFocus
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10"
               />
             </div>
           </div>
@@ -102,3 +148,4 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 };
 
 export default AdminLogin;
+
