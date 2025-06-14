@@ -9,14 +9,15 @@ interface DashboardMetricsProps {
   totalStaff: number;
 }
 
+// Make cards equal width/flex on desktop
 export const DashboardMetrics = ({
   presentStudents,
   totalStudents,
   presentStaff,
   totalStaff,
 }: DashboardMetricsProps) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <Card className="border-l-4 border-l-blue-500">
+  <div className="flex flex-col lg:flex-row gap-6">
+    <Card className="flex-1 border-l-4 border-l-blue-500 min-w-[220px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-gray-600">
@@ -33,7 +34,7 @@ export const DashboardMetrics = ({
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-green-500">
+    <Card className="flex-1 border-l-4 border-l-green-500 min-w-[220px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-gray-600">
@@ -52,3 +53,4 @@ export const DashboardMetrics = ({
     </Card>
   </div>
 );
+
