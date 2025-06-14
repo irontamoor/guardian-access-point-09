@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -138,10 +139,13 @@ export const useVMSData = () => {
   // --- ADD & UPDATE METHODS ---
 
   // Add student (system_users)
-  const addStudent = async (studentData: Omit<Student, 'id'>) => {
-    const first_name = studentData.name.split(" ")[0] || studentData.name;
-    const last_name = studentData.name.split(" ").slice(1).join(" ") || ".";
+  // studentData now requires id (no default in db)
+  const addStudent = async (studentData: Omit<Student, 'status' | 'check_in_time' | 'check_out_time'>) => {
+    const { id, name, grade } = studentData;
+    const first_name = name.split(" ")[0] || name;
+    const last_name = name.split(" ").slice(1).join(" ") || ".";
     const { error } = await supabase.from('system_users').insert({
+      id, // always required now
       first_name,
       last_name,
       role: 'student'
@@ -151,10 +155,12 @@ export const useVMSData = () => {
   };
 
   // Add staff (system_users)
-  const addStaff = async (staffData: Omit<Staff, 'id'>) => {
-    const first_name = staffData.name.split(" ")[0] || staffData.name;
-    const last_name = staffData.name.split(" ").slice(1).join(" ") || ".";
+  const addStaff = async (staffData: Omit<Staff, 'status' | 'check_in_time' | 'check_out_time'>) => {
+    const { id, name, department } = staffData;
+    const first_name = name.split(" ")[0] || name;
+    const last_name = name.split(" ").slice(1).join(" ") || ".";
     const { error } = await supabase.from('system_users').insert({
+      id, // always required now
       first_name,
       last_name,
       role: 'staff'
