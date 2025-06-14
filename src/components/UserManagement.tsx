@@ -208,11 +208,12 @@ const UserManagement = () => {
     }
   };
 
-  // Filter users by selected role, but filter out those with role 'user'
+  // Filter users by selected role
+  // "user" is no longer a valid role, so no need to filter out
   const filteredUsers =
     selectedRole === "all"
-      ? users.filter(u => u.role !== "user")
-      : users.filter((u) => u.role === selectedRole && u.role !== "user");
+      ? users
+      : users.filter((u) => u.role === selectedRole);
 
   return (
     <div className="space-y-6">
