@@ -1,5 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 // Types for our data structures
 export interface Student {
@@ -55,177 +57,275 @@ export interface ActivityRecord {
   status: 'success' | 'warning' | 'info';
 }
 
-// Mock data - in real implementation, this would connect to Supabase
-const mockStudents: Student[] = [
-  { id: 'STU001', name: 'Emma Johnson', grade: 'Grade 5', status: 'present', check_in_time: '8:15 AM' },
-  { id: 'STU002', name: 'Michael Chen', grade: 'Grade 7', status: 'present', check_in_time: '8:22 AM' },
-  { id: 'STU003', name: 'Sofia Rodriguez', grade: 'Grade 3', status: 'present', check_in_time: '8:45 AM' },
-];
+// Map table to interface transformation helpers:
+const parseStudent = (user: Database["public"]["Tables"]["system_users"]["Row"]): Student => ({
+  id: user.id,
+  name: `${user.first_name} ${user.last_name}`,
+  grade: (user.board_type ? `Board: ${user.board_type}` : ""),
+  status: "absent", // This will be updated based on attendance_records
+});
+const parseStaff = (user: Database["public"]["Tables"]["system_users"]["Row"]): Staff => ({
+  id: user.id,
+  name: `${user.first_name} ${user.last_name}`,
+  department: user.employee_id ? `ID: ${user.employee_id}` : "",
+  status: "absent", // This will be updated based on attendance_records
+});
 
-const mockStaff: Staff[] = [
-  { id: 'EMP001', name: 'Sarah Miller', department: 'Elementary', status: 'present', check_in_time: '7:45 AM' },
-  { id: 'EMP002', name: 'David Thompson', department: 'Administration', status: 'present', check_in_time: '8:00 AM' },
-  { id: 'EMP003', name: 'Lisa Garcia', department: 'Middle School', status: 'present', check_in_time: '7:55 AM' },
-];
+// Query helpers
+async function getUsersByRole(role: string): Promise<Database["public"]["Tables"]["system_users"]["Row"][]> {
+  const { data, error } = await supabase
+    .from("system_users")
+    .select("*")
+    .eq("role", role)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
 
-const mockVisitors: Visitor[] = [
-  { 
-    id: 'VIS001', 
-    name: 'John Anderson', 
-    company: 'ABC Corp', 
-    phone: '555-0123',
-    host_name: 'Dr. Smith',
-    purpose: 'Meeting',
-    badge_id: 'VIS1234',
-    status: 'active',
-    check_in_time: '10:30 AM'
-  },
-  {
-    id: 'VIS002',
-    name: 'Mary Johnson',
-    company: 'Tech Solutions',
-    phone: '555-0124',
-    host_name: 'Ms. Brown',
-    purpose: 'Interview',
-    badge_id: 'VIS1235',
-    status: 'active',
-    check_in_time: '11:15 AM'
-  }
-];
+async function getAttendanceMap(): Promise<Record<string, { status: string; check_in_time?: string; check_out_time?: string; }>> {
+  // Query latest attendance for each user for today
+  const { data, error } = await supabase
+    .from("attendance_records")
+    .select("user_id, status, check_in_time, check_out_time")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  // Return a map of user_id -> status/check in/out time
+  const map: Record<string, { status: string; check_in_time?: string; check_out_time?: string; }> = {};
+  (data || []).forEach((row: any) => {
+    // Only save the first seen record for each user (most recent due to order)
+    if (!map[row.user_id]) {
+      map[row.user_id] = {
+        status: row.status === "in" ? "present" : "absent",
+        check_in_time: row.check_in_time ?? undefined,
+        check_out_time: row.check_out_time ?? undefined,
+      };
+    }
+  });
+  return map;
+}
 
-const mockPickups: ParentPickup[] = [
-  {
-    id: 'PU001',
-    parent_name: 'Jennifer Wilson',
-    student_name: 'Tommy Wilson',
-    student_id: 'STU123',
-    car_registration: 'ABC-123',
-    pickup_type: 'pickup',
-    status: 'pending',
-    request_time: '3:20 PM'
-  },
-  {
-    id: 'PU002',
-    parent_name: 'Robert Chen',
-    student_name: 'Michael Chen',
-    student_id: 'STU002',
-    car_registration: 'XYZ-789',
-    pickup_type: 'pickup',
-    status: 'pending',
-    request_time: '3:25 PM'
-  }
-];
-
+// MAIN HOOK
 export const useVMSData = () => {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
-  const [staff, setStaff] = useState<Staff[]>(mockStaff);
-  const [visitors, setVisitors] = useState<Visitor[]>(mockVisitors);
-  const [pickups, setPickups] = useState<ParentPickup[]>(mockPickups);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [pickups, setPickups] = useState<ParentPickup[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Generate recent activity from all data
+  // Load students & staff from backend, with attendance status
+  const loadPeople = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Get data
+      const [studentRows, staffRows, attendanceMap] = await Promise.all([
+        getUsersByRole("student"),
+        getUsersByRole("staff"),
+        getAttendanceMap()
+      ]);
+      // Students
+      const studentsList: Student[] = studentRows.map(u => {
+        const att = attendanceMap[u.id] ?? {};
+        return {
+          ...parseStudent(u),
+          status: att.status ?? "absent",
+          check_in_time: att.check_in_time,
+          check_out_time: att.check_out_time,
+        };
+      });
+      setStudents(studentsList);
+
+      // Staff
+      const staffList: Staff[] = staffRows.map(u => {
+        const att = attendanceMap[u.id] ?? {};
+        return {
+          ...parseStaff(u),
+          status: att.status ?? "absent",
+          check_in_time: att.check_in_time,
+          check_out_time: att.check_out_time,
+        };
+      });
+      setStaff(staffList);
+    } catch (e: any) {
+      setError("Failed to load people: " + e.message);
+      setStudents([]);
+      setStaff([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Visitors (direct mapping)
+  const loadVisitors = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('visitors')
+        .select("*")
+        .order('check_in_time', { ascending: false });
+      if (error) throw error;
+      setVisitors((data ?? []) as Visitor[]);
+    } catch (e: any) {
+      setError("Failed to load visitors: " + e.message);
+      setVisitors([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Pickups (direct mapping)
+  const loadPickups = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('parent_pickups')
+        .select("*")
+        .order('request_time', { ascending: false });
+      if (error) throw error;
+      setPickups((data ?? []) as ParentPickup[]);
+    } catch (e: any) {
+      setError("Failed to load pickups: " + e.message);
+      setPickups([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load all people/records on mount
   useEffect(() => {
-    const activity: ActivityRecord[] = [
-      ...students.filter(s => s.status === 'present').map(s => ({
-        id: s.id + '_activity',
-        type: 'student' as const,
-        name: s.name,
-        action: 'Signed In',
-        time: s.check_in_time || '',
-        status: 'success' as const
-      })),
-      ...staff.filter(s => s.status === 'present').map(s => ({
-        id: s.id + '_activity',
-        type: 'staff' as const,
-        name: s.name,
-        action: 'Signed In',
-        time: s.check_in_time || '',
-        status: 'success' as const
-      })),
-      ...visitors.filter(v => v.status === 'active').map(v => ({
-        id: v.id + '_activity',
-        type: 'visitor' as const,
-        name: v.name,
-        action: 'Registered',
-        time: v.check_in_time,
-        status: 'info' as const
-      })),
-      ...pickups.filter(p => p.status === 'pending').map(p => ({
-        id: p.id + '_activity',
-        type: 'parent' as const,
-        name: p.parent_name,
-        action: 'Pickup Request',
-        time: p.request_time,
-        status: 'warning' as const
-      }))
-    ].slice(0, 10); // Show only latest 10 activities
+    loadPeople();
+    loadVisitors();
+    loadPickups();
+  }, [loadPeople, loadVisitors, loadPickups]);
 
-    setRecentActivity(activity);
+  // Generate recent activity
+  useEffect(() => {
+    function buildActivity(): ActivityRecord[] {
+      const activity: ActivityRecord[] = [
+        ...students.filter(s => s.status === 'present').map(s => ({
+          id: s.id + '_activity',
+          type: 'student' as const,
+          name: s.name,
+          action: 'Signed In',
+          time: s.check_in_time || '',
+          status: 'success' as const
+        })),
+        ...staff.filter(s => s.status === 'present').map(s => ({
+          id: s.id + '_activity',
+          type: 'staff' as const,
+          name: s.name,
+          action: 'Signed In',
+          time: s.check_in_time || '',
+          status: 'success' as const
+        })),
+        ...visitors.filter(v => v.status === 'active').map(v => ({
+          id: v.id + '_activity',
+          type: 'visitor' as const,
+          name: v.name,
+          action: 'Registered',
+          time: v.check_in_time,
+          status: 'info' as const
+        })),
+        ...pickups.filter(p => p.status === 'pending').map(p => ({
+          id: p.id + '_activity',
+          type: 'parent' as const,
+          name: p.parent_name,
+          action: 'Pickup Request',
+          time: p.request_time,
+          status: 'warning' as const
+        }))
+      ];
+      return activity.slice(0, 10);
+    }
+    setRecentActivity(buildActivity());
   }, [students, staff, visitors, pickups]);
 
-  const addStudent = (studentData: Omit<Student, 'id'>) => {
-    const newStudent: Student = {
-      ...studentData,
-      id: 'STU' + Date.now()
-    };
-    setStudents(prev => [...prev, newStudent]);
+  // --- ADD & UPDATE METHODS ---
+
+  // Add student (system_users)
+  const addStudent = async (studentData: Omit<Student, 'id'>) => {
+    // Map Student type to system_users insert
+    const first_name = studentData.name.split(" ")[0] || studentData.name;
+    const last_name = studentData.name.split(" ").slice(1).join(" ") || ".";
+    const { error } = await supabase.from('system_users').insert({
+      first_name,
+      last_name,
+      role: 'student'
+    });
+    if (error) throw error;
+    loadPeople();
   };
 
-  const addStaff = (staffData: Omit<Staff, 'id'>) => {
-    const newStaff: Staff = {
-      ...staffData,
-      id: 'EMP' + Date.now()
-    };
-    setStaff(prev => [...prev, newStaff]);
+  // Add staff (system_users)
+  const addStaff = async (staffData: Omit<Staff, 'id'>) => {
+    const first_name = staffData.name.split(" ")[0] || staffData.name;
+    const last_name = staffData.name.split(" ").slice(1).join(" ") || ".";
+    const { error } = await supabase.from('system_users').insert({
+      first_name,
+      last_name,
+      role: 'staff'
+    });
+    if (error) throw error;
+    loadPeople();
   };
 
-  const addVisitor = (visitorData: Omit<Visitor, 'id' | 'badge_id'>) => {
-    const newVisitor: Visitor = {
+  // Add visitor (visitors)
+  const addVisitor = async (visitorData: Omit<Visitor, 'id' | 'badge_id'>) => {
+    // badge_id: auto-generated with random 4 digits
+    const badge_id = "VIS" + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const { error } = await supabase.from("visitors").insert({
       ...visitorData,
-      id: 'VIS' + Date.now(),
-      badge_id: 'VIS' + Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-    };
-    setVisitors(prev => [...prev, newVisitor]);
+      badge_id,
+      status: "active",
+      check_in_time: new Date().toISOString()
+    });
+    if (error) throw error;
+    loadVisitors();
   };
 
-  const addPickup = (pickupData: Omit<ParentPickup, 'id'>) => {
-    const newPickup: ParentPickup = {
+  // Add pickup (parent_pickups)
+  const addPickup = async (pickupData: Omit<ParentPickup, 'id'>) => {
+    const { error } = await supabase.from("parent_pickups").insert({
       ...pickupData,
-      id: 'PU' + Date.now()
-    };
-    setPickups(prev => [...prev, newPickup]);
+      status: "pending",
+      request_time: new Date().toISOString()
+    });
+    if (error) throw error;
+    loadPickups();
   };
 
-  const updateStudentStatus = (id: string, status: 'present' | 'absent', time?: string) => {
-    setStudents(prev => prev.map(student => 
-      student.id === id 
-        ? { 
-            ...student, 
-            status, 
-            [status === 'present' ? 'check_in_time' : 'check_out_time']: time 
-          }
-        : student
-    ));
+  // Update student attendance
+  const updateStudentStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
+    // Insert a new attendance_records row
+    await supabase.from("attendance_records").insert({
+      user_id: userId,
+      status: status === "present" ? "in" : "out",
+      ...(status === "present" ? { check_in_time: time || new Date().toISOString() } : { check_out_time: time || new Date().toISOString() })
+    });
+    loadPeople();
   };
 
-  const updateStaffStatus = (id: string, status: 'present' | 'absent', time?: string) => {
-    setStaff(prev => prev.map(staffMember => 
-      staffMember.id === id 
-        ? { 
-            ...staffMember, 
-            status, 
-            [status === 'present' ? 'check_in_time' : 'check_out_time']: time 
-          }
-        : staffMember
-    ));
+  // Update staff attendance
+  const updateStaffStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
+    await supabase.from("attendance_records").insert({
+      user_id: userId,
+      status: status === "present" ? "in" : "out",
+      ...(status === "present" ? { check_in_time: time || new Date().toISOString() } : { check_out_time: time || new Date().toISOString() })
+    });
+    loadPeople();
   };
 
-  const updatePickupStatus = (id: string, status: ParentPickup['status'], completionTime?: string) => {
-    setPickups(prev => prev.map(pickup => 
-      pickup.id === id 
-        ? { ...pickup, status, completion_time: completionTime }
-        : pickup
-    ));
+  // Update pickup status
+  const updatePickupStatus = async (pickupId: string, status: ParentPickup['status'], completionTime?: string) => {
+    await supabase
+      .from("parent_pickups")
+      .update({ status, completion_time: completionTime || new Date().toISOString() })
+      .eq('id', pickupId);
+    loadPickups();
   };
 
   return {
@@ -234,12 +334,16 @@ export const useVMSData = () => {
     visitors,
     pickups,
     recentActivity,
+    loading,
+    error,
     addStudent,
     addStaff,
     addVisitor,
     addPickup,
     updateStudentStatus,
     updateStaffStatus,
-    updatePickupStatus
+    updatePickupStatus,
+    reload: () => { loadPeople(); loadVisitors(); loadPickups(); }
   };
 };
+
