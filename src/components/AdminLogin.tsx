@@ -3,49 +3,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User } from 'lucide-react';
+import { Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Define a dummy Supabase-like User object type for local admin login
+// Use a fixed list of allowed admin IDs for demonstration
+const ALLOWED_ADMIN_IDS = ['admin123', 'masteradmin', 'schooladmin'];
+
 const DUMMY_ADMIN_USER = {
-  id: 'local-admin',
+  id: 'admin-dummy',
   aud: 'authenticated',
-  email: 'admin@admin.com',
+  admin_id: '',
   role: 'admin',
   created_at: '',
-  confirmed_at: '',
-  email_confirmed_at: '',
-  phone: null,
-  phone_confirmed_at: '',
-  user_metadata: {},
-  app_metadata: {},
-  identities: [],
-  last_sign_in_at: '',
-  // add any other fields if your app checks for them
+  // other fields can be added as required
 };
 
 interface AdminLoginProps {
   onLogin: (adminData: any) => void;
 }
 
-const HARDCODED_ADMIN = {
-  username: 'admin@admin.com',
-  password: 'admin',
-};
-
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  });
+  const [adminId, setAdminId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleLogin = async () => {
-    if (!credentials.username || !credentials.password) {
+    if (!adminId) {
       toast({
         title: "Error",
-        description: "Please enter both username and password",
+        description: "Please enter your Admin ID",
         variant: "destructive"
       });
       return;
@@ -54,22 +40,18 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Client-side only: check hardcoded creds
-      if (
-        credentials.username === HARDCODED_ADMIN.username &&
-        credentials.password === HARDCODED_ADMIN.password
-      ) {
+      // Only allow login if adminId matches allowed list
+      if (ALLOWED_ADMIN_IDS.includes(adminId.trim().toLowerCase())) {
         toast({
           title: "Welcome!",
-          description: "Successfully logged in to admin dashboard",
+          description: `Admin ${adminId} logged in`,
           variant: "default"
         });
-        // Pass a dummy Supabase-like user object as expected by the parent
-        onLogin({ ...DUMMY_ADMIN_USER });
+        onLogin({ ...DUMMY_ADMIN_USER, admin_id: adminId, email: `${adminId}@admin.local` });
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid username or password",
+          description: "Invalid Admin ID",
           variant: "destructive"
         });
       }
@@ -87,34 +69,20 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Admin Access</CardTitle>
-          <CardDescription>Please sign in to access the admin dashboard</CardDescription>
+          <CardDescription>Please enter your Admin ID to access the dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username (email)</Label>
+            <Label htmlFor="adminId">Admin ID</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                id="username"
-                placeholder="Enter admin email"
-                value={credentials.username}
-                onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                id="adminId"
+                placeholder="Enter Admin ID"
+                value={adminId}
+                onChange={(e) => setAdminId(e.target.value)}
                 className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter admin password"
-                value={credentials.password}
-                onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                className="pl-10"
+                autoFocus
               />
             </div>
           </div>
