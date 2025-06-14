@@ -36,21 +36,6 @@ type AttendanceStatusMap = Record<
   { status: 'present' | 'absent'; check_in_time?: string; check_out_time?: string }
 >;
 
-// Map table to interface transformation helpers:
-const parseStudent = (user: Database["public"]["Tables"]["system_users"]["Row"]): Student => ({
-  id: user.id,
-  name: `${user.first_name} ${user.last_name}`,
-  grade: user.board_type ? `Board: ${user.board_type}` : "",
-  status: "absent", // This will be updated based on attendance_records
-});
-
-const parseStaff = (user: Database["public"]["Tables"]["system_users"]["Row"]): Staff => ({
-  id: user.id,
-  name: `${user.first_name} ${user.last_name}`,
-  department: user.employee_id ? `ID: ${user.employee_id}` : "",
-  status: "absent", // This will be updated based on attendance_records
-});
-
 // Query helpers
 async function getUsersByRole(role: "student" | "staff"): Promise<Database["public"]["Tables"]["system_users"]["Row"][]> {
   const { data, error } = await supabase
