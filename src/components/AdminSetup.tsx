@@ -10,9 +10,11 @@ const AdminSetup = () => {
   const [isSetup, setIsSetup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const handleSetup = async () => {
     setIsLoading(true);
+    setLastError(null);
     try {
       const result = await createAdminAuth();
       if (result.success) {
@@ -23,6 +25,7 @@ const AdminSetup = () => {
           variant: "default"
         });
       } else {
+        setLastError(result.error || "Failed to setup admin user");
         toast({
           title: "Setup Error",
           description: result.error || "Failed to setup admin user",
@@ -30,6 +33,7 @@ const AdminSetup = () => {
         });
       }
     } catch (error: any) {
+      setLastError(error.message || "Failed to setup admin user");
       toast({
         title: "Setup Error",
         description: error.message || "Failed to setup admin user",
@@ -80,10 +84,11 @@ const AdminSetup = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button 
+        <Button
           onClick={handleSetup}
           disabled={isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700"
+          data-testid="admin-setup-btn"
         >
           {isLoading ? (
             <div className="flex items-center space-x-2">
@@ -97,6 +102,11 @@ const AdminSetup = () => {
             </>
           )}
         </Button>
+        {lastError && (
+          <div className="mt-2 text-sm text-red-600 text-center">
+            {lastError}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

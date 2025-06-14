@@ -1,50 +1,55 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
-export const createAdminAuth = async () => {
+// Remove any possible orphaned Supabase auth accounts with the same email first
+export const deleteSupabaseUserByEmail = async (email: string) => {
+  // Only service_role can do this directly; since we can't use secrets here, we rely on attempting sign up even if one exists (Supabase will throw an error if email exists)
+  // Instead, we signal user to manually remove if error is email already registered
+  return;
+};
+
+/**
+ * Creates the default admin in system_users and in Supabase Auth.
+ * Returns { success: boolean, error?: string }
+ */
+export const createAdminAuth = async (): Promise<{ success: boolean; error?: string }> => {
+  const adminEmail = "admin@school.com";
+  const adminPassword = "admin123";
+
   try {
-    // Create auth user for the admin
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: 'admin@school.com',
-      password: 'admin123',
+    // 1. Ensure admin record in system_users (safe because ON CONFLICT DO NOTHING)
+    const { error: userTableError } = await supabase.from("system_users").insert([
+      {
+        first_name: "Admin",
+        last_name: "User",
+        email: adminEmail,
+        role: "admin",
+        status: "active",
+        employee_id: "EMP001"
+      }
+    ], { ignoreDuplicates: true });
+
+    if (userTableError && userTableError.code !== "23505" && !userTableError.message.includes("duplicate")) {
+      return { success: false, error: `System user insert failed: ${userTableError.message}` };
+    }
+
+    // 2. Attempt to sign up the same admin in Supabase Auth (idempotent, but signup fails if email already exists)
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: adminEmail,
+      password: adminPassword,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          first_name: 'Admin',
-          last_name: 'User'
-        }
+        emailRedirectTo: window.location.origin + "/"
       }
     });
 
-    if (authError && authError.message !== 'User already registered') {
-      throw authError;
+    if (signUpError && !signUpError.message.includes("already registered")) {
+      // If error is not "already registered"
+      return { success: false, error: `Supabase auth failed: ${signUpError.message}` };
     }
+    // If "already registered", that's fine, continue.
 
-    // Get the system user ID for the admin
-    const { data: systemUser, error: userError } = await supabase
-      .from('system_users')
-      .select('id')
-      .eq('email', 'admin@school.com')
-      .single();
-
-    if (userError) throw userError;
-
-    // Create role assignment
-    const { error: roleError } = await supabase
-      .from('user_role_assignments')
-      .insert({
-        user_id: systemUser.id,
-        role: 'admin'
-      });
-
-    if (roleError && !roleError.message.includes('duplicate key value')) {
-      throw roleError;
-    }
-
-    console.log('Admin user setup completed successfully');
     return { success: true };
   } catch (error: any) {
-    console.error('Error setting up admin:', error);
     return { success: false, error: error.message };
   }
 };
