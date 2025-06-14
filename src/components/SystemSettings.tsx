@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,6 @@ const SystemSettings = () => {
   });
   const [schoolSettings, setSchoolSettings] = useState({
     school_name: '',
-    max_visitors_per_day: '',
     auto_signout_hours: ''
   });
   const { toast } = useToast();
@@ -67,12 +65,6 @@ const SystemSettings = () => {
               school_name: typeof setting.setting_value === 'string' ? 
                 setting.setting_value.replace(/"/g, '') : 
                 setting.setting_value
-            }));
-            break;
-          case 'max_visitors_per_day':
-            setSchoolSettings(prev => ({
-              ...prev,
-              max_visitors_per_day: setting.setting_value?.toString() || ''
             }));
             break;
           case 'auto_signout_hours':
@@ -140,7 +132,6 @@ const SystemSettings = () => {
     
     const updates = [
       updateSetting('school_name', schoolSettings.school_name),
-      updateSetting('max_visitors_per_day', parseInt(schoolSettings.max_visitors_per_day) || 100),
       updateSetting('auto_signout_hours', parseInt(schoolSettings.auto_signout_hours) || 8)
     ];
 
@@ -287,18 +278,6 @@ const SystemSettings = () => {
                 onChange={(e) => setSchoolSettings(prev => ({ ...prev, school_name: e.target.value }))}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="max_visitors">Max Visitors Per Day</Label>
-              <Input
-                id="max_visitors"
-                type="number"
-                placeholder="100"
-                value={schoolSettings.max_visitors_per_day}
-                onChange={(e) => setSchoolSettings(prev => ({ ...prev, max_visitors_per_day: e.target.value }))}
-              />
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="auto_signout">Auto Sign-out Hours</Label>
               <Input
@@ -312,7 +291,6 @@ const SystemSettings = () => {
                 Automatically sign out users after this many hours
               </p>
             </div>
-
             <div className="flex justify-end pt-4">
               <Button onClick={handleSaveSchoolSettings} disabled={isLoading} className="bg-green-600 hover:bg-green-700">
                 <Save className="h-4 w-4 mr-2" />
