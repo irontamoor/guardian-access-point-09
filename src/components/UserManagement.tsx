@@ -208,9 +208,11 @@ const UserManagement = () => {
     }
   };
 
-  // Filter users by selected role
+  // Filter users by selected role, but filter out those with role 'user'
   const filteredUsers =
-    selectedRole === "all" ? users : users.filter((u) => u.role === selectedRole);
+    selectedRole === "all"
+      ? users.filter(u => u.role !== "user")
+      : users.filter((u) => u.role === selectedRole && u.role !== "user");
 
   return (
     <div className="space-y-6">
@@ -234,7 +236,7 @@ const UserManagement = () => {
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
                 {allRoles
-                  .filter(role => role !== "moderator")
+                  .filter(role => role !== "moderator" && role !== "user")
                   .map((role) => (
                     <SelectItem key={role} value={role}>
                       {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -356,7 +358,7 @@ const UserManagement = () => {
                       <SelectContent>
                         {loadingRoles && <div className="px-4 py-2">Loading...</div>}
                         {allRoles
-                          .filter(role => role !== "moderator")
+                          .filter(role => role !== "moderator" && role !== "user")
                           .map((role) => (
                             <SelectItem key={role} value={role}>
                               {role.charAt(0).toUpperCase() + role.slice(1)}

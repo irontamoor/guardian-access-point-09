@@ -14,8 +14,8 @@ export function useEnumValues(enumName: "app_role") {
     setLoading(true);
     // Only support 'app_role' for now; expand logic if more enums needed.
     if (enumName === "app_role") {
-      // Filter out 'moderator'
-      setValues(Constants.public.Enums.app_role.filter(role => role !== "moderator"));
+      // Filter out 'moderator' and 'user'
+      setValues(Constants.public.Enums.app_role.filter(role => role !== "moderator" && role !== "user"));
     } else {
       setValues([]);
     }
