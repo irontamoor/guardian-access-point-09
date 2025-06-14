@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
 import UserManagement from './UserManagement';
@@ -6,7 +7,6 @@ import AttendanceManagement from './AttendanceManagement';
 import SystemSettings from './SystemSettings';
 import Dashboard from './Dashboard';
 import AdminActivityDashboard from './AdminActivityDashboard';
-import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
