@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -83,12 +82,19 @@ async function getAttendanceMap(): Promise<AttendanceStatusMap> {
 }
 
 // MAIN HOOK
+import { useSystemUsers, parseStudent, parseStaff } from "./useSystemUsers";
+import { useAttendanceRecords } from "./useAttendanceRecords";
+import { buildActivityFeed } from "./useActivityFeed";
+
 export const useVMSData = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { getUsersByRole } = useSystemUsers();
+  const { getAttendanceMap } = useAttendanceRecords();
 
   // Load students & staff from backend, with attendance status
   const loadPeople = useCallback(async () => {
@@ -100,6 +106,7 @@ export const useVMSData = () => {
         getUsersByRole("staff"),
         getAttendanceMap()
       ]);
+
       // Students
       const studentsList: Student[] = studentRows.map(u => {
         const att = attendanceMap[u.id];
@@ -131,37 +138,16 @@ export const useVMSData = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getUsersByRole, getAttendanceMap]);
 
   // Load all people/records on mount
   useEffect(() => {
     loadPeople();
   }, [loadPeople]);
 
-  // Generate recent activity based only on students and staff
+  // Generate recent activity
   useEffect(() => {
-    function buildActivity(): ActivityRecord[] {
-      const activity: ActivityRecord[] = [
-        ...students.filter(s => s.status === 'present').map(s => ({
-          id: s.id + '_activity',
-          type: 'student' as const,
-          name: s.name,
-          action: 'Signed In',
-          time: s.check_in_time || '',
-          status: 'success' as const
-        })),
-        ...staff.filter(s => s.status === 'present').map(s => ({
-          id: s.id + '_activity',
-          type: 'staff' as const,
-          name: s.name,
-          action: 'Signed In',
-          time: s.check_in_time || '',
-          status: 'success' as const
-        }))
-      ];
-      return activity.slice(0, 10);
-    }
-    setRecentActivity(buildActivity());
+    setRecentActivity(buildActivityFeed(students, staff));
   }, [students, staff]);
 
   // --- ADD & UPDATE METHODS ---
