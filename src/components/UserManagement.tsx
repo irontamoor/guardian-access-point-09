@@ -19,7 +19,8 @@ const UserManagement = () => {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  const [allRoles, setAllRoles] = useState<UserRole[]>(['student', 'staff', 'admin', 'parent', 'visitor', 'reader']);
+  // Use a local list since dynamic fetch (supabase.rpc) is not available
+  const allRoles: UserRole[] = ['student', 'staff', 'admin', 'parent', 'visitor', 'reader'];
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -35,16 +36,8 @@ const UserManagement = () => {
 
   useEffect(() => {
     loadUsers();
-    fetchAllRoles();
+    // Removed fetchAllRoles because enum_values RPC does not exist
   }, []);
-
-  // Dynamically fetch user roles from DB enum
-  const fetchAllRoles = async () => {
-    const { data, error } = await supabase.rpc('enum_values', { table_name: 'user_role' });
-    if (!error && Array.isArray(data)) {
-      setAllRoles(data as UserRole[]);
-    } // Else fallback to default
-  };
 
   const loadUsers = async () => {
     try {
@@ -229,7 +222,7 @@ const UserManagement = () => {
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={() => { setEditingUser(null); setIsOpen(true); setFormData({ first_name: '', last_name: '', email: '', phone: '', employee_id: '', student_id: '', role: 'student', status: 'active', password: '' }); }}>
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -329,7 +322,9 @@ const UserManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {allRoles.map((role) => (
-                        <SelectItem key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</SelectItem>
+                        <SelectItem key={role} value={role}>
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
