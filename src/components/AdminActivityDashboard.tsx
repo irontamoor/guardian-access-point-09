@@ -14,8 +14,10 @@ interface UserStatus {
   name: string;
   role: string;
   inStatus: boolean;
-  // departmentOrGrade renamed to just "id"
   departmentOrGrade?: string;
+  company?: string | null;
+  hostName?: string | null;
+  purpose?: string | null;
 }
 
 const AdminActivityDashboard = () => {
@@ -31,14 +33,20 @@ const AdminActivityDashboard = () => {
       const { data: users, error: userError } = await supabase
         .from("system_users")
         .select("*");
-      if (userError) return setLoading(false);
+      if (userError) {
+        setLoading(false);
+        return;
+      }
 
       // 2. Get all recent attendance_events, most recent per user
       const { data: attendance, error: attendanceError } = await supabase
         .from("attendance_records")
-        .select("user_id, status, check_in_time, check_out_time")
+        .select("id, user_id, status, check_in_time, check_out_time, company, host_name, purpose")
         .order("created_at", { ascending: false });
-      if (attendanceError) return setLoading(false);
+      if (attendanceError) {
+        setLoading(false);
+        return;
+      }
 
       const attendanceMap: Record<string, AttendanceRecord> = {};
       (attendance || []).forEach((row: any) => {
@@ -57,7 +65,7 @@ const AdminActivityDashboard = () => {
             name: `${stu.first_name} ${stu.last_name}`,
             role: "student",
             inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: stu.id, // only show ID
+            departmentOrGrade: stu.id,
           };
         })
         .filter((s) => s.inStatus);
@@ -74,15 +82,31 @@ const AdminActivityDashboard = () => {
             name: `${staff.first_name} ${staff.last_name}`,
             role: "staff",
             inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: staff.id, // only show ID
+            departmentOrGrade: staff.id,
           };
         })
         .filter((s) => s.inStatus);
 
       setStaffIn(staffInList);
 
-      // Visitors in (future proof, could be on another table)
-      setVisitorIn([]);
+      // Visitors in: role: 'visitor', status: "in" and no check_out_time
+      const visitorInList: UserStatus[] = (users || [])
+        .filter((u) => u.role === "visitor")
+        .map((visitor) => {
+          const att = attendanceMap[visitor.id];
+          return {
+            id: visitor.id,
+            name: `${visitor.first_name} ${visitor.last_name}`,
+            role: "visitor",
+            inStatus: att && att.status === "in" && !att.check_out_time,
+            company: att?.company ?? "",
+            hostName: att?.host_name ?? "",
+            purpose: att?.purpose ?? "",
+          };
+        })
+        .filter((v) => v.inStatus);
+
+      setVisitorIn(visitorInList);
       setLoading(false);
     };
 
@@ -133,10 +157,37 @@ const AdminActivityDashboard = () => {
             <Users className="inline-block mr-2" />
             Visitors In
           </CardTitle>
-          <CardDescription>Currently checked-in visitors (not implemented)</CardDescription>
+          <CardDescription>Currently checked-in visitors</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500">Visitor check-in/out is not yet implemented.</p>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Host</TableHead>
+                <TableHead>Purpose</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visitorIn.length > 0 ? (
+                visitorIn.map((v) => (
+                  <TableRow key={v.id}>
+                    <TableCell>{v.name}</TableCell>
+                    <TableCell>{v.company || <span className="text-gray-400">—</span>}</TableCell>
+                    <TableCell>{v.hostName || <span className="text-gray-400">—</span>}</TableCell>
+                    <TableCell>{v.purpose || <span className="text-gray-400">—</span>}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-sm text-gray-500">
+                    No visitors are currently checked in.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
