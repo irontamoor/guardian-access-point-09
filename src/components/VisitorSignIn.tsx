@@ -9,6 +9,16 @@ import { ArrowLeft, UserPlus, Shield, Printer, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 
+// Import UUID generator, fallback to a quick function if missing
+// If you use a package, install 'uuid' and use: import { v4 as uuidv4 } from 'uuid';
+// Otherwise make a dummy (not cryptographically secure, but fine for demo)
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 interface VisitorSignInProps {
   onBack: () => void;
 }
@@ -44,9 +54,10 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
 
     // Create new if not found
     if (!visitor) {
-      // First/last from name
       const [first = "", ...last] = visitorData.name.split(" ");
+      const newVisitorId = uuidv4();
       const { data, error } = await supabase.from("system_users").insert({
+        id: newVisitorId, // ADD THIS LINE to provide required id!
         first_name: first || visitorData.name,
         last_name: last.join(" ") || ".",
         phone: visitorData.phone || null,
