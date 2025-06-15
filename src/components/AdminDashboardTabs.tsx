@@ -188,6 +188,9 @@ const LiveActivityDashboard = () => {
 
 // ---
 
+import DashboardSidebar from "./DashboardSidebar";
+import DashboardHeader from "./dashboard/DashboardHeader";
+
 const AdminDashboardTabs = ({
   onBack,
   onLogout,
@@ -195,136 +198,73 @@ const AdminDashboardTabs = ({
 }: AdminDashboardTabsProps) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardViewType, setDashboardViewType] = useState<"admin_activity" | "live_activity" | "security_alerts">("admin_activity");
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState("Jamiaa Al-Hudaa");
+  const [logoUrl] = useState<string | null>(null); // Logo moved to sidebar/header
+  const [companyName] = useState("Jamiaa Al-Hudaa");
 
   const isAdminOrReader = adminData?.role === "admin" || adminData?.role === "reader";
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (ev) {
-        setLogoUrl(ev.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // Layout: sidebar + main area horizontally, header fixed at top of main area
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Improved Top Header */}
-        <div className="bg-white/95 backdrop-blur border-b border-blue-100/60 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between h-auto py-5 sm:py-0">
-            <div className="flex items-center gap-4 flex-1">
-              <div>
-                {logoUrl ? (
-                  <img src={logoUrl} alt="logo" className="h-12 w-12 rounded object-cover border shadow" />
-                ) : (
-                  <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center text-2xl text-gray-400 border shadow">
-                    <BarChart3 className="h-8 w-8" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <span className="block font-extrabold text-2xl text-gray-900 tracking-tight leading-tight mb-0.5">{companyName}</span>
-                <label htmlFor="logo-upload" className="text-[11px] text-blue-600 cursor-pointer hover:underline font-medium">
-                  Change Logo
-                  <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                </label>
-              </div>
-            </div>
-            <div className="flex flex-row items-center gap-3 mt-5 sm:mt-0">
-              <div className="hidden md:flex flex-col items-end">
-                <span className="block font-semibold text-base text-gray-900">{adminData.first_name || adminData.last_name ? `${adminData.first_name || ""} ${adminData.last_name || ""}`.trim() : adminData.username || adminData.admin_id}</span>
-                <span className="block text-xs text-blue-600 font-medium">{adminData.role}</span>
-              </div>
-              <button
-                onClick={onLogout}
-                className="ml-2 px-3 py-2 rounded-md bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold border border-red-200 transition-shadow shadow-sm"
-                aria-label="Logout"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-        {/* End Improved Top Header */}
+    <div className="bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen w-full">
+      <div className="flex w-full max-w-full mx-auto min-h-screen">
+        {/* Sidebar */}
+        <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        <div className="max-w-7xl mx-auto p-6">
-          {/* Tabs Navigation */}
-          <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-2xl grid-cols-4 h-12 shadow">
-              <TabsTrigger value="overview" className="flex items-center space-x-2">
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Overview</span>
-              </TabsTrigger>
-              <TabsTrigger value="dashboards" className="flex items-center space-x-2">
-                <Hourglass className="h-4 w-4" />
-                <span className="hidden sm:inline">Dashboards</span>
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center space-x-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Users</span>
-              </TabsTrigger>
-              <TabsTrigger value="attendance" className="flex items-center space-x-2">
-                <Clock className="h-4 w-4" />
-                <span className="hidden sm:inline">Attendance</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          {/* End Tabs Navigation */}
-          <TabsContent value="overview" className="mt-0">
-            {isAdminOrReader ? (
-              <UnifiedAdminDashboard 
-                adminData={adminData}
-                onLogout={onLogout}
-                companyName={companyName}
-                logoUrl={logoUrl}
-              />
-            ) : (
-              <div className="text-center text-gray-400 py-10">
-                You do not have access to view the overview dashboard.
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="dashboards" className="mt-0">
-            {isAdminOrReader ? (
-              <div>
-                <div className="mb-4 flex flex-wrap gap-2 items-center">
-                  <label htmlFor="dashboard-view-type" className="text-sm font-medium text-gray-700 mr-2">
-                    View:
-                  </label>
-                  <select
-                    id="dashboard-view-type"
-                    value={dashboardViewType}
-                    onChange={e => setDashboardViewType(e.target.value as any)}
-                    className="border border-gray-300 px-3 py-1 rounded text-sm"
-                  >
-                    <option value="admin_activity">Admin Activity</option>
-                    <option value="live_activity">Live Activity</option>
-                    <option value="security_alerts">Security Alerts</option>
-                  </select>
-                </div>
-                {dashboardViewType === "admin_activity" && <AdminActivityDashboard />}
-                {dashboardViewType === "live_activity" && <LiveActivityDashboard />}
-                {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />}
-              </div>
-            ) : (
-              <div className="text-center text-gray-400 py-10">
-                You do not have access to view these dashboards.
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="users" className="mt-0">
-            <UserManagement />
-          </TabsContent>
-          <TabsContent value="attendance" className="mt-0">
-            <AttendanceManagement />
-          </TabsContent>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Dashboard Header */}
+          <DashboardHeader onLogout={onLogout} adminData={adminData} />
+          <main className="flex-1 w-full px-3 md:px-8 py-8">
+            {/* Tabs content render conditionally, main page style container */}
+            <div className="w-full max-w-6xl mx-auto">
+              {activeTab === "overview" && (
+                isAdminOrReader ? (
+                  <UnifiedAdminDashboard 
+                    adminData={adminData}
+                    onLogout={onLogout}
+                    companyName={companyName}
+                    logoUrl={logoUrl}
+                  />
+                ) : (
+                  <div className="text-center text-gray-400 py-10">
+                    You do not have access to view the overview dashboard.
+                  </div>
+                )
+              )}
+              {activeTab === "dashboards" && (
+                isAdminOrReader ? (
+                  <div>
+                    <div className="mb-4 flex flex-wrap gap-2 items-center">
+                      <label htmlFor="dashboard-view-type" className="text-sm font-medium text-gray-700 mr-2">
+                        View:
+                      </label>
+                      <select
+                        id="dashboard-view-type"
+                        value={dashboardViewType}
+                        onChange={e => setDashboardViewType(e.target.value as any)}
+                        className="border border-gray-300 px-3 py-1 rounded text-sm"
+                      >
+                        <option value="admin_activity">Admin Activity</option>
+                        <option value="live_activity">Live Activity</option>
+                        <option value="security_alerts">Security Alerts</option>
+                      </select>
+                    </div>
+                    {dashboardViewType === "admin_activity" && <AdminActivityDashboard />}
+                    {dashboardViewType === "live_activity" && <LiveActivityDashboard />}
+                    {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-10">
+                    You do not have access to view these dashboards.
+                  </div>
+                )
+              )}
+              {activeTab === "users" && <UserManagement />}
+              {activeTab === "attendance" && <AttendanceManagement />}
+            </div>
+          </main>
         </div>
-      </Tabs>
+      </div>
     </div>
   );
 };
