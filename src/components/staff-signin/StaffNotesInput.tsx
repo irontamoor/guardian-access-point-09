@@ -15,11 +15,11 @@ export function StaffNotesInput({ value, onChange, disabled, quickReasons }: Sta
       <Label htmlFor="notes">Reason / Comment</Label>
       <Textarea
         id="notes"
-        placeholder="E.g. Late, Medical Appointment"
+        placeholder="E.g. Meeting, Offsite, Sick Leave"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
         className="resize-none"
+        disabled={disabled}
       />
       <div className="flex flex-wrap gap-2 mt-1">
         {quickReasons.map((reason) => (

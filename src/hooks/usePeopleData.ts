@@ -1,74 +1,77 @@
 
-import { useCallback, useState } from "react";
-import { useSystemUsersData } from "./users/useSystemUsersData";
-import { parseStudent, parseStaff } from "./users/useUserParsers";
-import { useAttendanceMapping } from "./attendance/useAttendanceMapping";
+import { useState, useEffect } from 'react';
+import { useSystemUsers } from './useSystemUsers';
+import { useAttendanceRecords } from './useAttendanceRecords';
 
-export interface Student {
+export type Student = {
   id: string;
   name: string;
   grade: string;
   status: 'present' | 'absent';
-  check_in_time?: string;
-  check_out_time?: string;
-}
+};
 
-export interface Staff {
+export type Staff = {
   id: string;
   name: string;
   department: string;
   status: 'present' | 'absent';
-  check_in_time?: string;
-  check_out_time?: string;
-}
+};
 
-export function usePeopleData() {
+export const usePeopleData = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { getUsersByRole } = useSystemUsersData();
-  const { getAttendanceMap } = useAttendanceMapping();
+  const { getUsersByRole, parseStudent, parseStaff } = useSystemUsers();
+  const { getAttendanceMap } = useAttendanceRecords();
 
-  const loadPeople = useCallback(async () => {
+  const loadPeople = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [studentRows, staffRows, attendanceMap] = await Promise.all([
+      const [studentsData, staffData] = await Promise.all([
         getUsersByRole("student"),
         getUsersByRole("staff"),
-        getAttendanceMap()
       ]);
 
-      setStudents(studentRows.map(u => {
-        const att = attendanceMap[u.id];
-        return {
-          ...parseStudent(u),
-          status: att?.status === "present" ? "present" : "absent",
-          check_in_time: att?.check_in_time,
-          check_out_time: att?.check_out_time,
-        };
-      }));
+      const attendanceMap = await getAttendanceMap();
 
-      setStaff(staffRows.map(u => {
-        const att = attendanceMap[u.id];
+      const parsedStudents = studentsData.map(user => {
+        const student = parseStudent(user);
         return {
-          ...parseStaff(u),
-          status: att?.status === "present" ? "present" : "absent",
-          check_in_time: att?.check_in_time,
-          check_out_time: att?.check_out_time,
+          ...student,
+          status: attendanceMap[user.id] || 'absent'
         };
-      }));
+      });
 
-    } catch (e: any) {
-      setStudents([]);
-      setStaff([]);
-      setError("Failed to load people: " + e.message);
+      const parsedStaff = staffData.map(user => {
+        const staffMember = parseStaff(user);
+        return {
+          ...staffMember,
+          status: attendanceMap[user.id] || 'absent'
+        };
+      });
+
+      setStudents(parsedStudents);
+      setStaff(parsedStaff);
+    } catch (err) {
+      console.error('Error loading people data:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [getUsersByRole, getAttendanceMap]);
+  };
 
-  return { students, staff, loading, error, loadPeople };
-}
+  useEffect(() => {
+    loadPeople();
+  }, []);
+
+  return {
+    students,
+    staff,
+    loading,
+    error,
+    loadPeople,
+  };
+};

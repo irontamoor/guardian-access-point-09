@@ -1,23 +1,35 @@
 
-import { useEffect, useState } from "react";
-import type { Student, Staff } from "./usePeopleData";
-import { buildActivityFeed } from "./useActivityFeed";
+import { useState, useEffect } from 'react';
+import type { Student, Staff } from './usePeopleData';
 
-export interface ActivityRecord {
+export type ActivityRecord = {
   id: string;
-  type: 'student' | 'staff';
   name: string;
   action: string;
   time: string;
-  status: 'success' | 'warning' | 'info';
-}
+  type: 'student' | 'staff';
+};
 
-export function useActivityFeedState(students: Student[], staff: Staff[]) {
+export const useActivityFeedState = (students: Student[], staff: Staff[]) => {
   const [recentActivity, setRecentActivity] = useState<ActivityRecord[]>([]);
 
   useEffect(() => {
-    setRecentActivity(buildActivityFeed(students, staff));
+    // Generate mock recent activity based on present students and staff
+    const presentPeople = [
+      ...students.filter(s => s.status === 'present').map(s => ({ ...s, type: 'student' as const })),
+      ...staff.filter(s => s.status === 'present').map(s => ({ ...s, type: 'staff' as const }))
+    ];
+
+    const activity = presentPeople.slice(0, 10).map((person, index) => ({
+      id: `${person.id}-${index}`,
+      name: person.name,
+      action: 'signed in',
+      time: new Date(Date.now() - index * 300000).toLocaleTimeString(), // 5 min intervals
+      type: person.type
+    }));
+
+    setRecentActivity(activity);
   }, [students, staff]);
 
   return { recentActivity };
-}
+};

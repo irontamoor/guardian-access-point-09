@@ -2,31 +2,34 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Attendance map for typing
-export type AttendanceStatusMap = Record<
-  string,
-  { status: 'present' | 'absent'; check_in_time?: string; check_out_time?: string }
->;
+export type AttendanceStatusMap = Record<string, 'present' | 'absent'>;
 
 export function useAttendanceMapping() {
-  // Fetches attendance records and builds the latest status per user ID
-  const getAttendanceMap = useCallback(async () => {
+  const getAttendanceMap = useCallback(async (): Promise<AttendanceStatusMap> => {
+    const today = new Date().toISOString().split('T')[0];
+    
     const { data, error } = await supabase
       .from("attendance_records")
-      .select("user_id, status, check_in_time, check_out_time")
+      .select("user_id, status")
+      .gte("created_at", `${today}T00:00:00.000Z`)
+      .lte("created_at", `${today}T23:59:59.999Z`)
       .order("created_at", { ascending: false });
-    if (error) throw error;
-    const map: AttendanceStatusMap = {};
-    (data || []).forEach((row: any) => {
-      if (!map[row.user_id]) {
-        map[row.user_id] = {
-          status: row.status === "in" ? "present" : "absent",
-          check_in_time: row.check_in_time ?? undefined,
-          check_out_time: row.check_out_time ?? undefined,
-        };
+
+    if (error) {
+      console.error('Error fetching attendance:', error);
+      return {};
+    }
+
+    const statusMap: AttendanceStatusMap = {};
+    
+    // Process records to get latest status for each user
+    data?.forEach(record => {
+      if (!statusMap[record.user_id]) {
+        statusMap[record.user_id] = record.status === 'in' ? 'present' : 'absent';
       }
     });
-    return map;
+
+    return statusMap;
   }, []);
 
   return { getAttendanceMap };

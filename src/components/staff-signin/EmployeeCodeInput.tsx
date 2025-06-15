@@ -17,6 +17,7 @@ export function EmployeeCodeInput({ value, onChange, disabled }: EmployeeCodeInp
         placeholder="Enter employee ID"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        className="w-full"
         disabled={disabled}
       />
     </div>
