@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -69,82 +68,27 @@ async function getAttendanceMap(): Promise<AttendanceStatusMap> {
 }
 
 // MAIN HOOK
-import { useSystemUsers, parseStudent, parseStaff } from "./useSystemUsers";
-import { useAttendanceRecords } from "./useAttendanceRecords";
-import { buildActivityFeed } from "./useActivityFeed";
+import { usePeopleData } from "./usePeopleData";
+import { useActivityFeedState } from "./useActivityFeedState";
 
 export const useVMSData = () => {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [recentActivity, setRecentActivity] = useState<ActivityRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    students,
+    staff,
+    loading,
+    error,
+    loadPeople,
+  } = usePeopleData();
 
-  const { getUsersByRole } = useSystemUsers();
-  const { getAttendanceMap } = useAttendanceRecords();
-
-  // Load students & staff from backend, with attendance status
-  const loadPeople = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [studentRows, staffRows, attendanceMap] = await Promise.all([
-        getUsersByRole("student"),
-        getUsersByRole("staff"),
-        getAttendanceMap()
-      ]);
-
-      // Students
-      const studentsList: Student[] = studentRows.map(u => {
-        const att = attendanceMap[u.id];
-        return {
-          ...parseStudent(u),
-          status: att && att.status === "present" ? "present" : "absent",
-          check_in_time: att ? att.check_in_time : undefined,
-          check_out_time: att ? att.check_out_time : undefined,
-        };
-      });
-      setStudents(studentsList);
-
-      // Staff
-      const staffList: Staff[] = staffRows.map(u => {
-        const att = attendanceMap[u.id];
-        return {
-          ...parseStaff(u),
-          status: att && att.status === "present" ? "present" : "absent",
-          check_in_time: att ? att.check_in_time : undefined,
-          check_out_time: att ? att.check_out_time : undefined,
-        };
-      });
-      setStaff(staffList);
-
-    } catch (e: any) {
-      setError("Failed to load people: " + e.message);
-      setStudents([]);
-      setStaff([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [getUsersByRole, getAttendanceMap]);
-
-  useEffect(() => {
-    loadPeople();
-  }, [loadPeople]);
-
-  useEffect(() => {
-    setRecentActivity(buildActivityFeed(students, staff));
-  }, [students, staff]);
-
-  // --- ADD & UPDATE METHODS ---
+  const { recentActivity } = useActivityFeedState(students, staff);
 
   // Add student (system_users)
-  // studentData now requires id (no default in db)
-  const addStudent = async (studentData: Omit<Student, 'status' | 'check_in_time' | 'check_out_time'>) => {
+  const addStudent = async (studentData: Omit<typeof students[0], 'status' | 'check_in_time' | 'check_out_time'>) => {
     const { id, name, grade } = studentData;
     const first_name = name.split(" ")[0] || name;
     const last_name = name.split(" ").slice(1).join(" ") || ".";
     const { error } = await supabase.from('system_users').insert({
-      id, // always required now
+      id,
       first_name,
       last_name,
       role: 'student'
@@ -154,12 +98,12 @@ export const useVMSData = () => {
   };
 
   // Add staff (system_users)
-  const addStaff = async (staffData: Omit<Staff, 'status' | 'check_in_time' | 'check_out_time'>) => {
+  const addStaff = async (staffData: Omit<typeof staff[0], 'status' | 'check_in_time' | 'check_out_time'>) => {
     const { id, name, department } = staffData;
     const first_name = name.split(" ")[0] || name;
     const last_name = name.split(" ").slice(1).join(" ") || ".";
     const { error } = await supabase.from('system_users').insert({
-      id, // always required now
+      id,
       first_name,
       last_name,
       role: 'staff'
@@ -198,7 +142,6 @@ export const useVMSData = () => {
     addStaff,
     updateStudentStatus,
     updateStaffStatus,
-    reload: () => { loadPeople(); }
+    reload: loadPeople
   };
 };
-
