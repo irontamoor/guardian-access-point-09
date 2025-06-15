@@ -144,7 +144,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           first_name: string
-          id: string
+          id?: string
           last_name: string
           password?: string | null
           phone?: string | null
