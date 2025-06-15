@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, MessageSquare, UserCheck, UserX } from 'lucide-react';
@@ -37,7 +38,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
           <TableHead>
             <Checkbox
               checked={allSelected}
-              indeterminate={partialSelected ? "indeterminate" : undefined}
+              // Removed invalid "indeterminate" prop which caused TS error
               aria-label="Select all"
               onCheckedChange={checked => onSelectAll && onSelectAll(Boolean(checked))}
             />
