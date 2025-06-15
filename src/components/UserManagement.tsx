@@ -26,7 +26,6 @@ const UserManagement = () => {
     last_name: "",
     email: "",
     phone: "",
-    id: "",
     user_code: "",
     role: "student" as UserRole,
     status: "active" as UserStatus,
@@ -96,11 +95,10 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user - id is still required (should be uuid), but user_code is the human-friendly ID
+        // Create new user - **DO NOT provide id**, let DB autogenerate UUID
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
-            id: formData.id, // Must always be provided (uuid/hidden)
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
@@ -170,7 +168,6 @@ const UserManagement = () => {
       last_name: "",
       email: "",
       phone: "",
-      id: "",
       user_code: "",
       role: "student",
       status: "active",
@@ -186,7 +183,6 @@ const UserManagement = () => {
       last_name: user.last_name,
       email: user.email || '',
       phone: user.phone || '',
-      id: user.id || '',
       user_code: user.user_code || '',
       role: user.role,
       status: user.status,
@@ -271,7 +267,6 @@ const UserManagement = () => {
                     last_name: "",
                     email: "",
                     phone: "",
-                    id: "",
                     user_code: "",
                     role: allRoles[0] as UserRole || "student",
                     status: "active",
@@ -358,18 +353,6 @@ const UserManagement = () => {
                     required
                   />
                   <p className="text-xs text-gray-500">Must be unique among active users.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="id">Database UUID (Hidden / Optional)</Label>
-                  <Input
-                    id="id"
-                    value={formData.id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
-                    placeholder="Auto or generated UUID"
-                    disabled={!!editingUser}
-                  />
-                  <p className="text-xs text-gray-400">Auto-generated or manually set. Not used for sign-in.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
