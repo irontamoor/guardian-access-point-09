@@ -36,29 +36,46 @@ export default function AttendanceRecordsTable() {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
 
+  // Added: debug UI state
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
+
   // DEBUG: user session info
   useEffect(() => {
     async function debugUser() {
       const { data: { user }, error } = await supabase.auth.getUser();
-      console.log("[AttendanceRecordsTable] Supabase User:", user, error);
 
+      let sysUser = null;
+      let roleRow = null;
       if (user) {
         // Find corresponding system_user
-        const { data: sysUser } = await supabase
+        const { data: sysUserData } = await supabase
           .from("system_users")
           .select("*")
           .eq("id", user.id)
           .maybeSingle();
-        console.log("[AttendanceRecordsTable] system_users row:", sysUser);
+
+        sysUser = sysUserData;
 
         // Find admin role assignment
-        const { data: roleRow } = await supabase
+        const { data: roleRowData } = await supabase
           .from("user_role_assignments")
           .select("*")
           .eq("user_id", user.id)
           .eq("role", "admin");
-        console.log("[AttendanceRecordsTable] admin role assignments:", roleRow);
+
+        roleRow = roleRowData;
       }
+      setDebugInfo({
+        supabaseUser: user,
+        supabaseUserError: error,
+        systemUser: sysUser,
+        adminRoleAssignments: roleRow,
+      });
+      // Console logs for legacy/debug (keep or remove)
+      console.log("[AttendanceRecordsTable] Supabase User:", user, error);
+      console.log("[AttendanceRecordsTable] system_users row:", sysUser);
+      console.log("[AttendanceRecordsTable] admin role assignments:", roleRow);
     }
     debugUser();
   }, []);
@@ -120,6 +137,36 @@ export default function AttendanceRecordsTable() {
         <CardDescription>Showing all fields from attendance_records, joined with user info</CardDescription>
       </CardHeader>
       <CardContent>
+        {/* DEBUG: expandable debug info box */}
+        <div className="mb-3">
+          <button
+            className="text-xs text-gray-500 underline mb-1"
+            onClick={() => setShowDebug((v) => !v)}
+            type="button"
+          >
+            {showDebug ? "Hide Debug Info" : "Show Debug Info"}
+          </button>
+          {showDebug && (
+            <div className="bg-gray-100 border rounded p-3 mb-2 text-xs max-w-full overflow-x-auto">
+              <div>
+                <strong>Supabase User:</strong>
+                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUser, null, 2)}</pre>
+              </div>
+              <div>
+                <strong>Supabase User Error:</strong>
+                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUserError, null, 2)}</pre>
+              </div>
+              <div>
+                <strong>System User (system_users row):</strong>
+                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.systemUser, null, 2)}</pre>
+              </div>
+              <div>
+                <strong>Admin Role Assignments:</strong>
+                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.adminRoleAssignments, null, 2)}</pre>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between mb-2">
           <Button variant="ghost" onClick={fetchRecords} disabled={loading}>
             <RefreshCcw className="h-4 w-4 mr-1" />
