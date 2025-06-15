@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -36,6 +35,33 @@ export default function AttendanceRecordsTable() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+
+  // DEBUG: user session info
+  useEffect(() => {
+    async function debugUser() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log("[AttendanceRecordsTable] Supabase User:", user, error);
+
+      if (user) {
+        // Find corresponding system_user
+        const { data: sysUser } = await supabase
+          .from("system_users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        console.log("[AttendanceRecordsTable] system_users row:", sysUser);
+
+        // Find admin role assignment
+        const { data: roleRow } = await supabase
+          .from("user_role_assignments")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("role", "admin");
+        console.log("[AttendanceRecordsTable] admin role assignments:", roleRow);
+      }
+    }
+    debugUser();
+  }, []);
 
   async function fetchRecords() {
     setLoading(true);
