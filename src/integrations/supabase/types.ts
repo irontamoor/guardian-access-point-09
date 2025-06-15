@@ -266,6 +266,45 @@ export type Database = {
         }
         Relationships: []
       }
+      visitors: {
+        Row: {
+          created_at: string
+          first_name: string
+          host_name: string | null
+          id: string
+          last_name: string
+          notes: string | null
+          organization: string | null
+          phone_number: string | null
+          updated_at: string
+          visit_purpose: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          host_name?: string | null
+          id?: string
+          last_name: string
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          updated_at?: string
+          visit_purpose: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          host_name?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          updated_at?: string
+          visit_purpose?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

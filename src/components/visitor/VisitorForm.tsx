@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { UserPlus, Badge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { supabase } from '@/integrations/supabase/client';
 
 export function VisitorForm() {
   const [visitorData, setVisitorData] = useState({
@@ -20,6 +21,7 @@ export function VisitorForm() {
     phoneNumber: '',
     notes: ''
   });
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { options: visitTypes, loading: visitTypesLoading } = useSignInOptions("both", "visit_type");
 
@@ -27,7 +29,7 @@ export function VisitorForm() {
     setVisitorData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRegisterVisitor = () => {
+  const handleRegisterVisitor = async () => {
     if (!visitorData.firstName || !visitorData.lastName || !visitorData.visitPurpose) {
       toast({
         title: "Error",
@@ -37,21 +39,66 @@ export function VisitorForm() {
       return;
     }
 
-    toast({
-      title: "Visitor Registered!",
-      description: `${visitorData.firstName} ${visitorData.lastName} has been registered. Badge will be printed.`,
-      variant: "default"
-    });
+    setLoading(true);
+    try {
+      // Insert visitor data
+      const { data: visitor, error: visitorError } = await supabase
+        .from('visitors')
+        .insert({
+          first_name: visitorData.firstName,
+          last_name: visitorData.lastName,
+          organization: visitorData.organization,
+          visit_purpose: visitorData.visitPurpose,
+          host_name: visitorData.hostName,
+          phone_number: visitorData.phoneNumber,
+          notes: visitorData.notes,
+        })
+        .select()
+        .single();
 
-    setVisitorData({
-      firstName: '',
-      lastName: '',
-      organization: '',
-      visitPurpose: '',
-      hostName: '',
-      phoneNumber: '',
-      notes: ''
-    });
+      if (visitorError) throw visitorError;
+
+      // Create attendance record for the visitor
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
+        .insert({
+          user_id: visitor.id,
+          status: 'in',
+          check_in_time: new Date().toISOString(),
+          company: visitorData.organization,
+          purpose: visitorData.visitPurpose,
+          host_name: visitorData.hostName,
+          notes: visitorData.notes,
+        });
+
+      if (attendanceError) throw attendanceError;
+
+      toast({
+        title: "Visitor Registered!",
+        description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in. Badge will be printed.`,
+        variant: "default"
+      });
+
+      // Reset form
+      setVisitorData({
+        firstName: '',
+        lastName: '',
+        organization: '',
+        visitPurpose: '',
+        hostName: '',
+        phoneNumber: '',
+        notes: ''
+      });
+    } catch (error: any) {
+      console.error('Error registering visitor:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to register visitor",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,6 +118,7 @@ export function VisitorForm() {
               placeholder="Enter first name"
               value={visitorData.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -80,6 +128,7 @@ export function VisitorForm() {
               placeholder="Enter last name"
               value={visitorData.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
+              disabled={loading}
             />
           </div>
         </div>
@@ -91,6 +140,7 @@ export function VisitorForm() {
             placeholder="Enter organization name"
             value={visitorData.organization}
             onChange={(e) => handleInputChange('organization', e.target.value)}
+            disabled={loading}
           />
         </div>
 
@@ -99,6 +149,7 @@ export function VisitorForm() {
           <Select
             value={visitorData.visitPurpose}
             onValueChange={(value) => handleInputChange('visitPurpose', value)}
+            disabled={loading || visitTypesLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select purpose of visit" />
@@ -120,6 +171,7 @@ export function VisitorForm() {
             placeholder="Who are you visiting?"
             value={visitorData.hostName}
             onChange={(e) => handleInputChange('hostName', e.target.value)}
+            disabled={loading}
           />
         </div>
 
@@ -130,6 +182,7 @@ export function VisitorForm() {
             placeholder="Enter phone number"
             value={visitorData.phoneNumber}
             onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+            disabled={loading}
           />
         </div>
 
@@ -141,6 +194,7 @@ export function VisitorForm() {
             value={visitorData.notes}
             onChange={(e) => handleInputChange('notes', e.target.value)}
             className="resize-none"
+            disabled={loading}
           />
         </div>
 
@@ -148,9 +202,10 @@ export function VisitorForm() {
           <Button 
             onClick={handleRegisterVisitor}
             className="flex-1 bg-purple-600 hover:bg-purple-700"
+            disabled={loading}
           >
             <Badge className="h-4 w-4 mr-2" />
-            Register & Print Badge
+            {loading ? 'Registering...' : 'Register & Print Badge'}
           </Button>
         </div>
       </CardContent>
