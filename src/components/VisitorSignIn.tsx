@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 
 // Import UUID generator, fallback to a quick function if missing
-// If you use a package, install 'uuid' and use: import { v4 as uuidv4 } from 'uuid';
-// Otherwise make a dummy (not cryptographically secure, but fine for demo)
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -31,16 +30,17 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
     email: '',
     hostName: '',
     purpose: '',
-    visitType: ''
+    visitType: '',
+    badgeNumber: '', // <-- New field for sign out
   });
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [badgeId, setBadgeId] = useState<string | null>(null); // To display the badge number after registration
 
   // Helper: Find existing visitor by phone or email
   const findOrCreateVisitor = async () => {
     let visitor = null;
     if (visitorData.phone || visitorData.email) {
-      // Try match by email (if provided), else by phone
       let query = supabase.from("system_users").select("*").eq("role", "visitor");
       if (visitorData.email) {
         query = query.ilike("email", visitorData.email);
@@ -51,13 +51,12 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
       if (error && error.code !== "PGRST116") throw error;
       if (data) visitor = data;
     }
-
     // Create new if not found
     if (!visitor) {
       const [first = "", ...last] = visitorData.name.split(" ");
       const newVisitorId = uuidv4();
       const { data, error } = await supabase.from("system_users").insert({
-        id: newVisitorId, // ADD THIS LINE to provide required id!
+        id: newVisitorId,
         first_name: first || visitorData.name,
         last_name: last.join(" ") || ".",
         phone: visitorData.phone || null,
@@ -87,7 +86,6 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
 
   // Sign out: mark latest "in" attendance as out 
   const visitorCheckOut = async (visitor_id: string) => {
-    // Find the latest "in" attendance record for this visitor
     const { data: recs, error } = await supabase
       .from("attendance_records")
       .select("*")
@@ -108,7 +106,17 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
         .eq("id", latestIn.id);
       if (updError) throw updError;
     } else {
-      throw new Error("No check-in found for this visitor to check out.");
+      // Record a check out with no preceding check in
+      const now = new Date().toISOString();
+      const { error: insertError } = await supabase.from("attendance_records").insert({
+        user_id: visitor_id,
+        status: "out",
+        check_out_time: now,
+        company: null,
+        host_name: null,
+        purpose: "Checked out without prior check-in"
+      });
+      if (insertError) throw insertError;
     }
   };
 
@@ -136,11 +144,12 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
       await createVisitorAttendance(visitor.id);
 
       // Simulate Badge ID
-      const badgeId = 'VIS' + (visitor.id.substring(0, 4).toUpperCase());
+      const generatedBadgeId = 'VIS' + (visitor.id.substring(0, 4).toUpperCase());
+      setBadgeId(generatedBadgeId);
 
       toast({
         title: "Visitor Registered!",
-        description: `Badge ID: ${badgeId} - Please proceed to print visitor badge`,
+        description: `Badge: ${generatedBadgeId} - Please proceed to print visitor badge`,
         variant: "default"
       });
 
@@ -152,7 +161,8 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
         email: '',
         hostName: '',
         purpose: '',
-        visitType: ''
+        visitType: '',
+        badgeNumber: '',
       });
     } catch (err: any) {
       toast({
@@ -168,37 +178,52 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
   const handleCheckOut = async () => {
     setLoading(true);
     try {
-      // Must have phone or email to identify visitor
-      if (!visitorData.phone && !visitorData.email) {
+      // Must have badge number, phone or email to identify visitor
+      if (!visitorData.badgeNumber && !visitorData.phone && !visitorData.email) {
         toast({
           title: "Error",
-          description: "Please enter the visitor's phone or email to check out.",
+          description: "Please enter the visitor's Badge number, phone or email to check out.",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
-      // Find visitor
+
       let visitor = null;
-      let query = supabase.from("system_users").select("*").eq("role", "visitor");
-      if (visitorData.email) {
-        query = query.ilike("email", visitorData.email);
-      } else {
-        query = query.eq("phone", visitorData.phone);
+      if (visitorData.badgeNumber) {
+        // Try to find via badge number: badge is VISxxxx where xxxx is first 4 of id (uppercase)
+        const badgePattern = visitorData.badgeNumber.replace(/vis/gi, "VIS");
+        const { data: foundList, error } = await supabase
+          .from("system_users")
+          .select("*")
+          .eq("role", "visitor");
+        if (error) throw error;
+        const match = (foundList || []).find(v => ("VIS" + v.id.substring(0, 4).toUpperCase()) === badgePattern);
+        if (match) visitor = match;
       }
-      const { data, error } = await query.maybeSingle();
-      if (error || !data) {
+      // If not found by badge, try by email or phone
+      if (!visitor && (visitorData.phone || visitorData.email)) {
+        let query = supabase.from("system_users").select("*").eq("role", "visitor");
+        if (visitorData.email) {
+          query = query.ilike("email", visitorData.email);
+        } else {
+          query = query.eq("phone", visitorData.phone);
+        }
+        const { data, error } = await query.maybeSingle();
+        if (!error && data) visitor = data;
+      }
+
+      if (!visitor) {
         toast({
           title: "Not found",
-          description: "No visitor found with provided info for check out.",
+          description: "No visitor found with provided badge/phone/email for check out.",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
-      visitor = data;
 
-      // Update their latest attendance as signed out
+      // Update their latest attendance as signed out, or add an out record if none
       await visitorCheckOut(visitor.id);
 
       toast({
@@ -206,6 +231,18 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
         description: "Visitor checked out successfully",
         variant: "default"
       });
+
+      setVisitorData({
+        name: '',
+        company: '',
+        phone: '',
+        email: '',
+        hostName: '',
+        purpose: '',
+        visitType: '',
+        badgeNumber: '',
+      });
+      setBadgeId(null);
     } catch (err: any) {
       toast({
         title: "Error",
@@ -217,6 +254,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
     }
   };
 
+  // UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-4">
       {/* Header */}
@@ -331,6 +369,19 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="badgeNumber">Badge Number (for Check Out)</Label>
+              <Input
+                id="badgeNumber"
+                placeholder="Enter Badge Number for Check Out (e.g. VISABCD)"
+                value={visitorData.badgeNumber}
+                onChange={(e) => handleInputChange('badgeNumber', e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                If you are checking out, you may enter only your Badge number (no need for name, phone, etc)
+              </p>
+            </div>
+
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleRegisterVisitor}
@@ -371,11 +422,21 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
                 <div className="space-y-1 text-sm">
                   <div className="font-medium">{visitorData.name || 'Visitor Name'}</div>
                   <div className="text-gray-600">{visitorData.company || 'Company'}</div>
-                  <div className="text-xs text-gray-500">Badge: VIS####</div>
+                  <div className="text-xs text-gray-500">
+                    Badge: {badgeId ? badgeId : 'VIS####'}
+                  </div>
                   <div className="text-xs text-gray-500">Host: {visitorData.hostName || 'Host Name'}</div>
                 </div>
               </div>
             </div>
+            {badgeId && (
+              <div className="w-full mt-2">
+                <div className="p-3 text-center rounded-md bg-green-50 border border-green-200 text-green-600 font-semibold text-lg shadow-sm">
+                  Your Badge Number: <span className="font-mono text-black">{badgeId}</span>
+                </div>
+                <div className="mt-1 text-xs text-gray-500">Please use this Badge Number to check out when leaving.</div>
+              </div>
+            )}
             <Button className="w-full mt-4" variant="outline">
               <Printer className="h-4 w-4 mr-2" />
               Print Badge
@@ -388,3 +449,4 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
 };
 
 export default VisitorSignIn;
+
