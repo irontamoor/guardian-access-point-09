@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SystemSettingsHeader } from './system-settings/SystemSettingsHeader';
 import { SystemSettingsContent } from './system-settings/SystemSettingsContent';
+import SignInOptionsSettings from './SignInOptionsSettings';
 
 interface SystemSetting {
   id: string;
@@ -40,6 +40,7 @@ const SystemSettings = ({ adminData }: { adminData: { role: string; [key: string
     <div className="space-y-6">
       <SystemSettingsHeader />
       <SystemSettingsContent />
+      <SignInOptionsSettings adminData={adminData} />
     </div>
   );
 };
