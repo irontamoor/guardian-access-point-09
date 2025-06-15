@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,6 @@ const SystemSettings = () => {
         .order('setting_key');
 
       if (error) throw error;
-      
       const settingsData = data || [];
       setSettings(settingsData);
 
@@ -164,42 +162,8 @@ const SystemSettings = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Current Settings Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Current System Settings</CardTitle>
-          <CardDescription>Overview of all system settings and their last update times</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {settings.map((setting) => (
-              <div key={setting.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {setting.setting_key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </div>
-                  <div className="text-sm text-gray-500">{setting.description}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {typeof setting.setting_value === 'object' 
-                      ? 'Object' 
-                      : setting.setting_value?.toString() || 'Not set'
-                    }
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    Updated: {new Date(setting.updated_at).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
 export default SystemSettings;
-
