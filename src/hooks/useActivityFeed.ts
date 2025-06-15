@@ -1,5 +1,6 @@
 
-import type { Student, Staff, ActivityRecord } from "./useVMSData";
+import type { Student, Staff } from "./usePeopleData";
+import type { ActivityRecord } from "./useActivityFeedState";
 
 export function buildActivityFeed(
   students: Student[],

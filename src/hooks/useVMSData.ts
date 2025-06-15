@@ -1,72 +1,15 @@
 
-import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
-// Types for our data structures
-export interface Student {
-  id: string;
-  name: string;
-  grade: string; // Keep as empty string if needed; no board_type
-  status: 'present' | 'absent';
-  check_in_time?: string;
-  check_out_time?: string;
-}
-
-export interface Staff {
-  id: string;
-  name: string;
-  department: string;
-  status: 'present' | 'absent';
-  check_in_time?: string;
-  check_out_time?: string;
-}
-
-export interface ActivityRecord {
-  id: string;
-  type: 'student' | 'staff';
-  name: string;
-  action: string;
-  time: string;
-  status: 'success' | 'warning' | 'info';
-}
+// Re-export types from the new modular structure
+export type { Student, Staff } from "./usePeopleData";
+export type { ActivityRecord } from "./useActivityFeedState";
 
 // Attendance map for typing convenience
 type AttendanceStatusMap = Record<
   string,
   { status: 'present' | 'absent'; check_in_time?: string; check_out_time?: string }
 >;
-
-// Query helpers
-async function getUsersByRole(role: "student" | "staff"): Promise<Database["public"]["Tables"]["system_users"]["Row"][]> {
-  const { data, error } = await supabase
-    .from("system_users")
-    .select("*")
-    .eq("role", role)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
-}
-
-async function getAttendanceMap(): Promise<AttendanceStatusMap> {
-  const { data, error } = await supabase
-    .from("attendance_records")
-    .select("user_id, status, check_in_time, check_out_time")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  const map: AttendanceStatusMap = {};
-  (data || []).forEach((row: any) => {
-    if (!map[row.user_id]) {
-      // Correctly map "in" to present and "out" to absent
-      map[row.user_id] = {
-        status: row.status === "in" ? "present" : "absent",
-        check_in_time: row.check_in_time ?? undefined,
-        check_out_time: row.check_out_time ?? undefined,
-      };
-    }
-  });
-  return map;
-}
 
 // MAIN HOOK
 import { usePeopleData } from "./usePeopleData";
