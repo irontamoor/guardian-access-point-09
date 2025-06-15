@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
@@ -14,7 +13,7 @@ interface SystemSetting {
   updated_at: string;
 }
 
-const SystemSettings = () => {
+const SystemSettings = ({ adminData }: { adminData: { role: string; [key: string]: any } }) => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const { toast } = useToast();
 
@@ -43,7 +42,8 @@ const SystemSettings = () => {
         <Settings className="h-6 w-6 text-purple-600" />
         <h2 className="text-2xl font-bold text-gray-900">System Settings</h2>
       </div>
-      <SignInOptionsSettings />
+      {/* Pass adminData down */}
+      <SignInOptionsSettings adminData={adminData} />
       <Card>
         <CardHeader>
           <CardTitle>No system settings configured yet</CardTitle>

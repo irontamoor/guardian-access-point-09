@@ -4,8 +4,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OptionCategoryManager } from "./OptionCategoryManager";
 
-// Fetch shared hook for each type/category
-export default function SignInOptionsSettings() {
+// Add new: Accept adminData as a prop for access control
+type SignInOptionsSettingsProps = {
+  adminData: { role: string; [key: string]: any };
+};
+
+export default function SignInOptionsSettings({ adminData }: SignInOptionsSettingsProps) {
   // Student sign-in reasons/comments
   const {
     options: studentSignInOptions,
@@ -37,6 +41,22 @@ export default function SignInOptionsSettings() {
     addOption: addVisitTypeOption,
     deactivateOption: deactivateVisitTypeOption,
   } = useSignInOptions("both", "visit_type");
+
+  // Only show to admins
+  if (adminData.role !== "admin") {
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Option Management (Admins Only)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">
+            Only admins can manage global options. If you believe this is a mistake, contact an administrator.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

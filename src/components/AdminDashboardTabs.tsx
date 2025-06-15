@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -12,6 +11,7 @@ import { DashboardActivity } from './dashboard/DashboardActivity';
 // Removed import { DashboardSecurityAlerts } from './dashboard/DashboardSecurityAlerts';
 import { DashboardLiveStatusBoard } from './dashboard/DashboardLiveStatusBoard';
 import { useVMSData } from '@/hooks/useVMSData';
+import SystemSettings from './SystemSettings';
 
 // --- UnifiedAdminDashboard helper component ---
 interface AdminDashboardTabsProps {
@@ -262,6 +262,7 @@ const AdminDashboardTabs = ({
               )}
               {activeTab === "users" && <UserManagement />}
               {activeTab === "attendance" && <AttendanceManagement />}
+              {activeTab === "settings" && <SystemSettings adminData={adminData} />}
             </div>
           </main>
         </div>
@@ -271,4 +272,3 @@ const AdminDashboardTabs = ({
 };
 
 export default AdminDashboardTabs;
-
