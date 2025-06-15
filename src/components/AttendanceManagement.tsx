@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,17 +46,25 @@ const AttendanceManagement = () => {
   const [editReason, setEditReason] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAttendanceRecords();
+    // eslint-disable-next-line
   }, [selectedDate]);
 
   const fetchAttendanceRecords = async () => {
     try {
+      setFetchError(null);
       const startDate = new Date(selectedDate);
       const endDate = new Date(selectedDate);
       endDate.setDate(endDate.getDate() + 1);
+
+      // Log range and inputs for debug
+      console.log("[AttendanceManagement] Fetching attendance records for:", {
+        selectedDate, start: startDate.toISOString(), end: endDate.toISOString()
+      });
 
       const { data, error } = await supabase
         .from('attendance_records')
@@ -75,8 +82,13 @@ const AttendanceManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      // Log fetched data for debug
+      console.log("[AttendanceManagement] Attendance records fetched:", data);
+
       setAttendanceRecords(data || []);
     } catch (error: any) {
+      setAttendanceRecords([]);
+      setFetchError(error.message || "Failed to fetch attendance records.");
       toast({
         title: "Error",
         description: error.message || "Failed to fetch attendance records",
@@ -178,6 +190,13 @@ const AttendanceManagement = () => {
           />
         </div>
       </div>
+
+      {/* Display error message if fetching failed */}
+      {fetchError && (
+        <div className="bg-red-100 text-red-800 rounded px-4 py-2 mb-4">
+          Attendance fetch failed: {fetchError}
+        </div>
+      )}
 
       {/* Edit Modal */}
       <AttendanceEditModal
