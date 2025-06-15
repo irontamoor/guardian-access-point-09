@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { UserCheck, UserX } from 'lucide-react';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
+import { useSignInOptions } from '@/hooks/useSignInOptions';
 
 const QUICK_REASONS = [
   "Late",
@@ -27,6 +27,7 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
     loading, setLoading,
     isValidCode, fetchStudentUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStudentAttendance();
+  const { options: quickReasons, loading: optionsLoading } = useSignInOptions("student");
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -162,15 +163,15 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
             disabled={loading}
           />
           <div className="flex flex-wrap gap-2 mt-1">
-            {QUICK_REASONS.map((reason) => (
+            {quickReasons.map((reason) => (
               <button
-                key={reason}
+                key={reason.id}
                 type="button"
                 className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-blue-100 text-gray-700"
-                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason : reason)}
+                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason.label : reason.label)}
                 disabled={loading}
               >
-                {reason}
+                {reason.label}
               </button>
             ))}
           </div>

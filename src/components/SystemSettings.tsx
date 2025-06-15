@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import SignInOptionsSettings from './SignInOptionsSettings';
 
 interface SystemSetting {
   id: string;
@@ -17,9 +18,7 @@ const SystemSettings = () => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  useEffect(() => { fetchSettings(); }, []);
 
   const fetchSettings = async () => {
     try {
@@ -27,10 +26,8 @@ const SystemSettings = () => {
         .from('system_settings')
         .select('*')
         .order('setting_key');
-
       if (error) throw error;
-      const settingsData = data || [];
-      setSettings(settingsData);
+      setSettings(data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -46,7 +43,7 @@ const SystemSettings = () => {
         <Settings className="h-6 w-6 text-purple-600" />
         <h2 className="text-2xl font-bold text-gray-900">System Settings</h2>
       </div>
-      {/* No school settings UI */}
+      <SignInOptionsSettings />
       <Card>
         <CardHeader>
           <CardTitle>No system settings configured yet</CardTitle>
@@ -60,4 +57,3 @@ const SystemSettings = () => {
 };
 
 export default SystemSettings;
-
