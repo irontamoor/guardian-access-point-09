@@ -1,19 +1,12 @@
 
-import { supabase } from "@/integrations/supabase/client";
-
-// Re-export types from the new modular structure
+// Re-export types from the modular structure
 export type { Student, Staff } from "./usePeopleData";
 export type { ActivityRecord } from "./useActivityFeedState";
 
-// Attendance map for typing convenience
-type AttendanceStatusMap = Record<
-  string,
-  { status: 'present' | 'absent'; check_in_time?: string; check_out_time?: string }
->;
-
-// MAIN HOOK
 import { usePeopleData } from "./usePeopleData";
 import { useActivityFeedState } from "./useActivityFeedState";
+import { useDataOperations } from "./data/useDataOperations";
+import { useAttendanceOperations } from "./data/useAttendanceOperations";
 
 export const useVMSData = () => {
   const {
@@ -25,54 +18,27 @@ export const useVMSData = () => {
   } = usePeopleData();
 
   const { recentActivity } = useActivityFeedState(students, staff);
+  const { addStudent, addStaff } = useDataOperations();
+  const { updateStudentStatus, updateStaffStatus } = useAttendanceOperations();
 
-  // Add student (system_users)
-  const addStudent = async (studentData: Omit<typeof students[0], 'status' | 'check_in_time' | 'check_out_time'>) => {
-    const { id, name, grade } = studentData;
-    const first_name = name.split(" ")[0] || name;
-    const last_name = name.split(" ").slice(1).join(" ") || ".";
-    const { error } = await supabase.from('system_users').insert({
-      id,
-      first_name,
-      last_name,
-      role: 'student'
-    });
-    if (error) throw error;
+  // Enhanced operations that include data reload
+  const addStudentWithReload = async (studentData: { id: string; name: string; grade: string }) => {
+    await addStudent(studentData);
     loadPeople();
   };
 
-  // Add staff (system_users)
-  const addStaff = async (staffData: Omit<typeof staff[0], 'status' | 'check_in_time' | 'check_out_time'>) => {
-    const { id, name, department } = staffData;
-    const first_name = name.split(" ")[0] || name;
-    const last_name = name.split(" ").slice(1).join(" ") || ".";
-    const { error } = await supabase.from('system_users').insert({
-      id,
-      first_name,
-      last_name,
-      role: 'staff'
-    });
-    if (error) throw error;
+  const addStaffWithReload = async (staffData: { id: string; name: string; department: string }) => {
+    await addStaff(staffData);
     loadPeople();
   };
 
-  // Update student attendance
-  const updateStudentStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
-    await supabase.from("attendance_records").insert({
-      user_id: userId,
-      status: status === "present" ? "in" : "out",
-      ...(status === "present" ? { check_in_time: time || new Date().toISOString() } : { check_out_time: time || new Date().toISOString() })
-    });
+  const updateStudentStatusWithReload = async (userId: string, status: 'present' | 'absent', time?: string) => {
+    await updateStudentStatus(userId, status, time);
     loadPeople();
   };
 
-  // Update staff attendance
-  const updateStaffStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
-    await supabase.from("attendance_records").insert({
-      user_id: userId,
-      status: status === "present" ? "in" : "out",
-      ...(status === "present" ? { check_in_time: time || new Date().toISOString() } : { check_out_time: time || new Date().toISOString() })
-    });
+  const updateStaffStatusWithReload = async (userId: string, status: 'present' | 'absent', time?: string) => {
+    await updateStaffStatus(userId, status, time);
     loadPeople();
   };
 
@@ -82,10 +48,10 @@ export const useVMSData = () => {
     recentActivity,
     loading,
     error,
-    addStudent,
-    addStaff,
-    updateStudentStatus,
-    updateStaffStatus,
+    addStudent: addStudentWithReload,
+    addStaff: addStaffWithReload,
+    updateStudentStatus: updateStudentStatusWithReload,
+    updateStaffStatus: updateStaffStatusWithReload,
     reload: loadPeople
   };
 };
