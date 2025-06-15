@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
 import UserManagement from './UserManagement';
 import AttendanceManagement from './AttendanceManagement';
-import SystemSettings from './SystemSettings';
 import Dashboard from './Dashboard';
 import AdminActivityDashboard from './AdminActivityDashboard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -240,7 +239,7 @@ const AdminDashboardTabs = ({
               </div>
             </div>
             <div className="flex-1 flex justify-center">
-              <TabsList className="grid w-full max-w-2xl grid-cols-6 h-12">
+              <TabsList className="grid w-full max-w-2xl grid-cols-5 h-12">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Overview</span>
@@ -256,10 +255,6 @@ const AdminDashboardTabs = ({
                 <TabsTrigger value="attendance" className="flex items-center space-x-2">
                   <Clock className="h-4 w-4" />
                   <span className="hidden sm:inline">Attendance</span>
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -322,9 +317,6 @@ const AdminDashboardTabs = ({
           </TabsContent>
           <TabsContent value="attendance" className="mt-0">
             <AttendanceManagement />
-          </TabsContent>
-          <TabsContent value="settings" className="mt-0">
-            <SystemSettings />
           </TabsContent>
         </div>
       </Tabs>
