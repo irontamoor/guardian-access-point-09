@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,11 +25,8 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4">
       <DashboardHeader
-        onBack={onBack}
         onLogout={onLogout}
         adminData={adminData}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
       />
       <div className="max-w-7xl mx-auto space-y-6">
         <DashboardMetrics
