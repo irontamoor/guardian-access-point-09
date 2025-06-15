@@ -7,12 +7,12 @@ export type SignInOption = {
   label: string;
   applies_to: "staff" | "student" | "both";
   is_active: boolean;
-  category: "sign_in" | "pickup_type";
+  category: "sign_in" | "pickup_type" | "visit_type";
 };
 
 export const useSignInOptions = (
   appliesTo: "staff" | "student" | "both" = "both",
-  category: "sign_in" | "pickup_type" = "sign_in"
+  category: "sign_in" | "pickup_type" | "visit_type" = "sign_in"
 ) => {
   const [options, setOptions] = useState<SignInOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +29,6 @@ export const useSignInOptions = (
       .or(`applies_to.eq.${appliesTo},applies_to.eq.both`);
     if (error) setError(error.message);
 
-    // Remap to satisfy type guard
-    // Ensure applies_to and category fields are correct types
     setOptions(
       (data || []).map((row) => ({
         id: row.id,
@@ -42,7 +40,11 @@ export const useSignInOptions = (
             ? "student"
             : "both",
         is_active: !!row.is_active,
-        category: row.category === "pickup_type" ? "pickup_type" : "sign_in",
+        category: row.category === "pickup_type"
+          ? "pickup_type"
+          : row.category === "visit_type"
+          ? "visit_type"
+          : "sign_in",
       }))
     );
     setLoading(false);

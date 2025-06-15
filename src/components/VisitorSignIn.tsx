@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [badgeId, setBadgeId] = useState<string | null>(null); // To display the badge number after registration
+  const [showBadgeFlash, setShowBadgeFlash] = useState(false); // To show badge flash overlay
 
   // Helper: Find existing visitor by phone or email
   const findOrCreateVisitor = async () => {
@@ -146,6 +146,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
       // Simulate Badge ID
       const generatedBadgeId = 'VIS' + (visitor.id.substring(0, 4).toUpperCase());
       setBadgeId(generatedBadgeId);
+      setShowBadgeFlash(true); // trigger badge flash overlay
 
       toast({
         title: "Visitor Registered!",
@@ -153,7 +154,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
         variant: "default"
       });
 
-      // Reset form
+      // Reset form fields (except badge id)
       setVisitorData({
         name: '',
         company: '',
@@ -254,9 +255,35 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
     }
   };
 
+  // Overlay flash badge component
+  const BadgeFlashModal = () => {
+    if (!badgeId || !showBadgeFlash) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-all animate-fade-in">
+        <div className="bg-white rounded-lg px-8 py-8 max-w-sm shadow-xl border-2 border-purple-200 flex flex-col items-center space-y-4 animate-scale-in">
+          <div className="text-xl font-bold text-purple-700 mb-2">Visitor Badge Number</div>
+          <div className="p-4 rounded-md bg-purple-50 border border-purple-200 text-3xl font-mono font-semibold text-black animate-pulse select-all">
+            {badgeId}
+          </div>
+          <div className="text-gray-600 text-sm text-center">
+            <p>Write this number down to check out when you leave.</p>
+            <p className="text-gray-400">Tap Dismiss when done.</p>
+          </div>
+          <button
+            onClick={() => setShowBadgeFlash(false)}
+            className="w-full mt-2 py-2 rounded bg-purple-700 hover:bg-purple-800 text-white font-semibold text-lg transition"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-4">
+      <BadgeFlashModal />
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-6">
         <Button 
@@ -449,4 +476,3 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
 };
 
 export default VisitorSignIn;
-
