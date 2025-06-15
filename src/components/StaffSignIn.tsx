@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,9 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const [employeeId, setEmployeeId] = useState('');
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
+  // Helper: Validate UUID
+  const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
   // Helper: Validate employee by id in DB
   const fetchStaffUser = async (id: string) => {
@@ -54,11 +56,21 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
+      if (!isValidUUID(employeeId)) {
+        toast({
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       const staff = await fetchStaffUser(employeeId);
       if (!staff) {
         toast({
-          title: "Not found",
-          description: "No staff found with that employee ID.",
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
           variant: "destructive"
         });
         setLoading(false);
@@ -74,9 +86,13 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       });
       setEmployeeId('');
     } catch (err: any) {
+      // Swap DB UUID error with friendly message
+      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
+        ? "User does not exist. See Admin Team."
+        : err.message;
       toast({
         title: "Error",
-        description: err.message,
+        description: msg,
         variant: "destructive"
       });
     } finally {
@@ -97,11 +113,21 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
+      if (!isValidUUID(employeeId)) {
+        toast({
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       const staff = await fetchStaffUser(employeeId);
       if (!staff) {
         toast({
-          title: "Not found",
-          description: "No staff found with that employee ID.",
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
           variant: "destructive"
         });
         setLoading(false);
@@ -117,9 +143,12 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       });
       setEmployeeId('');
     } catch (err: any) {
+      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
+        ? "User does not exist. See Admin Team."
+        : err.message;
       toast({
         title: "Error",
-        description: err.message,
+        description: msg,
         variant: "destructive"
       });
     } finally {

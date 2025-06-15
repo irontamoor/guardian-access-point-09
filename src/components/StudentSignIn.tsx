@@ -17,6 +17,9 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
+  // Helper: Validate UUID
+  const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
   // Helper: Validate student by id in DB
   const fetchStudentUser = async (id: string) => {
     const { data, error } = await supabase
@@ -53,11 +56,21 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         return;
       }
 
+      if (!isValidUUID(studentId)) {
+        toast({
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       const student = await fetchStudentUser(studentId);
       if (!student) {
         toast({
-          title: "Not found",
-          description: "No student found with that student ID.",
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
           variant: "destructive"
         });
         setLoading(false);
@@ -73,9 +86,13 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
       });
       setStudentId('');
     } catch (err: any) {
+      // Swap DB UUID error with friendly message
+      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
+        ? "User does not exist. See Admin Team."
+        : err.message;
       toast({
         title: "Error",
-        description: err.message,
+        description: msg,
         variant: "destructive"
       });
     } finally {
@@ -96,11 +113,21 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         return;
       }
 
+      if (!isValidUUID(studentId)) {
+        toast({
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       const student = await fetchStudentUser(studentId);
       if (!student) {
         toast({
-          title: "Not found",
-          description: "No student found with that student ID.",
+          title: "User does not exist",
+          description: "User does not exist. See Admin Team.",
           variant: "destructive"
         });
         setLoading(false);
@@ -116,9 +143,12 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
       });
       setStudentId('');
     } catch (err: any) {
+      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
+        ? "User does not exist. See Admin Team."
+        : err.message;
       toast({
         title: "Error",
-        description: err.message,
+        description: msg,
         variant: "destructive"
       });
     } finally {
