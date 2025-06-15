@@ -43,6 +43,48 @@ const AttendanceManagement = () => {
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const { toast } = useToast();
 
+  // Debug info state (like AttendanceRecordsTable)
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // Debug info fetch effect (run once on mount)
+  useEffect(() => {
+    async function debugUser() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      let sysUser = null;
+      let roleRow = null;
+      if (user) {
+        // Find corresponding system_user
+        const { data: sysUserData } = await supabase
+          .from("system_users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        sysUser = sysUserData;
+
+        // Find admin role assignment
+        const { data: roleRowData } = await supabase
+          .from("user_role_assignments")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("role", "admin");
+        roleRow = roleRowData;
+      }
+      setDebugInfo({
+        supabaseUser: user,
+        supabaseUserError: error,
+        systemUser: sysUser,
+        adminRoleAssignments: roleRow,
+      });
+      // Optional: console logs for debugging
+      console.log("[AttendanceManagement] Supabase User:", user, error);
+      console.log("[AttendanceManagement] system_users row:", sysUser);
+      console.log("[AttendanceManagement] admin role assignments:", roleRow);
+    }
+    debugUser();
+  }, []);
+
   useEffect(() => {
     fetchSystemUsers();
   }, []);
@@ -197,6 +239,37 @@ const AttendanceManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Debug Info Toggle/Button */}
+      <div className="mb-2">
+        <button
+          className="text-xs text-gray-500 underline mb-1"
+          onClick={() => setShowDebug((v) => !v)}
+          type="button"
+        >
+          {showDebug ? "Hide Debug Info" : "Show Debug Info"}
+        </button>
+        {showDebug && (
+          <div className="bg-gray-100 border rounded p-3 mb-2 text-xs max-w-full overflow-x-auto">
+            <div>
+              <strong>Supabase User:</strong>
+              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUser, null, 2)}</pre>
+            </div>
+            <div>
+              <strong>Supabase User Error:</strong>
+              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUserError, null, 2)}</pre>
+            </div>
+            <div>
+              <strong>System User (system_users row):</strong>
+              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.systemUser, null, 2)}</pre>
+            </div>
+            <div>
+              <strong>Admin Role Assignments:</strong>
+              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.adminRoleAssignments, null, 2)}</pre>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-3">
           <Clock className="h-6 w-6 text-green-600" />
