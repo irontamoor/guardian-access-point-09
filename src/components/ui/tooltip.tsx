@@ -1,12 +1,14 @@
 
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
-
 import { cn } from "@/lib/utils"
 
 // Always use TooltipProvider as a JSX component, not a function!
-const TooltipProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <TooltipPrimitive.Provider>
+// FIX: Allow passing all TooltipPrimitive.Provider props (like delayDuration)
+type TooltipProviderProps = React.ComponentProps<typeof TooltipPrimitive.Provider>;
+
+const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, ...props }) => (
+  <TooltipPrimitive.Provider {...props}>
     {children}
   </TooltipPrimitive.Provider>
 );
@@ -31,4 +33,3 @@ const TooltipContent = React.forwardRef<
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
-
