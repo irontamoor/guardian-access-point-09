@@ -27,6 +27,7 @@ const UserManagement = () => {
     email: "",
     phone: "",
     id: "",
+    user_code: "",
     role: "student" as UserRole,
     status: "active" as UserStatus,
     password: "",
@@ -61,6 +62,15 @@ const UserManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Validate user_code is set
+      if (!formData.user_code) {
+        toast({
+          title: "Error",
+          description: "User Code (ID) is required",
+          variant: "destructive"
+        });
+        return;
+      }
       if (editingUser) {
         // Update existing user
         const { error } = await supabase
@@ -70,6 +80,7 @@ const UserManagement = () => {
             last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone || null,
+            user_code: formData.user_code,
             role: formData.role,
             status: formData.status,
             updated_at: new Date().toISOString(),
@@ -85,15 +96,16 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user - id is now always required!
+        // Create new user - id is still required (should be uuid), but user_code is the human-friendly ID
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
-            id: formData.id, // Must always be provided
+            id: formData.id, // Must always be provided (uuid/hidden)
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone || null,
+            user_code: formData.user_code,
             role: formData.role,
             status: formData.status
           })
@@ -159,6 +171,7 @@ const UserManagement = () => {
       email: "",
       phone: "",
       id: "",
+      user_code: "",
       role: "student",
       status: "active",
       password: ""
@@ -174,6 +187,7 @@ const UserManagement = () => {
       email: user.email || '',
       phone: user.phone || '',
       id: user.id || '',
+      user_code: user.user_code || '',
       role: user.role,
       status: user.status,
       password: ""
@@ -258,6 +272,7 @@ const UserManagement = () => {
                     email: "",
                     phone: "",
                     id: "",
+                    user_code: "",
                     role: allRoles[0] as UserRole || "student",
                     status: "active",
                     password: "",
@@ -334,15 +349,27 @@ const UserManagement = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="id">ID<span className="text-red-600">*</span></Label>
+                  <Label htmlFor="user_code">User Code (Staff/Student ID)<span className="text-red-600">*</span></Label>
+                  <Input
+                    id="user_code"
+                    value={formData.user_code}
+                    onChange={(e) => setFormData(prev => ({ ...prev, user_code: e.target.value }))}
+                    placeholder="Enter unique code"
+                    required
+                  />
+                  <p className="text-xs text-gray-500">Must be unique among active users.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="id">Database UUID (Hidden / Optional)</Label>
                   <Input
                     id="id"
                     value={formData.id}
                     onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
-                    placeholder="Enter unique ID"
-                    required
-                    disabled={!!editingUser} // Prevent editing id on update
+                    placeholder="Auto or generated UUID"
+                    disabled={!!editingUser}
                   />
+                  <p className="text-xs text-gray-400">Auto-generated or manually set. Not used for sign-in.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -418,7 +445,8 @@ const UserManagement = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>ID</TableHead>
+                  <TableHead>User Code</TableHead>
+                  <TableHead>Database UUID</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -429,7 +457,8 @@ const UserManagement = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell className="capitalize">{user.role}</TableCell>
                     <TableCell className="capitalize">{user.status}</TableCell>
-                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.user_code}</TableCell>
+                    <TableCell className="break-all">{user.id}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
@@ -452,7 +481,7 @@ const UserManagement = () => {
                 ))}
                 {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <div className="text-center text-gray-400 py-4">
                         No users found for this role.
                       </div>

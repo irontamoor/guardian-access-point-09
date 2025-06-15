@@ -13,20 +13,21 @@ interface StudentSignInProps {
 }
 
 const StudentSignIn = ({ onBack }: StudentSignInProps) => {
-  const [studentId, setStudentId] = useState('');
+  const [studentCode, setStudentCode] = useState('');
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  // Helper: Validate UUID
-  const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  // Validate student code: any non-empty string
+  const isValidCode = (str: string) => !!str.trim();
 
-  // Helper: Validate student by id in DB
-  const fetchStudentUser = async (id: string) => {
+  // Fetch active student by code
+  const fetchStudentUser = async (code: string) => {
     const { data, error } = await supabase
       .from("system_users")
       .select("*")
-      .eq("id", id)
+      .eq("user_code", code)
       .eq("role", "student")
+      .eq("status", "active")
       .maybeSingle();
     if (error) throw error;
     return data;
@@ -65,7 +66,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const handleSignIn = async () => {
     setLoading(true);
     try {
-      if (!studentId) {
+      if (!isValidCode(studentCode)) {
         toast({
           title: "Error",
           description: "Please enter a student ID",
@@ -75,17 +76,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         return;
       }
 
-      if (!isValidUUID(studentId)) {
-        toast({
-          title: "User does not exist",
-          description: "User does not exist. See Admin Team.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const student = await fetchStudentUser(studentId);
+      const student = await fetchStudentUser(studentCode);
       if (!student) {
         toast({
           title: "User does not exist",
@@ -96,19 +87,16 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         return;
       }
 
-      await createAttendanceRecord(studentId, "in");
+      await createAttendanceRecord(student.id, "in");
 
       toast({
         title: "Success!",
-        description: `Student ${studentId} signed in successfully`,
+        description: `Student ${studentCode} signed in successfully`,
         variant: "default"
       });
-      setStudentId('');
+      setStudentCode('');
     } catch (err: any) {
-      // Swap DB UUID error with friendly message
-      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
-        ? "User does not exist. See Admin Team."
-        : err.message;
+      const msg = err?.message || "Unknown error.";
       toast({
         title: "Error",
         description: msg,
@@ -122,7 +110,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const handleSignOut = async () => {
     setLoading(true);
     try {
-      if (!studentId) {
+      if (!isValidCode(studentCode)) {
         toast({
           title: "Error",
           description: "Please enter a student ID",
@@ -132,17 +120,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
         return;
       }
 
-      if (!isValidUUID(studentId)) {
-        toast({
-          title: "User does not exist",
-          description: "User does not exist. See Admin Team.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const student = await fetchStudentUser(studentId);
+      const student = await fetchStudentUser(studentCode);
       if (!student) {
         toast({
           title: "User does not exist",
@@ -154,9 +132,9 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
       }
 
       // Check if they signed in today
-      const signedInToday = await hasTodaySignIn(studentId);
+      const signedInToday = await hasTodaySignIn(student.id);
 
-      await createAttendanceRecord(studentId, "out");
+      await createAttendanceRecord(student.id, "out");
 
       if (!signedInToday) {
         toast({
@@ -167,15 +145,13 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
       } else {
         toast({
           title: "Success!",
-          description: `Student ${studentId} signed out successfully`,
+          description: `Student ${studentCode} signed out successfully`,
           variant: "default"
         });
       }
-      setStudentId('');
+      setStudentCode('');
     } catch (err: any) {
-      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
-        ? "User does not exist. See Admin Team."
-        : err.message;
+      const msg = err?.message || "Unknown error.";
       toast({
         title: "Error",
         description: msg,
@@ -218,17 +194,16 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID</Label>
+              <Label htmlFor="studentCode">Student ID</Label>
               <Input
-                id="studentId"
+                id="studentCode"
                 placeholder="Enter student ID"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
+                value={studentCode}
+                onChange={(e) => setStudentCode(e.target.value)}
                 className="w-full"
                 disabled={loading}
               />
             </div>
-
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleSignIn}

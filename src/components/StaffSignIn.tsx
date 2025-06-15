@@ -13,20 +13,21 @@ interface StaffSignInProps {
 }
 
 const StaffSignIn = ({ onBack }: StaffSignInProps) => {
-  const [employeeId, setEmployeeId] = useState('');
+  const [employeeCode, setEmployeeCode] = useState('');
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  // Helper: Validate UUID
-  const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  // Validate staff code: any non-empty string
+  const isValidCode = (str: string) => !!str.trim();
 
-  // Helper: Validate employee by id in DB
-  const fetchStaffUser = async (id: string) => {
+  // Fetch active staff by code
+  const fetchStaffUser = async (code: string) => {
     const { data, error } = await supabase
       .from("system_users")
       .select("*")
-      .eq("id", id)
+      .eq("user_code", code)
       .eq("role", "staff")
+      .eq("status", "active")
       .maybeSingle();
     if (error) throw error;
     return data;
@@ -65,7 +66,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const handleSignIn = async () => {
     setLoading(true);
     try {
-      if (!employeeId) {
+      if (!isValidCode(employeeCode)) {
         toast({
           title: "Error",
           description: "Please enter an employee ID",
@@ -75,17 +76,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
-      if (!isValidUUID(employeeId)) {
-        toast({
-          title: "User does not exist",
-          description: "User does not exist. See Admin Team.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const staff = await fetchStaffUser(employeeId);
+      const staff = await fetchStaffUser(employeeCode);
       if (!staff) {
         toast({
           title: "User does not exist",
@@ -96,19 +87,16 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
-      await createAttendanceRecord(employeeId, "in");
+      await createAttendanceRecord(staff.id, "in");
 
       toast({
         title: "Welcome!",
-        description: `Employee ${employeeId} signed in successfully`,
+        description: `Employee ${employeeCode} signed in successfully`,
         variant: "default"
       });
-      setEmployeeId('');
+      setEmployeeCode('');
     } catch (err: any) {
-      // Swap DB UUID error with friendly message
-      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
-        ? "User does not exist. See Admin Team."
-        : err.message;
+      const msg = err?.message || "Unknown error.";
       toast({
         title: "Error",
         description: msg,
@@ -122,7 +110,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const handleSignOut = async () => {
     setLoading(true);
     try {
-      if (!employeeId) {
+      if (!isValidCode(employeeCode)) {
         toast({
           title: "Error",
           description: "Please enter an employee ID",
@@ -132,17 +120,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
-      if (!isValidUUID(employeeId)) {
-        toast({
-          title: "User does not exist",
-          description: "User does not exist. See Admin Team.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const staff = await fetchStaffUser(employeeId);
+      const staff = await fetchStaffUser(employeeCode);
       if (!staff) {
         toast({
           title: "User does not exist",
@@ -154,9 +132,9 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       }
 
       // Check if they signed in today
-      const signedInToday = await hasTodaySignIn(employeeId);
+      const signedInToday = await hasTodaySignIn(staff.id);
 
-      await createAttendanceRecord(employeeId, "out");
+      await createAttendanceRecord(staff.id, "out");
 
       if (!signedInToday) {
         toast({
@@ -167,15 +145,13 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
       } else {
         toast({
           title: "Have a great day!",
-          description: `Employee ${employeeId} signed out successfully`,
+          description: `Employee ${employeeCode} signed out successfully`,
           variant: "default"
         });
       }
-      setEmployeeId('');
+      setEmployeeCode('');
     } catch (err: any) {
-      const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
-        ? "User does not exist. See Admin Team."
-        : err.message;
+      const msg = err?.message || "Unknown error.";
       toast({
         title: "Error",
         description: msg,
@@ -217,16 +193,15 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID</Label>
+              <Label htmlFor="employeeCode">Employee ID</Label>
               <Input
-                id="employeeId"
+                id="employeeCode"
                 placeholder="Enter employee ID"
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
+                value={employeeCode}
+                onChange={(e) => setEmployeeCode(e.target.value)}
                 disabled={loading}
               />
             </div>
-
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleSignIn}
