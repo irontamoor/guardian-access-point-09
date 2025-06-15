@@ -49,10 +49,17 @@ const AdminActivityDashboard = () => {
       return;
     }
 
-    console.log("Fetched users:", users);
-    console.log("Fetched attendance records:", attendance);
+    // Deep debugging: Log user IDs and attendance record user_ids
+    console.log("Fetched users:", users?.map(u => ({id: u.id, role: u.role, status: u.status, name: `${u.first_name} ${u.last_name}`})));
+    console.log("Fetched attendance records:", (attendance || []).map(a => ({
+      id: a.id,
+      user_id: a.user_id,
+      status: a.status,
+      check_in_time: a.check_in_time,
+      check_out_time: a.check_out_time
+    })));
 
-    // Map latest attendance record per user
+    // Map latest attendance record per user (by user_id)
     const attendanceMap: Record<string, AttendanceRecord> = {};
     (attendance || []).forEach((row: any) => {
       if (!attendanceMap[row.user_id]) {
@@ -60,53 +67,63 @@ const AdminActivityDashboard = () => {
       }
     });
 
-    // Pickup queue: students who are "in" and NOT checked out
+    // Detailed review of attendance mapping
+    Object.entries(attendanceMap).forEach(([uid, rec]) => {
+      console.log(`Attendance for user_id ${uid}:`, rec);
+    });
+
+    // Pickup queue: students with status "in" and NOT checked out, show mapping process
     const pickupList: UserStatus[] = (users || [])
-      .filter((u) => u.role === "student")
+      .filter((u) => u.role === "student" && u.status === "active")
       .map((stu) => {
         const att = attendanceMap[stu.id];
-        // Only present if last record is status "in" and check_out_time is empty
+        const inStatus = att && att.status === "in" && !att.check_out_time;
+        console.log(`Student "${stu.first_name} ${stu.last_name}" (id: ${stu.id}) attendance status:`, att?.status, "inStatus:", inStatus);
         return {
           id: stu.id,
           name: `${stu.first_name} ${stu.last_name}`,
           role: "student",
-          inStatus: att && att.status === "in" && !att.check_out_time,
+          inStatus: inStatus,
           departmentOrGrade: stu.id,
         };
       })
       .filter((s) => s.inStatus);
 
     setPickupQueue(pickupList);
+    console.log("Final pickupQueue (students in):", pickupList);
 
-    // Staff in: staff members who are "in" and NOT checked out
+    // Staff in: staff members who are "in" and NOT checked out, use status:"active"
     const staffInList: UserStatus[] = (users || [])
-      .filter((u) => u.role === "staff")
+      .filter((u) => u.role === "staff" && u.status === "active")
       .map((staff) => {
         const att = attendanceMap[staff.id];
+        const inStatus = att && att.status === "in" && !att.check_out_time;
+        console.log(`Staff "${staff.first_name} ${staff.last_name}" (id: ${staff.id}) attendance status:`, att?.status, "inStatus:", inStatus);
         return {
           id: staff.id,
           name: `${staff.first_name} ${staff.last_name}`,
           role: "staff",
-          inStatus: att && att.status === "in" && !att.check_out_time,
+          inStatus: inStatus,
           departmentOrGrade: staff.id,
         };
       })
       .filter((s) => s.inStatus);
 
-    console.log("Staff In List after processing:", staffInList);
-
     setStaffIn(staffInList);
+    console.log("Final staffIn (staff in):", staffInList);
 
     // Visitors in: role: 'visitor', status: "in" and no check_out_time
     const visitorInList: UserStatus[] = (users || [])
-      .filter((u) => u.role === "visitor")
+      .filter((u) => u.role === "visitor" && u.status === "active")
       .map((visitor) => {
         const att = attendanceMap[visitor.id];
+        const inStatus = att && att.status === "in" && !att.check_out_time;
+        console.log(`Visitor "${visitor.first_name} ${visitor.last_name}" (id: ${visitor.id}) attendance status:`, att?.status, "inStatus:", inStatus);
         return {
           id: visitor.id,
           name: `${visitor.first_name} ${visitor.last_name}`,
           role: "visitor",
-          inStatus: att && att.status === "in" && !att.check_out_time,
+          inStatus,
           company: att?.company ?? "",
           hostName: att?.host_name ?? "",
           purpose: att?.purpose ?? "",
@@ -116,6 +133,7 @@ const AdminActivityDashboard = () => {
 
     setVisitorIn(visitorInList);
     setLoading(false);
+    console.log("Final visitorIn (visitors in):", visitorInList);
   };
 
   useEffect(() => {
@@ -124,7 +142,6 @@ const AdminActivityDashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Refresh Button */}
       <div className="flex justify-end mb-2">
         <Button
           variant="outline"
