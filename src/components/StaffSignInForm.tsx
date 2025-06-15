@@ -1,22 +1,12 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { UserCheck, UserX, Badge } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
-
-// Quick pick reasons for sign-in/out
-const QUICK_REASONS = [
-  "Late",
-  "Medical Appointment",
-  "Personal Day",
-  "Meeting",
-  "Sick",
-  "Other"
-];
+import { StaffSignInHeader } from './staff-signin/StaffSignInHeader';
+import { EmployeeCodeInput } from './staff-signin/EmployeeCodeInput';
+import { StaffNotesInput } from './staff-signin/StaffNotesInput';
+import { StaffSignInButtons } from './staff-signin/StaffSignInButtons';
 
 interface StaffSignInFormProps {
   onSuccess?: () => void;
@@ -135,67 +125,24 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
 
   return (
     <Card className="border-l-4 border-l-green-500">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Badge className="h-5 w-5 text-green-600" />
-          <span>Employee Information</span>
-        </CardTitle>
-        <CardDescription>Enter your employee ID</CardDescription>
-      </CardHeader>
+      <StaffSignInHeader />
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="employeeCode">Employee ID</Label>
-          <Input
-            id="employeeCode"
-            placeholder="Enter employee ID"
-            value={employeeCode}
-            onChange={(e) => setEmployeeCode(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="notes">Reason / Comment</Label>
-          <Textarea
-            id="notes"
-            placeholder="E.g. Late, Medical Appointment"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={loading}
-            className="resize-none"
-          />
-          <div className="flex flex-wrap gap-2 mt-1">
-            {quickReasons.map((reason) => (
-              <button
-                key={reason.id}
-                type="button"
-                className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-green-100 text-gray-700"
-                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason.label : reason.label)}
-                disabled={loading}
-              >
-                {reason.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex space-x-3 pt-4">
-          <Button 
-            onClick={handleSignIn}
-            disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700"
-          >
-            <UserCheck className="h-4 w-4 mr-2" />
-            Sign In
-          </Button>
-          <Button 
-            onClick={handleSignOut}
-            disabled={loading}
-            variant="outline"
-            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-          >
-            <UserX className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
+        <EmployeeCodeInput 
+          value={employeeCode}
+          onChange={setEmployeeCode}
+          disabled={loading}
+        />
+        <StaffNotesInput
+          value={notes}
+          onChange={setNotes}
+          disabled={loading}
+          quickReasons={quickReasons}
+        />
+        <StaffSignInButtons
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          loading={loading}
+        />
       </CardContent>
     </Card>
   );

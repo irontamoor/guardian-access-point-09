@@ -1,20 +1,12 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { UserCheck, UserX } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
-
-const QUICK_REASONS = [
-  "Late",
-  "Medical Appointment",
-  "Bus Delay",
-  "Personal Reason",
-  "Other"
-];
+import { StudentSignInHeader } from './student-signin/StudentSignInHeader';
+import { StudentCodeInput } from './student-signin/StudentCodeInput';
+import { NotesInput } from './student-signin/NotesInput';
+import { SignInButtons } from './student-signin/SignInButtons';
 
 interface StudentSignInFormProps {
   onSuccess?: () => void;
@@ -133,68 +125,24 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
 
   return (
     <Card className="border-l-4 border-l-blue-500">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <UserCheck className="h-5 w-5 text-blue-600" />
-          <span>Student Information</span>
-        </CardTitle>
-        <CardDescription>Enter student ID</CardDescription>
-      </CardHeader>
+      <StudentSignInHeader />
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="studentCode">Student ID</Label>
-          <Input
-            id="studentCode"
-            placeholder="Enter student ID"
-            value={studentCode}
-            onChange={(e) => setStudentCode(e.target.value)}
-            className="w-full"
-            disabled={loading}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="notes">Reason / Comment</Label>
-          <Textarea
-            id="notes"
-            placeholder="E.g. Late, Medical Appointment"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="resize-none"
-            disabled={loading}
-          />
-          <div className="flex flex-wrap gap-2 mt-1">
-            {quickReasons.map((reason) => (
-              <button
-                key={reason.id}
-                type="button"
-                className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-blue-100 text-gray-700"
-                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason.label : reason.label)}
-                disabled={loading}
-              >
-                {reason.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex space-x-3 pt-4">
-          <Button 
-            onClick={handleSignIn}
-            disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700"
-          >
-            <UserCheck className="h-4 w-4 mr-2" />
-            Sign In
-          </Button>
-          <Button 
-            onClick={handleSignOut}
-            disabled={loading}
-            variant="outline"
-            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-          >
-            <UserX className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
+        <StudentCodeInput 
+          value={studentCode}
+          onChange={setStudentCode}
+          disabled={loading}
+        />
+        <NotesInput
+          value={notes}
+          onChange={setNotes}
+          disabled={loading}
+          quickReasons={quickReasons}
+        />
+        <SignInButtons
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          loading={loading}
+        />
       </CardContent>
     </Card>
   );

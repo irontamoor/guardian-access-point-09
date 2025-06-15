@@ -1,80 +1,43 @@
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
 
-export type SignInOption = {
+interface SignInOption {
   id: string;
   label: string;
-  applies_to: "staff" | "student" | "both";
-  is_active: boolean;
-  category: "sign_in" | "pickup_type" | "visit_type";
-};
+  category: string;
+}
 
-export const useSignInOptions = (
-  appliesTo: "staff" | "student" | "both" = "both",
-  category: "sign_in" | "pickup_type" | "visit_type" = "sign_in"
-) => {
+export function useSignInOptions(type: "student" | "staff") {
   const [options, setOptions] = useState<SignInOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const fetchOptions = async () => {
-    setLoading(true);
-    setError(null);
-    const { data, error } = await supabase
-      .from("sign_in_options")
-      .select("*")
-      .eq("is_active", true)
-      .eq("category", category)
-      .or(`applies_to.eq.${appliesTo},applies_to.eq.both`);
-    if (error) setError(error.message);
-
-    setOptions(
-      (data || []).map((row) => ({
-        id: row.id,
-        label: row.label,
-        applies_to:
-          row.applies_to === "staff"
-            ? "staff"
-            : row.applies_to === "student"
-            ? "student"
-            : "both",
-        is_active: !!row.is_active,
-        category: row.category === "pickup_type"
-          ? "pickup_type"
-          : row.category === "visit_type"
-          ? "visit_type"
-          : "sign_in",
-      }))
-    );
-    setLoading(false);
-  };
-
-  const addOption = async (
-    label: string,
-    applies_to: "staff" | "student" | "both" = "both",
-    category: "sign_in" | "pickup_type" = "sign_in"
-  ) => {
-    const { error } = await supabase.from("sign_in_options").insert([
-      { label, applies_to, category },
-    ]);
-    if (!error) await fetchOptions();
-    return error;
-  };
-
-  const deactivateOption = async (id: string) => {
-    const { error } = await supabase
-      .from("sign_in_options")
-      .update({ is_active: false })
-      .eq("id", id);
-    if (!error) await fetchOptions();
-    return error;
+  // Mock options for now - in a real app, these would come from the database
+  const defaultOptions: Record<string, SignInOption[]> = {
+    student: [
+      { id: "1", label: "Late", category: "attendance" },
+      { id: "2", label: "Medical Appointment", category: "medical" },
+      { id: "3", label: "Bus Delay", category: "transport" },
+      { id: "4", label: "Personal Reason", category: "personal" },
+      { id: "5", label: "Other", category: "other" }
+    ],
+    staff: [
+      { id: "1", label: "Late", category: "attendance" },
+      { id: "2", label: "Medical Appointment", category: "medical" },
+      { id: "3", label: "Personal Day", category: "personal" },
+      { id: "4", label: "Meeting", category: "work" },
+      { id: "5", label: "Sick", category: "medical" },
+      { id: "6", label: "Other", category: "other" }
+    ]
   };
 
   useEffect(() => {
-    fetchOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliesTo, category]);
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setOptions(defaultOptions[type] || []);
+      setLoading(false);
+    }, 100);
+  }, [type]);
 
-  return { options, loading, error, addOption, deactivateOption, fetchOptions };
-};
+  return { options, loading };
+}
