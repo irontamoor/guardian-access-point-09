@@ -32,7 +32,7 @@ export function AdminTabs({ adminData }: AdminTabsProps) {
       </TabsContent>
       
       <TabsContent value="settings">
-        <AdminSystemSettings />
+        <AdminSystemSettings adminData={adminData} />
       </TabsContent>
     </Tabs>
   );
