@@ -1,6 +1,6 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import type { Student, Staff } from "@/hooks/useVMSData";
+import type { Student, Staff } from "@/hooks/usePeopleData";
 
 interface DashboardLiveStatusBoardProps {
   staff: Staff[];
@@ -34,7 +34,7 @@ export const DashboardLiveStatusBoard = ({ students }: DashboardLiveStatusBoardP
                     Present
                   </div>
                   <div className="text-xs text-gray-500">
-                    Since {student.check_in_time}
+                    Since {student.check_in_time || 'N/A'}
                   </div>
                 </div>
               </div>

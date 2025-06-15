@@ -27,6 +27,85 @@ interface AdminDashboardTabsProps {
   };
 }
 
+const AdminDashboardTabs = ({
+  onBack,
+  onLogout,
+  adminData,
+}: AdminDashboardTabsProps) => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [dashboardViewType, setDashboardViewType] = useState<"admin_activity" | "live_activity" | "security_alerts">("admin_activity");
+  const [logoUrl] = useState<string | null>(null); // Logo moved to sidebar/header
+  const [companyName] = useState("Jamiaa Al-Hudaa");
+
+  const isAdminOrReader = adminData?.role === "admin" || adminData?.role === "reader";
+
+  // Layout: sidebar + main area horizontally, header fixed at top of main area
+  return (
+    <div className="bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen w-full">
+      <div className="flex w-full max-w-full mx-auto min-h-screen">
+        {/* Sidebar */}
+        <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Dashboard Header */}
+          <DashboardHeader onLogout={onLogout} adminData={adminData} />
+          <main className="flex-1 w-full px-3 md:px-8 py-8">
+            {/* Tabs content render conditionally, main page style container */}
+            <div className="w-full max-w-6xl mx-auto">
+              {activeTab === "overview" && (
+                isAdminOrReader ? (
+                  <UnifiedAdminDashboard 
+                    adminData={adminData}
+                    onLogout={onLogout}
+                    companyName={companyName}
+                    logoUrl={logoUrl}
+                  />
+                ) : (
+                  <div className="text-center text-gray-400 py-10">
+                    You do not have access to view the overview dashboard.
+                  </div>
+                )
+              )}
+              {activeTab === "dashboards" && (
+                isAdminOrReader ? (
+                  <div>
+                    <div className="mb-4 flex flex-wrap gap-2 items-center">
+                      <label htmlFor="dashboard-view-type" className="text-sm font-medium text-gray-700 mr-2">
+                        View:
+                      </label>
+                      <select
+                        id="dashboard-view-type"
+                        value={dashboardViewType}
+                        onChange={e => setDashboardViewType(e.target.value as any)}
+                        className="border border-gray-300 px-3 py-1 rounded text-sm"
+                      >
+                        <option value="admin_activity">Admin Activity</option>
+                        <option value="live_activity">Live Activity</option>
+                        {/* REMOVED: <option value="security_alerts">Security Alerts</option> */}
+                      </select>
+                    </div>
+                    {dashboardViewType === "admin_activity" && <AdminActivityDashboard />}
+                    {dashboardViewType === "live_activity" && <LiveActivityDashboard />}
+                    {/* REMOVED: {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />} */}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-10">
+                    You do not have access to view these dashboards.
+                  </div>
+                )
+              )}
+              {activeTab === "users" && <UserManagement />}
+              {activeTab === "attendance" && <AttendanceManagement />}
+              {activeTab === "settings" && <SystemSettings adminData={adminData} />}
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const UnifiedAdminDashboard = ({
   adminData,
   onLogout,
@@ -107,7 +186,7 @@ const LiveActivityDashboard = () => {
     id: stu.id,
     name: stu.name,
     grade: stu.grade,
-    check_in_time: stu.check_in_time,
+    check_in_time: stu.check_in_time || 'N/A',
   }));
 
   return (
@@ -191,84 +270,5 @@ const LiveActivityDashboard = () => {
 
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./dashboard/DashboardHeader";
-
-const AdminDashboardTabs = ({
-  onBack,
-  onLogout,
-  adminData,
-}: AdminDashboardTabsProps) => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [dashboardViewType, setDashboardViewType] = useState<"admin_activity" | "live_activity" | "security_alerts">("admin_activity");
-  const [logoUrl] = useState<string | null>(null); // Logo moved to sidebar/header
-  const [companyName] = useState("Jamiaa Al-Hudaa");
-
-  const isAdminOrReader = adminData?.role === "admin" || adminData?.role === "reader";
-
-  // Layout: sidebar + main area horizontally, header fixed at top of main area
-  return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen w-full">
-      <div className="flex w-full max-w-full mx-auto min-h-screen">
-        {/* Sidebar */}
-        <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* Dashboard Header */}
-          <DashboardHeader onLogout={onLogout} adminData={adminData} />
-          <main className="flex-1 w-full px-3 md:px-8 py-8">
-            {/* Tabs content render conditionally, main page style container */}
-            <div className="w-full max-w-6xl mx-auto">
-              {activeTab === "overview" && (
-                isAdminOrReader ? (
-                  <UnifiedAdminDashboard 
-                    adminData={adminData}
-                    onLogout={onLogout}
-                    companyName={companyName}
-                    logoUrl={logoUrl}
-                  />
-                ) : (
-                  <div className="text-center text-gray-400 py-10">
-                    You do not have access to view the overview dashboard.
-                  </div>
-                )
-              )}
-              {activeTab === "dashboards" && (
-                isAdminOrReader ? (
-                  <div>
-                    <div className="mb-4 flex flex-wrap gap-2 items-center">
-                      <label htmlFor="dashboard-view-type" className="text-sm font-medium text-gray-700 mr-2">
-                        View:
-                      </label>
-                      <select
-                        id="dashboard-view-type"
-                        value={dashboardViewType}
-                        onChange={e => setDashboardViewType(e.target.value as any)}
-                        className="border border-gray-300 px-3 py-1 rounded text-sm"
-                      >
-                        <option value="admin_activity">Admin Activity</option>
-                        <option value="live_activity">Live Activity</option>
-                        {/* REMOVED: <option value="security_alerts">Security Alerts</option> */}
-                      </select>
-                    </div>
-                    {dashboardViewType === "admin_activity" && <AdminActivityDashboard />}
-                    {dashboardViewType === "live_activity" && <LiveActivityDashboard />}
-                    {/* REMOVED: {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />} */}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 py-10">
-                    You do not have access to view these dashboards.
-                  </div>
-                )
-              )}
-              {activeTab === "users" && <UserManagement />}
-              {activeTab === "attendance" && <AttendanceManagement />}
-              {activeTab === "settings" && <SystemSettings adminData={adminData} />}
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default AdminDashboardTabs;

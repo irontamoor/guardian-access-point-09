@@ -12,7 +12,7 @@ export function buildActivityFeed(
       type: 'student' as const,
       name: s.name,
       action: 'Signed In',
-      time: s.check_in_time || '',
+      time: s.check_in_time || new Date().toLocaleTimeString(),
       status: 'success' as const
     })),
     ...staff.filter(s => s.status === "present").map(s => ({
@@ -20,7 +20,7 @@ export function buildActivityFeed(
       type: 'staff' as const,
       name: s.name,
       action: 'Signed In',
-      time: s.check_in_time || '',
+      time: s.check_in_time || new Date().toLocaleTimeString(),
       status: 'success' as const
     })),
   ];

@@ -8,6 +8,7 @@ export type Student = {
   name: string;
   grade: string;
   status: 'present' | 'absent';
+  check_in_time?: string;
 };
 
 export type Staff = {
@@ -15,6 +16,7 @@ export type Staff = {
   name: string;
   department: string;
   status: 'present' | 'absent';
+  check_in_time?: string;
 };
 
 export const usePeopleData = () => {
@@ -41,7 +43,8 @@ export const usePeopleData = () => {
         const student = parseStudent(user);
         return {
           ...student,
-          status: attendanceMap[user.id] || 'absent'
+          status: attendanceMap[user.id] || 'absent',
+          check_in_time: attendanceMap[user.id] === 'present' ? new Date().toLocaleTimeString() : undefined
         };
       });
 
@@ -49,7 +52,8 @@ export const usePeopleData = () => {
         const staffMember = parseStaff(user);
         return {
           ...staffMember,
-          status: attendanceMap[user.id] || 'absent'
+          status: attendanceMap[user.id] || 'absent',
+          check_in_time: attendanceMap[user.id] === 'present' ? new Date().toLocaleTimeString() : undefined
         };
       });
 

@@ -8,6 +8,7 @@ export type ActivityRecord = {
   action: string;
   time: string;
   type: 'student' | 'staff';
+  status: 'success' | 'warning' | 'info';
 };
 
 export const useActivityFeedState = (students: Student[], staff: Staff[]) => {
@@ -25,7 +26,8 @@ export const useActivityFeedState = (students: Student[], staff: Staff[]) => {
       name: person.name,
       action: 'signed in',
       time: new Date(Date.now() - index * 300000).toLocaleTimeString(), // 5 min intervals
-      type: person.type
+      type: person.type,
+      status: 'success' as const
     }));
 
     setRecentActivity(activity);

@@ -1,7 +1,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
-import type { ActivityRecord } from "@/hooks/useVMSData";
+import type { ActivityRecord } from "@/hooks/useActivityFeedState";
 
 interface DashboardActivityProps {
   recentActivity: ActivityRecord[];
