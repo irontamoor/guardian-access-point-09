@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { UserCheck, Hourglass, Users } from "lucide-react";
+import { UserCheck, Hourglass, Users, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -26,95 +27,108 @@ const AdminActivityDashboard = () => {
   const [visitorIn, setVisitorIn] = useState<UserStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      // 1. Get all users (students, staff, visitors)
-      const { data: users, error: userError } = await supabase
-        .from("system_users")
-        .select("*");
-      if (userError) {
-        setLoading(false);
-        return;
-      }
-
-      // 2. Get all recent attendance_events, most recent per user
-      const { data: attendance, error: attendanceError } = await supabase
-        .from("attendance_records")
-        .select("id, user_id, status, check_in_time, check_out_time, company, host_name, purpose")
-        .order("created_at", { ascending: false });
-      if (attendanceError) {
-        setLoading(false);
-        return;
-      }
-
-      const attendanceMap: Record<string, AttendanceRecord> = {};
-      (attendance || []).forEach((row: any) => {
-        if (!attendanceMap[row.user_id]) {
-          attendanceMap[row.user_id] = row;
-        }
-      });
-
-      // Pickup queue: all students with status "in" (present)
-      const pickupList: UserStatus[] = (users || [])
-        .filter((u) => u.role === "student")
-        .map((stu) => {
-          const att = attendanceMap[stu.id];
-          return {
-            id: stu.id,
-            name: `${stu.first_name} ${stu.last_name}`,
-            role: "student",
-            inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: stu.id,
-          };
-        })
-        .filter((s) => s.inStatus);
-
-      setPickupQueue(pickupList);
-
-      // Staff in: staff with status "in"
-      const staffInList: UserStatus[] = (users || [])
-        .filter((u) => u.role === "staff")
-        .map((staff) => {
-          const att = attendanceMap[staff.id];
-          return {
-            id: staff.id,
-            name: `${staff.first_name} ${staff.last_name}`,
-            role: "staff",
-            inStatus: att && att.status === "in" && !att.check_out_time,
-            departmentOrGrade: staff.id,
-          };
-        })
-        .filter((s) => s.inStatus);
-
-      setStaffIn(staffInList);
-
-      // Visitors in: role: 'visitor', status: "in" and no check_out_time
-      const visitorInList: UserStatus[] = (users || [])
-        .filter((u) => u.role === "visitor")
-        .map((visitor) => {
-          const att = attendanceMap[visitor.id];
-          return {
-            id: visitor.id,
-            name: `${visitor.first_name} ${visitor.last_name}`,
-            role: "visitor",
-            inStatus: att && att.status === "in" && !att.check_out_time,
-            company: att?.company ?? "",
-            hostName: att?.host_name ?? "",
-            purpose: att?.purpose ?? "",
-          };
-        })
-        .filter((v) => v.inStatus);
-
-      setVisitorIn(visitorInList);
+  // Extract fetch logic so it can be used in both useEffect and a refresh button
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    // 1. Get all users (students, staff, visitors)
+    const { data: users, error: userError } = await supabase
+      .from("system_users")
+      .select("*");
+    if (userError) {
       setLoading(false);
-    };
+      return;
+    }
 
+    // 2. Get all recent attendance_events, most recent per user
+    const { data: attendance, error: attendanceError } = await supabase
+      .from("attendance_records")
+      .select("id, user_id, status, check_in_time, check_out_time, company, host_name, purpose")
+      .order("created_at", { ascending: false });
+    if (attendanceError) {
+      setLoading(false);
+      return;
+    }
+
+    const attendanceMap: Record<string, AttendanceRecord> = {};
+    (attendance || []).forEach((row: any) => {
+      if (!attendanceMap[row.user_id]) {
+        attendanceMap[row.user_id] = row;
+      }
+    });
+
+    // Pickup queue: all students with status "in" (present)
+    const pickupList: UserStatus[] = (users || [])
+      .filter((u) => u.role === "student")
+      .map((stu) => {
+        const att = attendanceMap[stu.id];
+        return {
+          id: stu.id,
+          name: `${stu.first_name} ${stu.last_name}`,
+          role: "student",
+          inStatus: att && att.status === "in" && !att.check_out_time,
+          departmentOrGrade: stu.id,
+        };
+      })
+      .filter((s) => s.inStatus);
+
+    setPickupQueue(pickupList);
+
+    // Staff in: staff with status "in"
+    const staffInList: UserStatus[] = (users || [])
+      .filter((u) => u.role === "staff")
+      .map((staff) => {
+        const att = attendanceMap[staff.id];
+        return {
+          id: staff.id,
+          name: `${staff.first_name} ${staff.last_name}`,
+          role: "staff",
+          inStatus: att && att.status === "in" && !att.check_out_time,
+          departmentOrGrade: staff.id,
+        };
+      })
+      .filter((s) => s.inStatus);
+
+    setStaffIn(staffInList);
+
+    // Visitors in: role: 'visitor', status: "in" and no check_out_time
+    const visitorInList: UserStatus[] = (users || [])
+      .filter((u) => u.role === "visitor")
+      .map((visitor) => {
+        const att = attendanceMap[visitor.id];
+        return {
+          id: visitor.id,
+          name: `${visitor.first_name} ${visitor.last_name}`,
+          role: "visitor",
+          inStatus: att && att.status === "in" && !att.check_out_time,
+          company: att?.company ?? "",
+          hostName: att?.host_name ?? "",
+          purpose: att?.purpose ?? "",
+        };
+      })
+      .filter((v) => v.inStatus);
+
+    setVisitorIn(visitorInList);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, []);
 
   return (
     <div className="space-y-8">
+      {/* Refresh Button */}
+      <div className="flex justify-end mb-2">
+        <Button
+          variant="outline"
+          onClick={fetchDashboardData}
+          disabled={loading}
+          className="gap-2"
+        >
+          <RefreshCcw className="h-4 w-4" />
+          Refresh
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>
@@ -231,3 +245,4 @@ const AdminActivityDashboard = () => {
 };
 
 export default AdminActivityDashboard;
+
