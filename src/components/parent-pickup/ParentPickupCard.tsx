@@ -4,14 +4,20 @@ import { ParentPickupHeader } from './ParentPickupHeader';
 import { PickupForm } from './PickupForm';
 
 interface ParentPickupCardProps {
-  onSuccess?: () => void;
+  onBack?: () => void;
 }
 
-export function ParentPickupCard({ onSuccess }: ParentPickupCardProps) {
+export function ParentPickupCard({ onBack }: ParentPickupCardProps) {
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    }
+  };
+
   return (
     <Card className="border-l-4 border-l-orange-500">
-      <ParentPickupHeader />
-      <PickupForm onSuccess={onSuccess} />
+      <ParentPickupHeader onBack={handleBack} />
+      <PickupForm onBack={handleBack} />
     </Card>
   );
 }
