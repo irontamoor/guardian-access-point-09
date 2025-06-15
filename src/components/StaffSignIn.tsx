@@ -32,6 +32,25 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
     return data;
   };
 
+  // Helper: Check if staff has signed in today
+  const hasTodaySignIn = async (user_id: string) => {
+    const start = new Date();
+    start.setHours(0,0,0,0);
+    const end = new Date();
+    end.setHours(23,59,59,999);
+
+    const { data, error } = await supabase
+      .from("attendance_records")
+      .select("id")
+      .eq("user_id", user_id)
+      .eq("status", "in")
+      .gte("check_in_time", start.toISOString())
+      .lte("check_in_time", end.toISOString())
+      .maybeSingle();
+    if (error) return false;
+    return !!data;
+  };
+
   const createAttendanceRecord = async (user_id: string, status: "in" | "out") => {
     const now = new Date().toISOString();
     const payload = {
@@ -134,13 +153,24 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         return;
       }
 
+      // Check if they signed in today
+      const signedInToday = await hasTodaySignIn(employeeId);
+
       await createAttendanceRecord(employeeId, "out");
 
-      toast({
-        title: "Have a great day!",
-        description: `Employee ${employeeId} signed out successfully`,
-        variant: "default"
-      });
+      if (!signedInToday) {
+        toast({
+          title: "You forgot to sign in",
+          description: "Make sure to sign in.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Have a great day!",
+          description: `Employee ${employeeId} signed out successfully`,
+          variant: "default"
+        });
+      }
       setEmployeeId('');
     } catch (err: any) {
       const msg = (err?.message && err.message.includes("invalid input syntax for type uuid"))
