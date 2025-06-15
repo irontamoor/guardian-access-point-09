@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Car, User, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSignInOptions } from '@/hooks/useSignInOptions';
 
 interface ParentPickupProps {
   onBack: () => void;
@@ -25,6 +25,28 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
   const [notesError, setNotesError] = useState<string | null>(null);
   const [relationshipError, setRelationshipError] = useState<string | null>(null); // NEW STATE
   const { toast } = useToast();
+
+  // --- NEW: Load dynamic pickup types ---
+  const { options: pickupOptions, loading: pickupTypesLoading } = useSignInOptions("both", "pickup_type");
+
+  // Default hardcoded types, only for compatibility/fallback if none found
+  const fallbackTypes = [
+    { value: "regular", label: "Regular Pickup" },
+    { value: "early", label: "Early Dismissal" },
+    { value: "medical", label: "Medical Appointment" },
+    { value: "emergency", label: "Emergency Pickup" },
+    { value: "dropoff", label: "Drop-off Only" },
+    { value: "other", label: "Other" },
+  ];
+
+  // Build dynamic pickup type list, but always show at least fallback if none in DB
+  const pickupTypeOptions =
+    pickupOptions.length > 0
+      ? pickupOptions.map(o => ({
+          value: o.label.toLowerCase().replace(/\s+/g, "_"),
+          label: o.label,
+        }))
+      : fallbackTypes;
 
   const isOtherPicked = pickupData.pickupType === "other";
 
@@ -211,17 +233,20 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="pickupType">Pickup Type</Label>
-              <Select value={pickupData.pickupType} onValueChange={(value) => handleInputChange('pickupType', value)}>
+              <Select
+                value={pickupData.pickupType}
+                onValueChange={(value) => setPickupData(prev => ({ ...prev, pickupType: value }))}
+                disabled={pickupTypesLoading && pickupOptions.length === 0}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select pickup type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="regular">Regular Pickup</SelectItem>
-                  <SelectItem value="early">Early Dismissal</SelectItem>
-                  <SelectItem value="medical">Medical Appointment</SelectItem>
-                  <SelectItem value="emergency">Emergency Pickup</SelectItem>
-                  <SelectItem value="dropoff">Drop-off Only</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {pickupTypeOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

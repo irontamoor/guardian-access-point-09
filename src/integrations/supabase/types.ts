@@ -100,6 +100,7 @@ export type Database = {
       sign_in_options: {
         Row: {
           applies_to: string
+          category: string
           created_at: string
           id: string
           is_active: boolean
@@ -109,6 +110,7 @@ export type Database = {
         }
         Insert: {
           applies_to?: string
+          category?: string
           created_at?: string
           id?: string
           is_active?: boolean
@@ -118,6 +120,7 @@ export type Database = {
         }
         Update: {
           applies_to?: string
+          category?: string
           created_at?: string
           id?: string
           is_active?: boolean
