@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useEnumValues } from "@/hooks/useEnumValues";
+import { useVMSData } from "@/hooks/useVMSData";
+import { Switch } from "@/components/ui/switch";
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -32,6 +34,9 @@ const UserManagement = () => {
     password: "",
   });
   const { toast } = useToast();
+  const { updateStudentStatus, updateStaffStatus } = useVMSData();
+  const [attendanceStatusMap, setAttendanceStatusMap] = useState<Record<string, "present" | "absent">>({}); // track UI state
+  const [attendanceLoading, setAttendanceLoading] = useState<string | null>(null); // user id currently updating
 
   // New: role filter dropdown state
   const [selectedRole, setSelectedRole] = useState<string>("all");
@@ -225,6 +230,50 @@ const UserManagement = () => {
     selectedRole === "all"
       ? users
       : users.filter((u) => u.role === selectedRole);
+
+  useEffect(() => {
+    // Fetch the latest attendance for all users to show status checkboxes
+    const fetchUserAttendance = async () => {
+      try {
+        // Use attendance_records table to build last status map
+        const { data, error } = await supabase
+          .from("attendance_records")
+          .select("user_id, status")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        const seen: Record<string, "present" | "absent"> = {};
+        (data || []).forEach((a) => {
+          if (!(a.user_id in seen)) {
+            seen[a.user_id] = a.status === "in" ? "present" : "absent";
+          }
+        });
+        setAttendanceStatusMap(seen);
+      } catch (e: any) {
+        setAttendanceStatusMap({});
+      }
+    };
+    fetchUserAttendance();
+  }, [users]);
+
+  // Handler for attendance checkbox toggle
+  const handleStatusToggle = async (user: SystemUser, checked: boolean) => {
+    setAttendanceLoading(user.id);
+    try {
+      if (user.role === "student") {
+        await updateStudentStatus(user.id, checked ? "present" : "absent");
+      } else if (user.role === "staff") {
+        await updateStaffStatus(user.id, checked ? "present" : "absent");
+      }
+      // Set UI state
+      setAttendanceStatusMap((prev) => ({ ...prev, [user.id]: checked ? "present" : "absent" }));
+      toast({ title: "Attendance updated", description: `${user.first_name} ${user.last_name} is now marked as ${checked ? "present" : "absent"}` });
+    } catch (e: any) {
+      toast({ title: "Error", description: "Failed to update attendance: " + e.message, variant: "destructive" });
+    } finally {
+      setAttendanceLoading(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -445,6 +494,7 @@ const UserManagement = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>User Code</TableHead>
                   <TableHead>Database UUID</TableHead>
+                  <TableHead>Attendance</TableHead> {/* NEW COLUMN */}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -457,6 +507,15 @@ const UserManagement = () => {
                     <TableCell className="capitalize">{user.status}</TableCell>
                     <TableCell>{user.user_code}</TableCell>
                     <TableCell className="break-all">{user.id}</TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={attendanceStatusMap[user.id] === "present"}
+                        onCheckedChange={(checked) => handleStatusToggle(user, checked)}
+                        disabled={attendanceLoading === user.id}
+                        aria-label="Present/Absent switch"
+                      />
+                      <span className="text-xs ml-2">{attendanceStatusMap[user.id] === "present" ? "Present" : "Absent"}</span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
@@ -479,7 +538,7 @@ const UserManagement = () => {
                 ))}
                 {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <div className="text-center text-gray-400 py-4">
                         No users found for this role.
                       </div>

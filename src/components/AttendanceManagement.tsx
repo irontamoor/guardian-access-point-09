@@ -315,6 +315,9 @@ const AttendanceManagement = () => {
     return new Date(timestamp).toLocaleDateString();
   };
 
+  // MASS EDIT BUTTON UI
+  const hasSelection = selectedIds.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Debug Info Toggle/Button */}
@@ -385,6 +388,23 @@ const AttendanceManagement = () => {
         </div>
       )}
 
+      {/* --- MASS EDIT BUTTON --- */}
+      {hasSelection && (
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              onClick={openMassEdit}
+              className="flex gap-1"
+              disabled={isLoading}
+            >
+              Mass Edit {selectedIds.length} Record{selectedIds.length !== 1 && "s"}
+            </Button>
+            <span className="text-xs text-gray-500">You can update all selected attendance records</span>
+          </div>
+        </div>
+      )}
+
       {/* Mass Edit Modal */}
       <AttendanceMassEditModal
         open={massEditOpen}
@@ -410,8 +430,12 @@ const AttendanceManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Attendance Records{selectedDate !== 'all' ? ` - ${formatDate(selectedDate)}` : " (All Dates)"}</CardTitle>
-          <CardDescription>View and edit attendance records. {selectedDate === 'all' ? 'Showing all available records.' : 'Filtered by selected date.'}</CardDescription>
+          <CardTitle>
+            Attendance Records{selectedDate !== 'all' ? ` - ${formatDate(selectedDate)}` : " (All Dates)"}
+          </CardTitle>
+          <CardDescription>
+            View and edit attendance records. {selectedDate === 'all' ? 'Showing all available records.' : 'Filtered by selected date.'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <AttendanceTable
