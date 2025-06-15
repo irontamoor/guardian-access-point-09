@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { useVMSData } from '@/hooks/useVMSData';
 import DashboardHeader from "./dashboard/DashboardHeader"; // Fixed: default import
 import { DashboardMetrics } from "./dashboard/DashboardMetrics";
 import { DashboardActivity } from "./dashboard/DashboardActivity";
-import { DashboardSecurityAlerts } from "./dashboard/DashboardSecurityAlerts";
+// Removed import { DashboardSecurityAlerts } from "./dashboard/DashboardSecurityAlerts";
 import { DashboardLiveStatusBoard } from "./dashboard/DashboardLiveStatusBoard";
 
 interface DashboardProps {
@@ -37,7 +38,7 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
         />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <DashboardActivity recentActivity={recentActivity} />
-          <DashboardSecurityAlerts />
+          {/* REMOVED: <DashboardSecurityAlerts /> */}
         </div>
         <DashboardLiveStatusBoard staff={staff} students={students} />
       </div>
@@ -46,3 +47,4 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
 };
 
 export default Dashboard;
+

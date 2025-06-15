@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Clock, Settings, BarChart3, Hourglass } from 'lucide-react';
@@ -8,7 +9,7 @@ import AdminActivityDashboard from './AdminActivityDashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { DashboardMetrics } from './dashboard/DashboardMetrics';
 import { DashboardActivity } from './dashboard/DashboardActivity';
-import { DashboardSecurityAlerts } from './dashboard/DashboardSecurityAlerts';
+// Removed import { DashboardSecurityAlerts } from './dashboard/DashboardSecurityAlerts';
 import { DashboardLiveStatusBoard } from './dashboard/DashboardLiveStatusBoard';
 import { useVMSData } from '@/hooks/useVMSData';
 
@@ -82,7 +83,7 @@ const UnifiedAdminDashboard = ({
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 flex flex-col gap-6">
                 <DashboardActivity recentActivity={recentActivity} />
-                <DashboardSecurityAlerts />
+                {/* REMOVED: <DashboardSecurityAlerts /> */}
               </div>
             </div>
           </div>
@@ -246,12 +247,12 @@ const AdminDashboardTabs = ({
                       >
                         <option value="admin_activity">Admin Activity</option>
                         <option value="live_activity">Live Activity</option>
-                        <option value="security_alerts">Security Alerts</option>
+                        {/* REMOVED: <option value="security_alerts">Security Alerts</option> */}
                       </select>
                     </div>
                     {dashboardViewType === "admin_activity" && <AdminActivityDashboard />}
                     {dashboardViewType === "live_activity" && <LiveActivityDashboard />}
-                    {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />}
+                    {/* REMOVED: {dashboardViewType === "security_alerts" && <DashboardSecurityAlerts />} */}
                   </div>
                 ) : (
                   <div className="text-center text-gray-400 py-10">
@@ -270,3 +271,4 @@ const AdminDashboardTabs = ({
 };
 
 export default AdminDashboardTabs;
+
