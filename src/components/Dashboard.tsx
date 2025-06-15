@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, UserCheck, TrendingUp, Calendar, Download, AlertCircle, LogOut } from 'lucide-react';
 import { useVMSData } from '@/hooks/useVMSData';
-import { DashboardHeader } from "./dashboard/DashboardHeader";
+import DashboardHeader from "./dashboard/DashboardHeader"; // Fixed: default import
 import { DashboardMetrics } from "./dashboard/DashboardMetrics";
 import { DashboardActivity } from "./dashboard/DashboardActivity";
 import { DashboardSecurityAlerts } from "./dashboard/DashboardSecurityAlerts";
