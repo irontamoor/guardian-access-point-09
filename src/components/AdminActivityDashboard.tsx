@@ -49,6 +49,9 @@ const AdminActivityDashboard = () => {
       return;
     }
 
+    console.log("Fetched users:", users);
+    console.log("Fetched attendance records:", attendance);
+
     const attendanceMap: Record<string, AttendanceRecord> = {};
     (attendance || []).forEach((row: any) => {
       if (!attendanceMap[row.user_id]) {
@@ -87,6 +90,8 @@ const AdminActivityDashboard = () => {
         };
       })
       .filter((s) => s.inStatus);
+
+    console.log("Staff In List after processing:", staffInList);
 
     setStaffIn(staffInList);
 
@@ -245,4 +250,3 @@ const AdminActivityDashboard = () => {
 };
 
 export default AdminActivityDashboard;
-
