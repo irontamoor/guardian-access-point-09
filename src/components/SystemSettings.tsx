@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, Database, Save, School } from 'lucide-react';
+import { Settings, Save, School } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,13 +20,6 @@ interface SystemSetting {
 const SystemSettings = () => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [dbConnection, setDbConnection] = useState({
-    host: '',
-    port: '',
-    database: '',
-    username: '',
-    password: ''
-  });
   const [schoolSettings, setSchoolSettings] = useState({
     school_name: '',
     auto_signout_hours: ''
@@ -51,14 +45,6 @@ const SystemSettings = () => {
       // Parse specific settings
       settingsData.forEach((setting: SystemSetting) => {
         switch (setting.setting_key) {
-          case 'database_connection':
-            if (typeof setting.setting_value === 'object') {
-              setDbConnection(prev => ({
-                ...prev,
-                ...setting.setting_value
-              }));
-            }
-            break;
           case 'school_name':
             setSchoolSettings(prev => ({
               ...prev,
@@ -110,33 +96,14 @@ const SystemSettings = () => {
     }
   };
 
-  const handleSaveDatabaseSettings = async () => {
-    setIsLoading(true);
-    
-    const success = await updateSetting('database_connection', dbConnection);
-    
-    if (success) {
-      toast({
-        title: "Success",
-        description: "Database connection settings saved successfully",
-        variant: "default"
-      });
-      fetchSettings();
-    }
-    
-    setIsLoading(false);
-  };
-
   const handleSaveSchoolSettings = async () => {
     setIsLoading(true);
-    
     const updates = [
       updateSetting('school_name', schoolSettings.school_name),
       updateSetting('auto_signout_hours', parseInt(schoolSettings.auto_signout_hours) || 8)
     ];
 
     const results = await Promise.all(updates);
-    
     if (results.every(r => r)) {
       toast({
         title: "Success",
@@ -145,36 +112,7 @@ const SystemSettings = () => {
       });
       fetchSettings();
     }
-    
     setIsLoading(false);
-  };
-
-  const testDatabaseConnection = async () => {
-    setIsLoading(true);
-    
-    try {
-      // This is a mock test - in a real implementation, you'd test the actual connection
-      if (!dbConnection.host || !dbConnection.database) {
-        throw new Error('Please fill in required database connection fields');
-      }
-      
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Success",
-        description: "Database connection test successful",
-        variant: "default"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Connection Failed",
-        description: error.message || "Failed to connect to database",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -185,80 +123,6 @@ const SystemSettings = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Database Connection Settings */}
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Database className="h-5 w-5" />
-              <span>Database Connection</span>
-            </CardTitle>
-            <CardDescription>Configure external database connection settings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="db_host">Host</Label>
-              <Input
-                id="db_host"
-                placeholder="Database host address"
-                value={dbConnection.host}
-                onChange={(e) => setDbConnection(prev => ({ ...prev, host: e.target.value }))}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="db_port">Port</Label>
-                <Input
-                  id="db_port"
-                  placeholder="5432"
-                  value={dbConnection.port}
-                  onChange={(e) => setDbConnection(prev => ({ ...prev, port: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="db_name">Database</Label>
-                <Input
-                  id="db_name"
-                  placeholder="Database name"
-                  value={dbConnection.database}
-                  onChange={(e) => setDbConnection(prev => ({ ...prev, database: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="db_username">Username</Label>
-              <Input
-                id="db_username"
-                placeholder="Database username"
-                value={dbConnection.username}
-                onChange={(e) => setDbConnection(prev => ({ ...prev, username: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="db_password">Password</Label>
-              <Input
-                id="db_password"
-                type="password"
-                placeholder="Database password"
-                value={dbConnection.password}
-                onChange={(e) => setDbConnection(prev => ({ ...prev, password: e.target.value }))}
-              />
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <Button onClick={testDatabaseConnection} disabled={isLoading} variant="outline">
-                Test Connection
-              </Button>
-              <Button onClick={handleSaveDatabaseSettings} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* School Settings */}
         <Card className="border-l-4 border-l-green-500">
           <CardHeader>
@@ -338,3 +202,4 @@ const SystemSettings = () => {
 };
 
 export default SystemSettings;
+
