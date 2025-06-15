@@ -27,7 +27,7 @@ export function StaffNotesInput({ value, onChange, disabled, quickReasons }: Sta
             key={reason.id}
             type="button"
             className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-green-100 text-gray-700"
-            onClick={() => onChange((prev) => prev ? prev + ', ' + reason.label : reason.label)}
+            onClick={() => onChange(value ? value + ', ' + reason.label : reason.label)}
             disabled={disabled}
           >
             {reason.label}

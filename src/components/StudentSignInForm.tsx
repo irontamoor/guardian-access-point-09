@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
@@ -19,7 +18,7 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
     loading, setLoading,
     isValidCode, fetchStudentUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStudentAttendance();
-  const { options: quickReasons, loading: optionsLoading } = useSignInOptions("student");
+  const { options: quickReasons, loading: optionsLoading } = useSignInOptions("student", "sign_in");
 
   const handleSignIn = async () => {
     setLoading(true);

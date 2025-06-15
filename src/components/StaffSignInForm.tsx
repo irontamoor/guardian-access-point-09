@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
@@ -19,7 +18,7 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
     loading, setLoading,
     isValidCode, fetchStaffUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStaffAttendance();
-  const { options: quickReasons, loading: optionsLoading } = useSignInOptions("staff");
+  const { options: quickReasons, loading: optionsLoading } = useSignInOptions("staff", "sign_in");
 
   const handleSignIn = async () => {
     setLoading(true);
