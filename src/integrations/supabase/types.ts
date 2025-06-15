@@ -51,30 +51,39 @@ export type Database = {
         Row: {
           check_in_time: string | null
           check_out_time: string | null
+          company: string | null
           created_at: string
           created_by: string | null
+          host_name: string | null
           id: string
           notes: string | null
+          purpose: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           user_id: string
         }
         Insert: {
           check_in_time?: string | null
           check_out_time?: string | null
+          company?: string | null
           created_at?: string
           created_by?: string | null
+          host_name?: string | null
           id?: string
           notes?: string | null
+          purpose?: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           user_id: string
         }
         Update: {
           check_in_time?: string | null
           check_out_time?: string | null
+          company?: string | null
           created_at?: string
           created_by?: string | null
+          host_name?: string | null
           id?: string
           notes?: string | null
+          purpose?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           user_id?: string
         }

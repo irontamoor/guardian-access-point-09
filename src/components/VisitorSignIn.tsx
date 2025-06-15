@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, UserPlus, Shield, Printer, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface VisitorSignInProps {
   onBack: () => void;
@@ -24,47 +24,186 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
     visitType: ''
   });
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  // Helper: Find existing visitor by phone or email
+  const findOrCreateVisitor = async () => {
+    let visitor = null;
+    if (visitorData.phone || visitorData.email) {
+      // Try match by email (if provided), else by phone
+      let query = supabase.from("system_users").select("*").eq("role", "visitor");
+      if (visitorData.email) {
+        query = query.ilike("email", visitorData.email);
+      } else {
+        query = query.eq("phone", visitorData.phone);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      if (data) visitor = data;
+    }
+
+    // Create new if not found
+    if (!visitor) {
+      // First/last from name
+      const [first = "", ...last] = visitorData.name.split(" ");
+      const { data, error } = await supabase.from("system_users").insert({
+        first_name: first || visitorData.name,
+        last_name: last.join(" ") || ".",
+        phone: visitorData.phone || null,
+        email: visitorData.email || null,
+        role: "visitor",
+        status: "active"
+      }).select().single();
+      if (error) throw error;
+      visitor = data;
+    }
+    return visitor;
+  };
+
+  // Visitor attendance record
+  const createVisitorAttendance = async (visitor_id: string) => {
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("attendance_records").insert({
+      user_id: visitor_id,
+      status: "in",
+      check_in_time: now,
+      company: visitorData.company || null,
+      host_name: visitorData.hostName || null,
+      purpose: visitorData.purpose || null
+    });
+    if (error) throw error;
+  };
+
+  // Sign out: mark latest "in" attendance as out 
+  const visitorCheckOut = async (visitor_id: string) => {
+    // Find the latest "in" attendance record for this visitor
+    const { data: recs, error } = await supabase
+      .from("attendance_records")
+      .select("*")
+      .eq("user_id", visitor_id)
+      .eq("status", "in")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    const latestIn = recs && recs.length ? recs[0] : null;
+    if (latestIn) {
+      const now = new Date().toISOString();
+      const { error: updError } = await supabase
+        .from("attendance_records")
+        .update({
+          status: "out",
+          check_out_time: now
+        })
+        .eq("id", latestIn.id);
+      if (updError) throw updError;
+    } else {
+      throw new Error("No check-in found for this visitor to check out.");
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setVisitorData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRegisterVisitor = () => {
-    if (!visitorData.name || !visitorData.phone || !visitorData.hostName) {
+  const handleRegisterVisitor = async () => {
+    setLoading(true);
+    try {
+      if (!visitorData.name || !visitorData.phone || !visitorData.hostName) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Create/find visitor user in system_users
+      const visitor = await findOrCreateVisitor();
+
+      // Add their attendance event (with company, host, purpose)
+      await createVisitorAttendance(visitor.id);
+
+      // Simulate Badge ID
+      const badgeId = 'VIS' + (visitor.id.substring(0, 4).toUpperCase());
+
+      toast({
+        title: "Visitor Registered!",
+        description: `Badge ID: ${badgeId} - Please proceed to print visitor badge`,
+        variant: "default"
+      });
+
+      // Reset form
+      setVisitorData({
+        name: '',
+        company: '',
+        phone: '',
+        email: '',
+        hostName: '',
+        purpose: '',
+        visitType: ''
+      });
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: err.message,
         variant: "destructive"
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const badgeId = 'VIS' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    
-    toast({
-      title: "Visitor Registered!",
-      description: `Badge ID: ${badgeId} - Please proceed to print visitor badge`,
-      variant: "default"
-    });
-    
-    // Reset form
-    setVisitorData({
-      name: '',
-      company: '',
-      phone: '',
-      email: '',
-      hostName: '',
-      purpose: '',
-      visitType: ''
-    });
   };
 
-  const handleCheckOut = () => {
-    toast({
-      title: "Thank you for visiting!",
-      description: "Visitor checked out successfully",
-      variant: "default"
-    });
+  const handleCheckOut = async () => {
+    setLoading(true);
+    try {
+      // Must have phone or email to identify visitor
+      if (!visitorData.phone && !visitorData.email) {
+        toast({
+          title: "Error",
+          description: "Please enter the visitor's phone or email to check out.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      // Find visitor
+      let visitor = null;
+      let query = supabase.from("system_users").select("*").eq("role", "visitor");
+      if (visitorData.email) {
+        query = query.ilike("email", visitorData.email);
+      } else {
+        query = query.eq("phone", visitorData.phone);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error || !data) {
+        toast({
+          title: "Not found",
+          description: "No visitor found with provided info for check out.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      visitor = data;
+
+      // Update their latest attendance as signed out
+      await visitorCheckOut(visitor.id);
+
+      toast({
+        title: "Thank you for visiting!",
+        description: "Visitor checked out successfully",
+        variant: "default"
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -184,6 +323,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleRegisterVisitor}
+                disabled={loading}
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -191,6 +331,7 @@ const VisitorSignIn = ({ onBack }: VisitorSignInProps) => {
               </Button>
               <Button 
                 onClick={handleCheckOut}
+                disabled={loading}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >

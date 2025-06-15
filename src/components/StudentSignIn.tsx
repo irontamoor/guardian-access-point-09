@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, UserCheck, UserX, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 interface StudentSignInProps {
   onBack: () => void;
@@ -13,43 +15,115 @@ interface StudentSignInProps {
 const StudentSignIn = ({ onBack }: StudentSignInProps) => {
   const [studentId, setStudentId] = useState('');
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    if (!studentId) {
-      toast({
-        title: "Error",
-        description: "Please enter a student ID",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Success!",
-      description: `Student ${studentId} signed in successfully`,
-      variant: "default"
-    });
-    
-    setStudentId('');
+  // Helper: Validate student by id in DB
+  const fetchStudentUser = async (id: string) => {
+    const { data, error } = await supabase
+      .from("system_users")
+      .select("*")
+      .eq("id", id)
+      .eq("role", "student")
+      .maybeSingle();
+    if (error) throw error;
+    return data;
   };
 
-  const handleSignOut = () => {
-    if (!studentId) {
+  const createAttendanceRecord = async (user_id: string, status: "in" | "out") => {
+    const now = new Date().toISOString();
+    const payload = {
+      user_id,
+      status,
+      ...(status === "in" ? { check_in_time: now } : { check_out_time: now })
+    };
+    const { error } = await supabase.from("attendance_records").insert(payload);
+    if (error) throw error;
+  };
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    try {
+      if (!studentId) {
+        toast({
+          title: "Error",
+          description: "Please enter a student ID",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      const student = await fetchStudentUser(studentId);
+      if (!student) {
+        toast({
+          title: "Not found",
+          description: "No student found with that student ID.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      await createAttendanceRecord(studentId, "in");
+
+      toast({
+        title: "Success!",
+        description: `Student ${studentId} signed in successfully`,
+        variant: "default"
+      });
+      setStudentId('');
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Please enter a student ID",
+        description: err.message,
         variant: "destructive"
       });
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    toast({
-      title: "Success!",
-      description: `Student ${studentId} signed out successfully`,
-      variant: "default"
-    });
-    
-    setStudentId('');
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      if (!studentId) {
+        toast({
+          title: "Error",
+          description: "Please enter a student ID",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      const student = await fetchStudentUser(studentId);
+      if (!student) {
+        toast({
+          title: "Not found",
+          description: "No student found with that student ID.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      await createAttendanceRecord(studentId, "out");
+
+      toast({
+        title: "Success!",
+        description: `Student ${studentId} signed out successfully`,
+        variant: "default"
+      });
+      setStudentId('');
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,12 +165,14 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full"
+                disabled={loading}
               />
             </div>
 
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleSignIn}
+                disabled={loading}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <UserCheck className="h-4 w-4 mr-2" />
@@ -104,6 +180,7 @@ const StudentSignIn = ({ onBack }: StudentSignInProps) => {
               </Button>
               <Button 
                 onClick={handleSignOut}
+                disabled={loading}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >

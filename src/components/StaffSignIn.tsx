@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, UserCheck, UserX, Briefcase, Badge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 interface StaffSignInProps {
   onBack: () => void;
@@ -14,43 +16,115 @@ interface StaffSignInProps {
 const StaffSignIn = ({ onBack }: StaffSignInProps) => {
   const [employeeId, setEmployeeId] = useState('');
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    if (!employeeId) {
-      toast({
-        title: "Error",
-        description: "Please enter an employee ID",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Welcome!",
-      description: `Employee ${employeeId} signed in successfully`,
-      variant: "default"
-    });
-
-    setEmployeeId('');
+  // Helper: Validate employee by id in DB
+  const fetchStaffUser = async (id: string) => {
+    const { data, error } = await supabase
+      .from("system_users")
+      .select("*")
+      .eq("id", id)
+      .eq("role", "staff")
+      .maybeSingle();
+    if (error) throw error;
+    return data;
   };
 
-  const handleSignOut = () => {
-    if (!employeeId) {
+  const createAttendanceRecord = async (user_id: string, status: "in" | "out") => {
+    const now = new Date().toISOString();
+    const payload = {
+      user_id,
+      status,
+      ...(status === "in" ? { check_in_time: now } : { check_out_time: now })
+    };
+    const { error } = await supabase.from("attendance_records").insert(payload);
+    if (error) throw error;
+  };
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    try {
+      if (!employeeId) {
+        toast({
+          title: "Error",
+          description: "Please enter an employee ID",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      const staff = await fetchStaffUser(employeeId);
+      if (!staff) {
+        toast({
+          title: "Not found",
+          description: "No staff found with that employee ID.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      await createAttendanceRecord(employeeId, "in");
+
+      toast({
+        title: "Welcome!",
+        description: `Employee ${employeeId} signed in successfully`,
+        variant: "default"
+      });
+      setEmployeeId('');
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Please enter an employee ID",
+        description: err.message,
         variant: "destructive"
       });
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    toast({
-      title: "Have a great day!",
-      description: `Employee ${employeeId} signed out successfully`,
-      variant: "default"
-    });
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      if (!employeeId) {
+        toast({
+          title: "Error",
+          description: "Please enter an employee ID",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
 
-    setEmployeeId('');
+      const staff = await fetchStaffUser(employeeId);
+      if (!staff) {
+        toast({
+          title: "Not found",
+          description: "No staff found with that employee ID.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      await createAttendanceRecord(employeeId, "out");
+
+      toast({
+        title: "Have a great day!",
+        description: `Employee ${employeeId} signed out successfully`,
+        variant: "default"
+      });
+      setEmployeeId('');
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,7 +146,6 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
         </div>
         <p className="text-gray-600">Employee attendance and time tracking system</p>
       </div>
-
       <div className="max-w-md mx-auto">
         {/* Sign In/Out Form */}
         <Card className="border-l-4 border-l-green-500">
@@ -91,12 +164,14 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
                 placeholder="Enter employee ID"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
+                disabled={loading}
               />
             </div>
 
             <div className="flex space-x-3 pt-4">
               <Button 
                 onClick={handleSignIn}
+                disabled={loading}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <UserCheck className="h-4 w-4 mr-2" />
@@ -104,6 +179,7 @@ const StaffSignIn = ({ onBack }: StaffSignInProps) => {
               </Button>
               <Button 
                 onClick={handleSignOut}
+                disabled={loading}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >
