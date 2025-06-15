@@ -287,32 +287,6 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Emergency Protocols */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <span>Emergency Protocols</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 text-sm">
-              <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                <div className="font-medium text-red-800 mb-1">Unauthorized Pickup Attempt</div>
-                <div className="text-red-600">Contact school security immediately</div>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div className="font-medium text-yellow-800 mb-1">Student Not Found</div>
-                <div className="text-yellow-600">Check attendance & notify administration</div>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="font-medium text-blue-800 mb-1">Parent ID Required</div>
-                <div className="text-blue-600">Always verify parent/guardian identity</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
