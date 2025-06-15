@@ -40,7 +40,7 @@ export function SystemSettingsContent() {
         const settingValue = data[0].setting_value;
         // Type guard to ensure we have the correct structure
         if (settingValue && typeof settingValue === 'object' && !Array.isArray(settingValue)) {
-          const settings = settingValue as DashboardVisibility;
+          const settings = settingValue as unknown as DashboardVisibility;
           setVisibility(settings);
         }
       }
