@@ -196,7 +196,7 @@ const AdminDashboardTabs = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardViewType, setDashboardViewType] = useState<"admin_activity" | "live_activity" | "security_alerts">("admin_activity");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState("My Company");
+  const [companyName, setCompanyName] = useState("Jamiaa Al-Hudaa");
 
   // Pass down companyName setter to SystemSettings to sync with school_name
   // Remove the prop for now - SystemSettings does not accept onSchoolNameChange
