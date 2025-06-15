@@ -52,6 +52,7 @@ const AdminActivityDashboard = () => {
     console.log("Fetched users:", users);
     console.log("Fetched attendance records:", attendance);
 
+    // Map latest attendance record per user
     const attendanceMap: Record<string, AttendanceRecord> = {};
     (attendance || []).forEach((row: any) => {
       if (!attendanceMap[row.user_id]) {
@@ -59,11 +60,12 @@ const AdminActivityDashboard = () => {
       }
     });
 
-    // Pickup queue: all students with status "in" (present)
+    // Pickup queue: students who are "in" and NOT checked out
     const pickupList: UserStatus[] = (users || [])
       .filter((u) => u.role === "student")
       .map((stu) => {
         const att = attendanceMap[stu.id];
+        // Only present if last record is status "in" and check_out_time is empty
         return {
           id: stu.id,
           name: `${stu.first_name} ${stu.last_name}`,
@@ -76,7 +78,7 @@ const AdminActivityDashboard = () => {
 
     setPickupQueue(pickupList);
 
-    // Staff in: staff with status "in"
+    // Staff in: staff members who are "in" and NOT checked out
     const staffInList: UserStatus[] = (users || [])
       .filter((u) => u.role === "staff")
       .map((staff) => {
@@ -250,3 +252,4 @@ const AdminActivityDashboard = () => {
 };
 
 export default AdminActivityDashboard;
+

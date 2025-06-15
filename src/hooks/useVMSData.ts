@@ -57,6 +57,7 @@ async function getAttendanceMap(): Promise<AttendanceStatusMap> {
   const map: AttendanceStatusMap = {};
   (data || []).forEach((row: any) => {
     if (!map[row.user_id]) {
+      // Correctly map "in" to present and "out" to absent
       map[row.user_id] = {
         status: row.status === "in" ? "present" : "absent",
         check_in_time: row.check_in_time ?? undefined,
@@ -93,12 +94,12 @@ export const useVMSData = () => {
         getAttendanceMap()
       ]);
 
-      // Students (no longer any board_type)
+      // Students
       const studentsList: Student[] = studentRows.map(u => {
         const att = attendanceMap[u.id];
         return {
           ...parseStudent(u),
-          status: att ? att.status : "absent",
+          status: att && att.status === "present" ? "present" : "absent",
           check_in_time: att ? att.check_in_time : undefined,
           check_out_time: att ? att.check_out_time : undefined,
         };
@@ -110,7 +111,7 @@ export const useVMSData = () => {
         const att = attendanceMap[u.id];
         return {
           ...parseStaff(u),
-          status: att ? att.status : "absent",
+          status: att && att.status === "present" ? "present" : "absent",
           check_in_time: att ? att.check_in_time : undefined,
           check_out_time: att ? att.check_out_time : undefined,
         };
@@ -126,12 +127,10 @@ export const useVMSData = () => {
     }
   }, [getUsersByRole, getAttendanceMap]);
 
-  // Load all people/records on mount
   useEffect(() => {
     loadPeople();
   }, [loadPeople]);
 
-  // Generate recent activity
   useEffect(() => {
     setRecentActivity(buildActivityFeed(students, staff));
   }, [students, staff]);
@@ -202,3 +201,4 @@ export const useVMSData = () => {
     reload: () => { loadPeople(); }
   };
 };
+
