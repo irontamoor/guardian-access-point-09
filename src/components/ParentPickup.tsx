@@ -15,6 +15,7 @@ interface ParentPickupProps {
 const ParentPickup = ({ onBack }: ParentPickupProps) => {
   const [pickupData, setPickupData] = useState({
     parentName: '',
+    relationship: '', // NEW FIELD
     studentName: '',
     studentId: '',
     carRegistration: '',
@@ -22,6 +23,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
     notes: ''
   });
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [relationshipError, setRelationshipError] = useState<string | null>(null); // NEW STATE
   const { toast } = useToast();
 
   const isOtherPicked = pickupData.pickupType === "other";
@@ -31,6 +33,9 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
     if (field === "notes" && value.trim() !== "") {
       setNotesError(null);
     }
+    if (field === "relationship" && value.trim() !== "") {
+      setRelationshipError(null);
+    }
   };
 
   const validateNotes = () => {
@@ -39,6 +44,16 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       return false;
     }
     setNotesError(null);
+    return true;
+  };
+
+  // NEW VALIDATION for relationship
+  const validateRelationship = () => {
+    if (!pickupData.relationship.trim()) {
+      setRelationshipError("Relationship to student is required.");
+      return false;
+    }
+    setRelationshipError(null);
     return true;
   };
 
@@ -52,6 +67,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       });
       return;
     }
+    if (!validateRelationship()) return; // NEW: Check relationship
     if (!validateNotes()) return;
 
     toast({
@@ -63,6 +79,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
     // Reset form
     setPickupData({
       parentName: '',
+      relationship: '',
       studentName: '',
       studentId: '',
       carRegistration: '',
@@ -70,6 +87,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       notes: ''
     });
     setNotesError(null);
+    setRelationshipError(null);
   };
 
   const handleDropOff = () => {
@@ -82,6 +100,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       });
       return;
     }
+    if (!validateRelationship()) return; // NEW: Check relationship
     if (!validateNotes()) return;
 
     toast({
@@ -92,6 +111,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
 
     setPickupData({
       parentName: '',
+      relationship: '',
       studentName: '',
       studentId: '',
       carRegistration: '',
@@ -99,6 +119,7 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
       notes: ''
     });
     setNotesError(null);
+    setRelationshipError(null);
   };
 
   return (
@@ -140,6 +161,21 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
                 value={pickupData.parentName}
                 onChange={(e) => handleInputChange('parentName', e.target.value)}
               />
+            </div>
+            
+            {/* NEW RELATIONSHIP FIELD */}
+            <div className="space-y-2">
+              <Label htmlFor="relationship">Relationship to Student *</Label>
+              <Input
+                id="relationship"
+                placeholder="e.g. Mother, Uncle, Family Friend"
+                value={pickupData.relationship}
+                onChange={(e) => handleInputChange('relationship', e.target.value)}
+                className={relationshipError ? "border-red-500" : ""}
+              />
+              {relationshipError && (
+                <div className="text-red-600 text-sm mt-1">{relationshipError}</div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,4 +294,3 @@ const ParentPickup = ({ onBack }: ParentPickupProps) => {
 };
 
 export default ParentPickup;
-
