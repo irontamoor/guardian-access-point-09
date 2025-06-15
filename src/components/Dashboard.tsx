@@ -1,13 +1,10 @@
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, UserCheck, TrendingUp, Calendar, Download, AlertCircle, LogOut } from 'lucide-react';
 import { useVMSData } from '@/hooks/useVMSData';
-import DashboardHeader from "./dashboard/DashboardHeader"; // Fixed: default import
+import { DashboardLayout } from "./dashboard/DashboardLayout";
+import DashboardHeader from "./dashboard/DashboardHeader";
 import { DashboardMetrics } from "./dashboard/DashboardMetrics";
 import { DashboardActivity } from "./dashboard/DashboardActivity";
-// Removed import { DashboardSecurityAlerts } from "./dashboard/DashboardSecurityAlerts";
 import { DashboardLiveStatusBoard } from "./dashboard/DashboardLiveStatusBoard";
 
 interface DashboardProps {
@@ -24,27 +21,26 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
   const presentStaff = staff.filter((s) => s.status === "present").length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4">
+    <DashboardLayout>
       <DashboardHeader
         onLogout={onLogout}
         adminData={adminData}
       />
-      <div className="max-w-7xl mx-auto space-y-6">
-        <DashboardMetrics
-          presentStudents={presentStudents}
-          totalStudents={students.length}
-          presentStaff={presentStaff}
-          totalStaff={staff.length}
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DashboardActivity recentActivity={recentActivity} />
-          {/* REMOVED: <DashboardSecurityAlerts /> */}
-        </div>
-        <DashboardLiveStatusBoard staff={staff} students={students} />
+      
+      <DashboardMetrics
+        presentStudents={presentStudents}
+        totalStudents={students.length}
+        presentStaff={presentStaff}
+        totalStaff={staff.length}
+      />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DashboardActivity recentActivity={recentActivity} />
       </div>
-    </div>
+      
+      <DashboardLiveStatusBoard staff={staff} students={students} />
+    </DashboardLayout>
   );
 };
 
 export default Dashboard;
-

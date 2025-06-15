@@ -5,8 +5,7 @@ export type { ActivityRecord } from "./useActivityFeedState";
 
 import { usePeopleData } from "./usePeopleData";
 import { useActivityFeedState } from "./useActivityFeedState";
-import { useDataOperations } from "./data/useDataOperations";
-import { useAttendanceOperations } from "./data/useAttendanceOperations";
+import { useVMSOperations } from "./data/useVMSOperations";
 
 export const useVMSData = () => {
   const {
@@ -18,29 +17,7 @@ export const useVMSData = () => {
   } = usePeopleData();
 
   const { recentActivity } = useActivityFeedState(students, staff);
-  const { addStudent, addStaff } = useDataOperations();
-  const { updateStudentStatus, updateStaffStatus } = useAttendanceOperations();
-
-  // Enhanced operations that include data reload
-  const addStudentWithReload = async (studentData: { id: string; name: string; grade: string }) => {
-    await addStudent(studentData);
-    loadPeople();
-  };
-
-  const addStaffWithReload = async (staffData: { id: string; name: string; department: string }) => {
-    await addStaff(staffData);
-    loadPeople();
-  };
-
-  const updateStudentStatusWithReload = async (userId: string, status: 'present' | 'absent', time?: string) => {
-    await updateStudentStatus(userId, status, time);
-    loadPeople();
-  };
-
-  const updateStaffStatusWithReload = async (userId: string, status: 'present' | 'absent', time?: string) => {
-    await updateStaffStatus(userId, status, time);
-    loadPeople();
-  };
+  const vmsOperations = useVMSOperations(loadPeople);
 
   return {
     students,
@@ -48,10 +25,7 @@ export const useVMSData = () => {
     recentActivity,
     loading,
     error,
-    addStudent: addStudentWithReload,
-    addStaff: addStaffWithReload,
-    updateStudentStatus: updateStudentStatusWithReload,
-    updateStaffStatus: updateStaffStatusWithReload,
+    ...vmsOperations,
     reload: loadPeople
   };
 };

@@ -1,7 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAttendanceQueries } from "./useAttendanceQueries";
 
 export const useAttendanceData = () => {
+  const attendanceQueries = useAttendanceQueries();
+
   const fetchAttendanceRecords = async (filters?: any) => {
     let query = supabase
       .from("attendance_records")
@@ -60,5 +63,6 @@ export const useAttendanceData = () => {
     fetchAttendanceRecords,
     updateAttendanceRecord,
     deleteAttendanceRecord,
+    ...attendanceQueries,
   };
 };

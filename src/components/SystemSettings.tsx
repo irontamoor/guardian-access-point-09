@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SystemSettingsHeader } from './system-settings/SystemSettingsHeader';
+import { SystemSettingsContent } from './system-settings/SystemSettingsContent';
 import SignInOptionsSettings from './SignInOptionsSettings';
 
 interface SystemSetting {
@@ -38,20 +39,9 @@ const SystemSettings = ({ adminData }: { adminData: { role: string; [key: string
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Settings className="h-6 w-6 text-purple-600" />
-        <h2 className="text-2xl font-bold text-gray-900">System Settings</h2>
-      </div>
-      {/* Pass adminData down */}
+      <SystemSettingsHeader />
       <SignInOptionsSettings adminData={adminData} />
-      <Card>
-        <CardHeader>
-          <CardTitle>No system settings configured yet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-500">Once settings are added, they'll appear here.</p>
-        </CardContent>
-      </Card>
+      <SystemSettingsContent />
     </div>
   );
 };
