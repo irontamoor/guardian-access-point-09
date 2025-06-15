@@ -32,8 +32,12 @@ export function useDashboardVisibility() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const settings = data[0].setting_value as DashboardVisibility;
-        setVisibility(settings);
+        const settingValue = data[0].setting_value;
+        // Type guard to ensure we have the correct structure
+        if (settingValue && typeof settingValue === 'object' && !Array.isArray(settingValue)) {
+          const settings = settingValue as DashboardVisibility;
+          setVisibility(settings);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching visibility settings:', error);
