@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Car, User, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { PickupTypeSelect } from './PickupTypeSelect';
+import { PickupNotesInput } from './PickupNotesInput';
+import { PickupInfoFields } from './PickupInfoFields';
 
 export interface PickupFormProps {
   onBack: () => void;
@@ -149,92 +151,27 @@ export const PickupForm = ({ onBack }: PickupFormProps) => {
           </div>
         </div>
         <div className="p-6 pt-0 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="parentName">Parent/Guardian Name *</Label>
-            <Input
-              id="parentName"
-              placeholder="Enter your full name"
-              value={pickupData.parentName}
-              onChange={(e) => handleInputChange('parentName', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="relationship">Relationship to Student *</Label>
-            <Input
-              id="relationship"
-              placeholder="e.g. Mother, Uncle, Family Friend"
-              value={pickupData.relationship}
-              onChange={(e) => handleInputChange('relationship', e.target.value)}
-              className={relationshipError ? "border-red-500" : ""}
-            />
-            {relationshipError && (
-              <div className="text-red-600 text-sm mt-1">{relationshipError}</div>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="studentName">Student Name *</Label>
-              <Input
-                id="studentName"
-                placeholder="Enter student's name"
-                value={pickupData.studentName}
-                onChange={(e) => handleInputChange('studentName', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID *</Label>
-              <Input
-                id="studentId"
-                placeholder="Enter student ID"
-                value={pickupData.studentId}
-                onChange={(e) => handleInputChange('studentId', e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="carRegistration">Car Registration (optional)</Label>
-            <Input
-              id="carRegistration"
-              placeholder="Enter car registration number"
-              value={pickupData.carRegistration}
-              onChange={(e) => handleInputChange('carRegistration', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="pickupType">Pickup Type</Label>
-            <Select
-              value={pickupData.pickupType}
-              onValueChange={(value) => setPickupData(prev => ({ ...prev, pickupType: value }))}
-              disabled={pickupTypesLoading && pickupOptions.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select pickup type" />
-              </SelectTrigger>
-              <SelectContent>
-                {pickupTypeOptions.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">
-              Additional Notes
-              {isOtherPicked && <span className="text-red-600 ml-1">*</span>}
-            </Label>
-            <Input
-              id="notes"
-              placeholder={isOtherPicked ? "Describe details for 'Other' pickup type" : "Any special instructions or notes"}
-              value={pickupData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              className={isOtherPicked && notesError ? "border-red-500" : ""}
-            />
-            {notesError && (
-              <div className="text-red-600 text-sm mt-1">{notesError}</div>
-            )}
-          </div>
+          <PickupInfoFields
+            parentName={pickupData.parentName}
+            relationship={pickupData.relationship}
+            relationshipError={relationshipError}
+            studentName={pickupData.studentName}
+            studentId={pickupData.studentId}
+            carRegistration={pickupData.carRegistration}
+            onChange={handleInputChange}
+          />
+          <PickupTypeSelect
+            value={pickupData.pickupType}
+            onChange={val => setPickupData(prev => ({ ...prev, pickupType: val }))}
+            options={pickupTypeOptions}
+            loading={pickupTypesLoading && pickupOptions.length === 0}
+          />
+          <PickupNotesInput
+            value={pickupData.notes}
+            required={isOtherPicked}
+            error={notesError}
+            onChange={val => handleInputChange('notes', val)}
+          />
           <div className="flex space-x-3 pt-4">
             <Button 
               onClick={handleRequestPickup}
