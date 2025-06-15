@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Clock, Edit, MessageSquare, UserCheck, UserX } from 'lucide-react';
+import { Clock, Edit, MessageSquare, UserCheck, UserX, RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -32,21 +33,14 @@ interface AttendanceRecord {
   };
 }
 
-interface AttendanceEdit {
-  id: string;
-  old_status?: AttendanceStatus;
-  new_status: AttendanceStatus;
-  edit_reason: string;
-  edited_at: string;
-}
-
 const AttendanceManagement = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [editReason, setEditReason] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [debugMessage, setDebugMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,18 +49,11 @@ const AttendanceManagement = () => {
   }, [selectedDate]);
 
   const fetchAttendanceRecords = async () => {
+    setIsLoading(true);
+    setFetchError(null);
+    setDebugMessage(null);
     try {
-      setFetchError(null);
-      const startDate = new Date(selectedDate);
-      const endDate = new Date(selectedDate);
-      endDate.setDate(endDate.getDate() + 1);
-
-      // Log range and inputs for debug
-      console.log("[AttendanceManagement] Fetching attendance records for:", {
-        selectedDate, start: startDate.toISOString(), end: endDate.toISOString()
-      });
-
-      const { data, error } = await supabase
+      let query = supabase
         .from('attendance_records')
         .select(`
           *,
@@ -77,23 +64,41 @@ const AttendanceManagement = () => {
             role
           )
         `)
-        .gte('created_at', startDate.toISOString())
-        .lt('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
 
+      // Show all records if selectedDate is "all"
+      if (selectedDate !== 'all') {
+        const startDate = new Date(selectedDate);
+        const endDate = new Date(selectedDate);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query
+          .gte('created_at', startDate.toISOString())
+          .lt('created_at', endDate.toISOString());
+      }
+
+      // Log for debug
+      console.log('[AttendanceManagement] Fetching attendance records - Selected Date:', selectedDate);
+
+      const { data, error } = await query;
+
       if (error) throw error;
-      // Log fetched data for debug
-      console.log("[AttendanceManagement] Attendance records fetched:", data);
+
+      // Debug
+      console.log('[AttendanceManagement] Attendance records fetched:', data);
+      setDebugMessage(`Fetched ${data?.length ?? 0} records. Raw: ${JSON.stringify(data, null, 2)}`);
 
       setAttendanceRecords(data || []);
     } catch (error: any) {
       setAttendanceRecords([]);
       setFetchError(error.message || "Failed to fetch attendance records.");
+      setDebugMessage(error.stack || 'No stack');
       toast({
         title: "Error",
         description: error.message || "Failed to fetch attendance records",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,27 +179,48 @@ const AttendanceManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-3">
           <Clock className="h-6 w-6 text-green-600" />
           <h2 className="text-2xl font-bold text-gray-900">Attendance Management</h2>
         </div>
         <div className="flex items-center space-x-3">
           <Label htmlFor="date">Select Date:</Label>
-          <Input
-            id="date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-40"
-          />
+          <Select value={selectedDate} onValueChange={setSelectedDate}>
+            <SelectTrigger className="w-40" id="date">
+              <SelectValue placeholder="Select Date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Dates</SelectItem>
+              <SelectItem value={new Date().toISOString().split('T')[0]}>
+                Today ({new Date().toLocaleDateString()})
+              </SelectItem>
+              {/* Optionally add more recent days here */}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            onClick={fetchAttendanceRecords}
+            disabled={isLoading}
+            className="ml-2 flex gap-1"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Refresh
+          </Button>
         </div>
       </div>
 
-      {/* Display error message if fetching failed */}
       {fetchError && (
         <div className="bg-red-100 text-red-800 rounded px-4 py-2 mb-4">
           Attendance fetch failed: {fetchError}
+        </div>
+      )}
+
+      {/* Debug Information */}
+      {debugMessage && (
+        <div className="bg-gray-100 text-gray-800 rounded px-3 py-2 text-xs mb-2">
+          <b>Debug info:</b>
+          <pre className="overflow-auto">{debugMessage}</pre>
         </div>
       )}
 
@@ -210,8 +236,8 @@ const AttendanceManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Attendance Records - {formatDate(selectedDate)}</CardTitle>
-          <CardDescription>View and edit attendance records for the selected date</CardDescription>
+          <CardTitle>Attendance Records{selectedDate !== 'all' ? ` - ${formatDate(selectedDate)}` : " (All Dates)"}</CardTitle>
+          <CardDescription>View and edit attendance records. {selectedDate === 'all' ? 'Showing all available records.' : 'Filtered by selected date.'}</CardDescription>
         </CardHeader>
         <CardContent>
           <AttendanceTable
@@ -220,7 +246,7 @@ const AttendanceManagement = () => {
             setEditingRecord={setEditingRecord}
             formatTime={formatTime}
             formatDate={formatDate}
-            selectedDate={selectedDate}
+            selectedDate={selectedDate === 'all' ? new Date().toISOString().split('T')[0] : selectedDate}
           />
         </CardContent>
       </Card>
@@ -229,3 +255,4 @@ const AttendanceManagement = () => {
 };
 
 export default AttendanceManagement;
+
