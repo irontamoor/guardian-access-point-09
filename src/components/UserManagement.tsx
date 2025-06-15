@@ -75,6 +75,7 @@ const UserManagement = () => {
         });
         return;
       }
+
       if (editingUser) {
         // Update existing user
         const { error } = await supabase
@@ -88,11 +89,34 @@ const UserManagement = () => {
             role: formData.role,
             status: formData.status,
             updated_at: new Date().toISOString(),
-            // id is primary key and can't be edited
           })
           .eq('id', editingUser.id);
 
         if (error) throw error;
+
+        // If admin and password was set, update auth password
+        if (editingUser.role === "admin" && formData.password) {
+          // Call Supabase admin API to update user's password
+          // Password reset logic for admin
+          // ! You must implement using service role from a backend function for security in production;
+          // client-side Supabase JS can't update another user's password directly.
+          const { error: passError } = await supabase.auth.admin.updateUserById(editingUser.id, {
+            password: formData.password,
+          });
+          if (passError) {
+            toast({
+              title: "Warning",
+              description: "Password change failed: " + passError.message,
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: "Password updated for admin",
+              variant: "default"
+            });
+          }
+        }        
 
         toast({
           title: "Success",
@@ -100,24 +124,25 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user - id is optional, will be auto-generated
+        // Create new user
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
-            id: undefined, // This fixes the TS error and allows backend to autogen
+            id: undefined,
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone || null,
             user_code: formData.user_code,
             role: formData.role,
-            status: formData.status
+            status: formData.status,
           } as any)
           .select()
           .single();
 
         if (userError) throw userError;
 
+        // Auth sign up for created user (if password set)
         if (formData.password) {
           const { error: authError } = await supabase.auth.signUp({
             email: formData.email,
@@ -380,26 +405,29 @@ const UserManagement = () => {
                   />
                 </div>
 
-                {!editingUser && (
+                {/* Password field: For adding any user, and for editing admins */}
+                {(editingUser?.role === "admin" || (!editingUser)) && (
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{editingUser ? "Reset Password" : "Password"}</Label>
                     <Input
                       id="password"
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Leave blank for users without auth access"
+                      placeholder={editingUser ? "Leave blank to keep current password" : "Leave blank for users without auth access"}
                     />
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="user_code">User Code (Staff/Student ID)<span className="text-red-600">*</span></Label>
+                  <Label htmlFor="user_code">
+                    User Code (Staff/Student/Visitor Code)<span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="user_code"
                     value={formData.user_code}
                     onChange={(e) => setFormData(prev => ({ ...prev, user_code: e.target.value }))}
-                    placeholder="Enter unique code"
+                    placeholder="Enter unique staff/student/visitor code"
                     required
                   />
                   <p className="text-xs text-gray-500">Must be unique among active users.</p>
