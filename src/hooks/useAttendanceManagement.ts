@@ -2,15 +2,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAttendanceRecordsState } from './attendance/useAttendanceRecordsState';
 import { useAttendanceEdit } from './attendance/useAttendanceEdit';
-import { useMassEdit } from './attendance/useMassEdit';
+import { useAttendanceFilters } from './attendance/useAttendanceFilters';
+import { useAttendanceSelection } from './attendance/useAttendanceSelection';
+import { useAttendanceActions } from './attendance/useAttendanceActions';
 
 export function useAttendanceManagement() {
-  const [selectedDate, setSelectedDate] = useState('all');
+  const [isLoading, setIsLoading] = useState(false);
   
   const {
     attendanceRecords,
-    isLoading,
-    setIsLoading,
+    isLoading: recordsLoading,
+    setIsLoading: setRecordsLoading,
     fetchError,
     debugMessage,
     fetchSystemUsers,
@@ -22,15 +24,11 @@ export function useAttendanceManagement() {
     setEditingRecord,
     editReason,
     setEditReason,
-    handleEditAttendance: handleEdit,
   } = useAttendanceEdit();
 
-  const {
-    selectedIds,
-    handleMassEditSubmit: handleMassEdit,
-    handleToggleSelect,
-    handleSelectAll: handleSelectAllBase,
-  } = useMassEdit();
+  const { selectedDate, setSelectedDate } = useAttendanceFilters();
+  const { selectedIds, handleToggleSelect, handleSelectAll, clearSelection } = useAttendanceSelection();
+  const { handleEditAttendance: handleEdit, handleMassEdit } = useAttendanceActions();
 
   const refreshAttendance = useCallback(() => {
     fetchAttendanceRecords(selectedDate);
@@ -38,19 +36,26 @@ export function useAttendanceManagement() {
 
   const handleEditAttendance = useCallback(async () => {
     setIsLoading(true);
-    await handleEdit(attendanceRecords, refreshAttendance);
+    await handleEdit(editingRecord, editReason, () => {
+      setEditingRecord(null);
+      setEditReason('');
+      refreshAttendance();
+    });
     setIsLoading(false);
-  }, [handleEdit, attendanceRecords, refreshAttendance, setIsLoading]);
+  }, [handleEdit, editingRecord, editReason, refreshAttendance, setEditingRecord, setEditReason]);
 
   const handleMassEditSubmit = useCallback(async (massEditStatus: "in" | "out", massEditReason: string) => {
     setIsLoading(true);
-    await handleMassEdit(massEditStatus, massEditReason, attendanceRecords, refreshAttendance);
+    await handleMassEdit(selectedIds, massEditStatus, massEditReason, attendanceRecords, () => {
+      clearSelection();
+      refreshAttendance();
+    });
     setIsLoading(false);
-  }, [handleMassEdit, attendanceRecords, refreshAttendance, setIsLoading]);
+  }, [handleMassEdit, selectedIds, attendanceRecords, clearSelection, refreshAttendance]);
 
-  const handleSelectAll = useCallback((checked: boolean) => {
-    handleSelectAllBase(checked, attendanceRecords);
-  }, [handleSelectAllBase, attendanceRecords]);
+  const handleSelectAllWrapper = useCallback((checked: boolean) => {
+    handleSelectAll(checked, attendanceRecords);
+  }, [handleSelectAll, attendanceRecords]);
 
   useEffect(() => {
     fetchSystemUsers();
@@ -68,14 +73,14 @@ export function useAttendanceManagement() {
     setEditReason,
     selectedDate,
     setSelectedDate,
-    isLoading,
+    isLoading: isLoading || recordsLoading,
     fetchError,
     debugMessage,
     selectedIds,
     handleEditAttendance,
     handleMassEditSubmit,
     handleToggleSelect,
-    handleSelectAll,
+    handleSelectAll: handleSelectAllWrapper,
     fetchAttendanceRecords: refreshAttendance,
   };
 }
