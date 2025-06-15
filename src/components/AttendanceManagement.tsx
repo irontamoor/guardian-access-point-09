@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,12 +40,33 @@ const AttendanceManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSystemUsers();
+  }, []);
 
   useEffect(() => {
     fetchAttendanceRecords();
     // eslint-disable-next-line
-  }, [selectedDate]);
+  }, [selectedDate, systemUsers]);
+
+  // Fetch all users ONCE so we can join in frontend
+  const fetchSystemUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*');
+      if (error) throw error;
+      setSystemUsers(data || []);
+    } catch (error: any) {
+      setSystemUsers([]);
+      setDebugMessage((prev: string | null) =>
+        (prev || "") + `\nFailed to load users: ${error.message}`
+      );
+    }
+  };
 
   const fetchAttendanceRecords = async () => {
     setIsLoading(true);
@@ -55,18 +75,9 @@ const AttendanceManagement = () => {
     try {
       let query = supabase
         .from('attendance_records')
-        .select(`
-          *,
-          system_users (
-            first_name,
-            last_name,
-            id,
-            role
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      // Show all records if selectedDate is "all"
       if (selectedDate !== 'all') {
         const startDate = new Date(selectedDate);
         const endDate = new Date(selectedDate);
@@ -76,18 +87,25 @@ const AttendanceManagement = () => {
           .lt('created_at', endDate.toISOString());
       }
 
-      // Log for debug
-      console.log('[AttendanceManagement] Fetching attendance records - Selected Date:', selectedDate);
-
       const { data, error } = await query;
-
       if (error) throw error;
 
-      // Debug
-      console.log('[AttendanceManagement] Attendance records fetched:', data);
-      setDebugMessage(`Fetched ${data?.length ?? 0} records. Raw: ${JSON.stringify(data, null, 2)}`);
+      // Merge in user info from separately-fetched systemUsers
+      const merged = (data || []).map((record: any) => {
+        const sysUser = systemUsers.find(u => u.id === record.user_id);
+        return {
+          ...record,
+          system_users: sysUser || null,
+        };
+      });
 
-      setAttendanceRecords(data || []);
+      // Debug info for validation
+      console.log('[AttendanceManagement] Attendance:', merged);
+      setDebugMessage(
+        `Fetched ${merged.length} attendance. Raw data: ${JSON.stringify(merged, null, 2)}`
+      );
+
+      setAttendanceRecords(merged);
     } catch (error: any) {
       setAttendanceRecords([]);
       setFetchError(error.message || "Failed to fetch attendance records.");
@@ -255,4 +273,3 @@ const AttendanceManagement = () => {
 };
 
 export default AttendanceManagement;
-
