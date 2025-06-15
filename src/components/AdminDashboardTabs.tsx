@@ -198,10 +198,6 @@ const AdminDashboardTabs = ({
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("Jamiaa Al-Hudaa");
 
-  // Pass down companyName setter to SystemSettings to sync with school_name
-  // Remove the prop for now - SystemSettings does not accept onSchoolNameChange
-  //const handleSchoolNameChange = (name: string) => setCompanyName(name);
-
   const isAdminOrReader = adminData?.role === "admin" || adminData?.role === "reader";
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,50 +214,35 @@ const AdminDashboardTabs = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="bg-white border-b shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
-            <div className="flex items-center gap-4">
+        {/* Improved Top Header */}
+        <div className="bg-white/95 backdrop-blur border-b border-blue-100/60 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between h-auto py-5 sm:py-0">
+            <div className="flex items-center gap-4 flex-1">
               <div>
                 {logoUrl ? (
-                  <img src={logoUrl} alt="logo" className="h-10 w-10 rounded object-cover border" />
+                  <img src={logoUrl} alt="logo" className="h-12 w-12 rounded object-cover border shadow" />
                 ) : (
-                  <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center text-xl text-gray-400">
-                    <BarChart3 className="h-7 w-7" />
+                  <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center text-2xl text-gray-400 border shadow">
+                    <BarChart3 className="h-8 w-8" />
                   </div>
                 )}
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-gray-800">{companyName}</span>
-                <label htmlFor="logo-upload" className="text-[11px] text-blue-600 cursor-pointer hover:underline">
+              <div>
+                <span className="block font-extrabold text-2xl text-gray-900 tracking-tight leading-tight mb-0.5">{companyName}</span>
+                <label htmlFor="logo-upload" className="text-[11px] text-blue-600 cursor-pointer hover:underline font-medium">
                   Change Logo
                   <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                 </label>
               </div>
             </div>
-            <div className="flex-1 flex justify-center">
-              <TabsList className="grid w-full max-w-2xl grid-cols-5 h-12">
-                <TabsTrigger value="overview" className="flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="dashboards" className="flex items-center space-x-2">
-                  <Hourglass className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dashboards</span>
-                </TabsTrigger>
-                <TabsTrigger value="users" className="flex items-center space-x-2">
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Users</span>
-                </TabsTrigger>
-                <TabsTrigger value="attendance" className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span className="hidden sm:inline">Attendance</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-row items-center gap-3 mt-5 sm:mt-0">
+              <div className="hidden md:flex flex-col items-end">
+                <span className="block font-semibold text-base text-gray-900">{adminData.first_name || adminData.last_name ? `${adminData.first_name || ""} ${adminData.last_name || ""}`.trim() : adminData.username || adminData.admin_id}</span>
+                <span className="block text-xs text-blue-600 font-medium">{adminData.role}</span>
+              </div>
               <button
                 onClick={onLogout}
-                className="px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold border border-red-200 transition"
+                className="ml-2 px-3 py-2 rounded-md bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold border border-red-200 transition-shadow shadow-sm"
                 aria-label="Logout"
               >
                 Logout
@@ -269,7 +250,31 @@ const AdminDashboardTabs = ({
             </div>
           </div>
         </div>
+        {/* End Improved Top Header */}
+
         <div className="max-w-7xl mx-auto p-6">
+          {/* Tabs Navigation */}
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4 h-12 shadow">
+              <TabsTrigger value="overview" className="flex items-center space-x-2">
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="dashboards" className="flex items-center space-x-2">
+                <Hourglass className="h-4 w-4" />
+                <span className="hidden sm:inline">Dashboards</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center space-x-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="attendance" className="flex items-center space-x-2">
+                <Clock className="h-4 w-4" />
+                <span className="hidden sm:inline">Attendance</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {/* End Tabs Navigation */}
           <TabsContent value="overview" className="mt-0">
             {isAdminOrReader ? (
               <UnifiedAdminDashboard 
