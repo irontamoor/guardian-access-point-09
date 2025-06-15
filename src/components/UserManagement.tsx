@@ -95,10 +95,11 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user - **DO NOT provide id**, let DB autogenerate UUID
+        // Create new user - id is optional, will be auto-generated
         const { data: newUser, error: userError } = await supabase
           .from('system_users')
           .insert({
+            id: undefined, // This fixes the TS error and allows backend to autogen
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
@@ -106,7 +107,7 @@ const UserManagement = () => {
             user_code: formData.user_code,
             role: formData.role,
             status: formData.status
-          })
+          } as any)
           .select()
           .single();
 
@@ -392,6 +393,20 @@ const UserManagement = () => {
                     </Select>
                   </div>
                 </div>
+
+                {/* Only show Database UUID for editing existing user */}
+                {editingUser && (
+                  <div className="space-y-2">
+                    <Label htmlFor="id">Database UUID</Label>
+                    <Input
+                      id="id"
+                      value={editingUser.id}
+                      readOnly
+                      className="bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-400">Auto-generated UUID. Not used for sign-in.</p>
+                  </div>
+                )}
 
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
