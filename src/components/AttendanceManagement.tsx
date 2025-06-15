@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { AttendanceEditModal } from './AttendanceEditModal';
 import { AttendanceTable } from './AttendanceTable';
+import { AttendanceMassEditModal } from './AttendanceMassEditModal';
 
 type AttendanceStatus = Database['public']['Enums']['attendance_status'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -41,6 +42,10 @@ const AttendanceManagement = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [massEditOpen, setMassEditOpen] = useState(false);
+  const [massEditStatus, setMassEditStatus] = useState<"in" | "out">("in");
+  const [massEditReason, setMassEditReason] = useState("");
   const { toast } = useToast();
 
   // Debug info state (like AttendanceRecordsTable)
@@ -228,6 +233,79 @@ const AttendanceManagement = () => {
     }
   };
 
+  const handleToggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => 
+      checked ? [...prev, id] : prev.filter(selId => selId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? attendanceRecords.map(r => r.id) : []);
+  };
+
+  const openMassEdit = () => {
+    setMassEditOpen(true);
+    setMassEditStatus("in");
+    setMassEditReason("");
+  };
+
+  const closeMassEdit = () => {
+    setMassEditOpen(false);
+    setMassEditReason("");
+  };
+
+  const handleMassEditSubmit = async () => {
+    if (selectedIds.length === 0 || !massEditReason.trim()) return;
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Bulk update
+      // 1. Update status for all selected
+      const { error: updateError } = await supabase
+        .from('attendance_records')
+        .update({
+          status: massEditStatus,
+          check_in_time: massEditStatus === 'in' ? new Date().toISOString() : undefined,
+          check_out_time: massEditStatus === 'out' ? new Date().toISOString() : null,
+        })
+        .in('id', selectedIds);
+
+      if (updateError) throw updateError;
+
+      // 2. Log mass edit for each
+      for (const id of selectedIds) {
+        const oldStatus = attendanceRecords.find(r => r.id === id)?.status;
+        await supabase.from('attendance_edits').insert({
+          attendance_record_id: id,
+          admin_user_id: user.id,
+          old_status: oldStatus,
+          new_status: massEditStatus,
+          edit_reason: massEditReason,
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: `Updated status for ${selectedIds.length} attendance record(s).`,
+      });
+
+      setSelectedIds([]);
+      setMassEditOpen(false);
+      setMassEditReason("");
+      fetchAttendanceRecords();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Mass edit failed",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const formatTime = (timestamp?: string) => {
     if (!timestamp) return '-';
     return new Date(timestamp).toLocaleTimeString();
@@ -307,6 +385,19 @@ const AttendanceManagement = () => {
         </div>
       )}
 
+      {/* Mass Edit Modal */}
+      <AttendanceMassEditModal
+        open={massEditOpen}
+        onClose={closeMassEdit}
+        selectedCount={selectedIds.length}
+        status={massEditStatus}
+        onStatusChange={(v: "in" | "out") => setMassEditStatus(v)}
+        editReason={massEditReason}
+        setEditReason={setMassEditReason}
+        loading={isLoading}
+        onSubmit={handleMassEditSubmit}
+      />
+
       {/* Edit Modal */}
       <AttendanceEditModal
         editingRecord={editingRecord}
@@ -330,6 +421,9 @@ const AttendanceManagement = () => {
             formatTime={formatTime}
             formatDate={formatDate}
             selectedDate={selectedDate === 'all' ? new Date().toISOString().split('T')[0] : selectedDate}
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onToggleSelect={handleToggleSelect}
           />
         </CardContent>
       </Card>
