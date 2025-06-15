@@ -4,8 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { UserCheck, UserX } from 'lucide-react';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
+
+const QUICK_REASONS = [
+  "Late",
+  "Medical Appointment",
+  "Bus Delay",
+  "Personal Reason",
+  "Other"
+];
 
 interface StudentSignInFormProps {
   onSuccess?: () => void;
@@ -13,6 +22,7 @@ interface StudentSignInFormProps {
 
 const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
   const [studentCode, setStudentCode] = useState('');
+  const [notes, setNotes] = useState('');
   const {
     loading, setLoading,
     isValidCode, fetchStudentUser, hasTodaySignIn, createAttendanceRecord, toast
@@ -42,7 +52,7 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
         return;
       }
 
-      await createAttendanceRecord(student.id, "in");
+      await createAttendanceRecord(student.id, "in", notes);
 
       toast({
         title: "Success!",
@@ -50,6 +60,7 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
         variant: "default"
       });
       setStudentCode('');
+      setNotes('');
       onSuccess?.();
     } catch (err: any) {
       const msg = err?.message || "Unknown error.";
@@ -87,10 +98,9 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
         return;
       }
 
-      // Check if they signed in today
       const signedInToday = await hasTodaySignIn(student.id);
 
-      await createAttendanceRecord(student.id, "out");
+      await createAttendanceRecord(student.id, "out", notes);
 
       if (!signedInToday) {
         toast({
@@ -106,6 +116,7 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
         });
       }
       setStudentCode('');
+      setNotes('');
       onSuccess?.();
     } catch (err: any) {
       const msg = err?.message || "Unknown error.";
@@ -139,6 +150,30 @@ const StudentSignInForm = ({ onSuccess }: StudentSignInFormProps) => {
             className="w-full"
             disabled={loading}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Reason / Comment</Label>
+          <Textarea
+            id="notes"
+            placeholder="E.g. Late, Medical Appointment"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="resize-none"
+            disabled={loading}
+          />
+          <div className="flex flex-wrap gap-2 mt-1">
+            {QUICK_REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-blue-100 text-gray-700"
+                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason : reason)}
+                disabled={loading}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex space-x-3 pt-4">
           <Button 

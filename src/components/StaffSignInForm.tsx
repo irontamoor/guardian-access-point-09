@@ -4,8 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { UserCheck, UserX, Badge } from 'lucide-react';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
+
+// Quick pick reasons for sign-in/out
+const QUICK_REASONS = [
+  "Late",
+  "Medical Appointment",
+  "Personal Day",
+  "Meeting",
+  "Sick",
+  "Other"
+];
 
 interface StaffSignInFormProps {
   onSuccess?: () => void;
@@ -13,6 +24,7 @@ interface StaffSignInFormProps {
 
 const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
   const [employeeCode, setEmployeeCode] = useState('');
+  const [notes, setNotes] = useState('');
   const {
     loading, setLoading,
     isValidCode, fetchStaffUser, hasTodaySignIn, createAttendanceRecord, toast
@@ -42,7 +54,7 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
         return;
       }
 
-      await createAttendanceRecord(staff.id, "in");
+      await createAttendanceRecord(staff.id, "in", notes);
 
       toast({
         title: "Welcome!",
@@ -50,6 +62,7 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
         variant: "default"
       });
       setEmployeeCode('');
+      setNotes('');
       onSuccess?.();
     } catch (err: any) {
       const msg = err?.message || "Unknown error.";
@@ -87,10 +100,9 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
         return;
       }
 
-      // Check if they signed in today
       const signedInToday = await hasTodaySignIn(staff.id);
 
-      await createAttendanceRecord(staff.id, "out");
+      await createAttendanceRecord(staff.id, "out", notes);
 
       if (!signedInToday) {
         toast({
@@ -106,6 +118,7 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
         });
       }
       setEmployeeCode('');
+      setNotes('');
       onSuccess?.();
     } catch (err: any) {
       const msg = err?.message || "Unknown error.";
@@ -138,6 +151,30 @@ const StaffSignInForm = ({ onSuccess }: StaffSignInFormProps) => {
             onChange={(e) => setEmployeeCode(e.target.value)}
             disabled={loading}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Reason / Comment</Label>
+          <Textarea
+            id="notes"
+            placeholder="E.g. Late, Medical Appointment"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            disabled={loading}
+            className="resize-none"
+          />
+          <div className="flex flex-wrap gap-2 mt-1">
+            {QUICK_REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-green-100 text-gray-700"
+                onClick={() => setNotes((prev) => prev ? prev + ', ' + reason : reason)}
+                disabled={loading}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex space-x-3 pt-4">
           <Button 

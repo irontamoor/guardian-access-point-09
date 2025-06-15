@@ -39,12 +39,14 @@ export const useStaffAttendance = () => {
     return !!data;
   };
 
-  const createAttendanceRecord = async (user_id: string, status: "in" | "out") => {
+  // Accepts optional notes argument!
+  const createAttendanceRecord = async (user_id: string, status: "in" | "out", notes?: string) => {
     const now = new Date().toISOString();
     const payload: any = {
       user_id,
       status,
-      ...(status === "in" ? { check_in_time: now } : { check_out_time: now })
+      ...(status === "in" ? { check_in_time: now } : { check_out_time: now }),
+      ...(notes ? { notes } : {})
     };
     const { error } = await supabase.from("attendance_records").insert(payload);
     if (error) throw error;
