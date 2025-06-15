@@ -1,7 +1,8 @@
 
 import { useCallback, useState } from "react";
-import { useSystemUsers, parseStudent, parseStaff } from "./useSystemUsers";
-import { useAttendanceRecords } from "./useAttendanceRecords";
+import { useSystemUsersData } from "./users/useSystemUsersData";
+import { parseStudent, parseStaff } from "./users/useUserParsers";
+import { useAttendanceMapping } from "./attendance/useAttendanceMapping";
 
 export interface Student {
   id: string;
@@ -27,8 +28,8 @@ export function usePeopleData() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { getUsersByRole } = useSystemUsers();
-  const { getAttendanceMap } = useAttendanceRecords();
+  const { getUsersByRole } = useSystemUsersData();
+  const { getAttendanceMap } = useAttendanceMapping();
 
   const loadPeople = useCallback(async () => {
     setLoading(true);
