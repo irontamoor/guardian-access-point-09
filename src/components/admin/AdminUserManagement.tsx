@@ -1,14 +1,10 @@
 
 import UserManagement from "../UserManagement";
 
-interface AdminUserManagementProps {
-  adminData: any;
-}
-
-export function AdminUserManagement({ adminData }: AdminUserManagementProps) {
+export function AdminUserManagement() {
   return (
     <div className="space-y-6">
-      <UserManagement adminData={adminData} />
+      <UserManagement />
     </div>
   );
 }

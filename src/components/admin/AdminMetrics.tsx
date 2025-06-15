@@ -3,18 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, UserCheck, Calendar, Clock } from 'lucide-react';
 
 interface AdminMetricsProps {
-  totalStudents: number;
-  totalStaff: number;
-  presentToday: number;
-  totalAttendanceRecords: number;
+  students: Array<{ status?: string; check_in_time?: string }>;
+  staff: Array<{ status?: string; check_in_time?: string }>;
 }
 
-export function AdminMetrics({ 
-  totalStudents, 
-  totalStaff, 
-  presentToday, 
-  totalAttendanceRecords 
-}: AdminMetricsProps) {
+export function AdminMetrics({ students, staff }: AdminMetricsProps) {
+  const totalStudents = students.length;
+  const totalStaff = staff.length;
+  
+  // Calculate present today (those with status 'in' or recent check_in_time)
+  const today = new Date().toISOString().split('T')[0];
+  const presentToday = [
+    ...students.filter(s => s.status === 'in' || (s.check_in_time && s.check_in_time.startsWith(today))),
+    ...staff.filter(s => s.status === 'in' || (s.check_in_time && s.check_in_time.startsWith(today)))
+  ].length;
+  
+  const totalAttendanceRecords = totalStudents + totalStaff;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       <Card>

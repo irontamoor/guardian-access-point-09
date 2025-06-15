@@ -81,7 +81,7 @@ const AttendanceManagement = () => {
       )}
 
       <AttendanceMassActions
-        selectedCount={selectedIds.length}
+        selectedCount={selectedIds.size}
         onMassEdit={openMassEdit}
         isLoading={isLoading}
       />
@@ -89,7 +89,7 @@ const AttendanceManagement = () => {
       <AttendanceMassEditModal
         open={massEditOpen}
         onClose={closeMassEdit}
-        selectedCount={selectedIds.length}
+        selectedCount={selectedIds.size}
         status={massEditStatus}
         onStatusChange={(v: "in" | "out") => setMassEditStatus(v)}
         editReason={massEditReason}
@@ -124,7 +124,7 @@ const AttendanceManagement = () => {
             formatTime={formatTime}
             formatDate={formatDate}
             selectedDate={selectedDate === 'all' ? new Date().toISOString().split('T')[0] : selectedDate}
-            selectedIds={selectedIds}
+            selectedIds={Array.from(selectedIds)}
             onSelectAll={handleSelectAll}
             onToggleSelect={handleToggleSelect}
           />

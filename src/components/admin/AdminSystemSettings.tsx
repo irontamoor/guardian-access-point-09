@@ -2,15 +2,11 @@
 import SystemSettings from "../SystemSettings";
 import SignInOptionsSettings from "../SignInOptionsSettings";
 
-interface AdminSystemSettingsProps {
-  adminData: any;
-}
-
-export function AdminSystemSettings({ adminData }: AdminSystemSettingsProps) {
+export function AdminSystemSettings() {
   return (
     <div className="space-y-6">
-      <SignInOptionsSettings adminData={adminData} />
-      <SystemSettings adminData={adminData} />
+      <SignInOptionsSettings />
+      <SystemSettings />
     </div>
   );
 }

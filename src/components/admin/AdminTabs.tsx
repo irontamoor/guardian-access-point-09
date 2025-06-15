@@ -24,15 +24,15 @@ export function AdminTabs({ adminData }: AdminTabsProps) {
       </TabsContent>
       
       <TabsContent value="users">
-        <AdminUserManagement adminData={adminData} />
+        <AdminUserManagement />
       </TabsContent>
       
       <TabsContent value="attendance">
-        <AdminAttendanceManagement adminData={adminData} />
+        <AdminAttendanceManagement />
       </TabsContent>
       
       <TabsContent value="settings">
-        <AdminSystemSettings adminData={adminData} />
+        <AdminSystemSettings />
       </TabsContent>
     </Tabs>
   );
