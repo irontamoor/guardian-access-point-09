@@ -307,14 +307,6 @@ const AttendanceManagement = () => {
         </div>
       )}
 
-      {/* Debug Information */}
-      {debugMessage && (
-        <div className="bg-gray-100 text-gray-800 rounded px-3 py-2 text-xs mb-2">
-          <b>Debug info:</b>
-          <pre className="overflow-auto">{debugMessage}</pre>
-        </div>
-      )}
-
       {/* Edit Modal */}
       <AttendanceEditModal
         editingRecord={editingRecord}
