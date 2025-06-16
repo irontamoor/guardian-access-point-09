@@ -17,6 +17,7 @@ export function useDashboardVisibility() {
     showParentPickup: true,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVisibilitySettings();
@@ -24,12 +25,17 @@ export function useDashboardVisibility() {
 
   const fetchVisibilitySettings = async () => {
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('system_settings')
         .select('setting_key, setting_value')
         .eq('setting_key', 'dashboard_visibility');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching visibility settings:', error);
+        setError('Failed to load dashboard settings');
+        return;
+      }
 
       if (data && data.length > 0) {
         const settingValue = data[0].setting_value;
@@ -41,10 +47,11 @@ export function useDashboardVisibility() {
       }
     } catch (error: any) {
       console.error('Error fetching visibility settings:', error);
+      setError('Failed to load dashboard settings');
     } finally {
       setLoading(false);
     }
   };
 
-  return { visibility, loading, refetch: fetchVisibilitySettings };
+  return { visibility, loading, error, refetch: fetchVisibilitySettings };
 }

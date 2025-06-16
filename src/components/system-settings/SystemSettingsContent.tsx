@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +22,7 @@ export function SystemSettingsContent() {
     showParentPickup: true,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,12 +31,17 @@ export function SystemSettingsContent() {
 
   const fetchVisibilitySettings = async () => {
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('system_settings')
         .select('setting_key, setting_value')
         .eq('setting_key', 'dashboard_visibility');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching visibility settings:', error);
+        setError('Failed to load settings. Please check your permissions.');
+        return;
+      }
 
       if (data && data.length > 0) {
         const settingValue = data[0].setting_value;
@@ -46,33 +53,66 @@ export function SystemSettingsContent() {
       }
     } catch (error: any) {
       console.error('Error fetching visibility settings:', error);
+      setError('Failed to load settings. Please check your permissions.');
     }
   };
 
   const updateVisibilitySetting = async (key: keyof DashboardVisibility, value: boolean) => {
     setLoading(true);
+    setError(null);
+    
     try {
       const newVisibility = { ...visibility, [key]: value };
-      setVisibility(newVisibility);
-
-      const { error } = await supabase
+      
+      // First try to update existing record
+      const { data: existingData, error: fetchError } = await supabase
         .from('system_settings')
-        .upsert({
-          setting_key: 'dashboard_visibility',
-          setting_value: newVisibility,
-          description: 'Controls visibility of dashboard cards'
-        });
+        .select('id')
+        .eq('setting_key', 'dashboard_visibility')
+        .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      let result;
+      if (existingData) {
+        // Update existing record
+        result = await supabase
+          .from('system_settings')
+          .update({
+            setting_value: newVisibility,
+            description: 'Controls visibility of dashboard cards'
+          })
+          .eq('setting_key', 'dashboard_visibility');
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('system_settings')
+          .insert({
+            setting_key: 'dashboard_visibility',
+            setting_value: newVisibility,
+            description: 'Controls visibility of dashboard cards'
+          });
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      // Update local state only after successful database update
+      setVisibility(newVisibility);
 
       toast({
         title: "Setting Updated",
         description: "Dashboard visibility setting has been saved.",
       });
     } catch (error: any) {
+      console.error('Error updating setting:', error);
+      setError('Failed to update setting. Please check your permissions.');
       toast({
         title: "Error",
-        description: error.message || "Failed to update setting",
+        description: error.message || "Failed to update setting. Please check your permissions.",
         variant: "destructive"
       });
     } finally {
@@ -82,6 +122,12 @@ export function SystemSettingsContent() {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       <Card>
         <CardHeader>
           <CardTitle>Dashboard Visibility</CardTitle>
