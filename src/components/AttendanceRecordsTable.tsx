@@ -13,8 +13,8 @@ type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'
 type Visitor = Database['public']['Tables']['visitors']['Row'];
 
 interface AttendanceRecordWithUser extends AttendanceRecord {
-  system_user?: SystemUser;
-  visitor?: Visitor;
+  system_users?: SystemUser;
+  visitors?: Visitor;
 }
 
 export default function AttendanceRecordsTable() {
@@ -91,8 +91,8 @@ export default function AttendanceRecordsTable() {
         
         return {
           ...rec,
-          system_user: systemUser || null,
-          visitor: visitor || null,
+          system_users: systemUser || null,
+          visitors: visitor || null,
         };
       }) || [];
 
@@ -121,38 +121,38 @@ export default function AttendanceRecordsTable() {
     dt ? new Date(dt).toLocaleString() : "-";
 
   const getPersonName = (record: AttendanceRecordWithUser) => {
-    if (record.system_user) {
-      return `${record.system_user.first_name} ${record.system_user.last_name}`;
+    if (record.system_users) {
+      return `${record.system_users.first_name} ${record.system_users.last_name}`;
     }
-    if (record.visitor) {
-      return `${record.visitor.first_name} ${record.visitor.last_name}`;
+    if (record.visitors) {
+      return `${record.visitors.first_name} ${record.visitors.last_name}`;
     }
     return `Unknown User (${record.user_id})`;
   };
 
   const getPersonType = (record: AttendanceRecordWithUser) => {
-    if (record.system_user) {
-      return record.system_user.role;
+    if (record.system_users) {
+      return record.system_users.role;
     }
-    if (record.visitor) {
+    if (record.visitors) {
       return "visitor";
     }
     return "unknown";
   };
 
   const getContactInfo = (record: AttendanceRecordWithUser) => {
-    if (record.system_user) {
-      return record.system_user.email || "-";
+    if (record.system_users) {
+      return record.system_users.email || "-";
     }
-    if (record.visitor) {
-      return record.visitor.phone_number || "-";
+    if (record.visitors) {
+      return record.visitors.phone_number || "-";
     }
     return "-";
   };
 
   const getOrganization = (record: AttendanceRecordWithUser) => {
-    if (record.visitor) {
-      return record.visitor.organization || "-";
+    if (record.visitors) {
+      return record.visitors.organization || "-";
     }
     return record.company || "-";
   };
@@ -227,8 +227,8 @@ export default function AttendanceRecordsTable() {
                     <TableCell>{formatDateTime(rec.check_out_time)}</TableCell>
                     <TableCell>{formatDateTime(rec.created_at)}</TableCell>
                     <TableCell>{getOrganization(rec)}</TableCell>
-                    <TableCell>{rec.host_name || rec.visitor?.host_name || "-"}</TableCell>
-                    <TableCell>{rec.purpose || rec.visitor?.visit_purpose || "-"}</TableCell>
+                    <TableCell>{rec.host_name || rec.visitors?.host_name || "-"}</TableCell>
+                    <TableCell>{rec.purpose || rec.visitors?.visit_purpose || "-"}</TableCell>
                     <TableCell>{rec.notes || "-"}</TableCell>
                   </TableRow>
                 ))
