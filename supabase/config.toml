@@ -1,5 +1,0 @@
-
-project_id = "kzhawtofvjtagpejtuik"
-
-[functions.close-active-attendance]
-verify_jwt = false
