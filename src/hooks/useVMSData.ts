@@ -41,18 +41,64 @@ export function useVMSData() {
       if (staffError) throw staffError;
       setStaff(staffData || []);
 
-      // Load recent activity
-      const { data: activityData, error: activityError } = await supabase
+      // Load recent activity - fetch attendance records first
+      const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_records')
-        .select(`
-          *,
-          system_users(first_name, last_name, role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (activityError) throw activityError;
-      setRecentActivity(activityData || []);
+      if (attendanceError) throw attendanceError;
+
+      if (attendanceData && attendanceData.length > 0) {
+        // Get unique user IDs from attendance records
+        const userIds = [...new Set(attendanceData.map(record => record.user_id).filter(Boolean))];
+
+        // Fetch system users for these IDs
+        let systemUsers: any[] = [];
+        if (userIds.length > 0) {
+          const { data: systemUsersData, error: usersError } = await supabase
+            .from('system_users')
+            .select('id, first_name, last_name, user_code, admin_id, role')
+            .in('id', userIds);
+
+          if (!usersError && systemUsersData) {
+            systemUsers = systemUsersData;
+          }
+        }
+
+        // Get visitor IDs (those not found in system_users)
+        const systemUserIds = systemUsers.map(u => u.id);
+        const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
+        
+        let visitors: any[] = [];
+        if (visitorIds.length > 0) {
+          const { data: visitorsData, error: visitorsError } = await supabase
+            .from('visitors')
+            .select('id, first_name, last_name, organization, visit_purpose')
+            .in('id', visitorIds);
+
+          if (!visitorsError && visitorsData) {
+            visitors = visitorsData;
+          }
+        }
+
+        // Combine the data with user information
+        const enrichedActivity = attendanceData.map(record => {
+          const systemUser = systemUsers.find(user => user.id === record.user_id);
+          const visitor = visitors.find(v => v.id === record.user_id);
+          
+          return {
+            ...record,
+            system_users: systemUser || null,
+            visitors: visitor || null
+          };
+        });
+
+        setRecentActivity(enrichedActivity);
+      } else {
+        setRecentActivity([]);
+      }
     } catch (err: any) {
       setError(err.message);
       console.error('Error loading VMS data:', err);

@@ -27,6 +27,8 @@ export default function AttendanceRecordsTable() {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching attendance records...');
+      
       // Fetch all attendance records
       const { data: attendance, error: attendanceError } = await supabase
         .from('attendance_records')
@@ -34,32 +36,41 @@ export default function AttendanceRecordsTable() {
         .order('created_at', { ascending: false });
 
       if (attendanceError) throw attendanceError;
+      console.log('Attendance records found:', attendance?.length || 0);
+
+      if (!attendance || attendance.length === 0) {
+        setRecords([]);
+        return;
+      }
 
       // Get unique user IDs for system_users lookup
-      const systemUserIds = Array.from(
+      const userIds = Array.from(
         new Set(
           attendance
             ?.map((rec: any) => rec.user_id)
             .filter((id) => id) || []
         )
       );
+      console.log('Unique user IDs:', userIds);
 
       // Fetch system users with all required fields
       let systemUsers: SystemUser[] = [];
-      if (systemUserIds.length > 0) {
+      if (userIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
           .from('system_users')
           .select('*')
-          .in('id', systemUserIds);
+          .in('id', userIds);
 
         if (usersError) throw usersError;
         systemUsers = usersData || [];
+        console.log('System users found:', systemUsers.length);
       }
 
       // Get unique visitor IDs (those not found in system_users)
-      const visitorIds = systemUserIds.filter(
+      const visitorIds = userIds.filter(
         (id) => !systemUsers.find((user) => user.id === id)
       );
+      console.log('Visitor IDs:', visitorIds);
 
       // Fetch visitors with all required fields
       let visitors: Visitor[] = [];
@@ -71,6 +82,7 @@ export default function AttendanceRecordsTable() {
 
         if (visitorsError) throw visitorsError;
         visitors = visitorsData || [];
+        console.log('Visitors found:', visitors.length);
       }
 
       // Merge attendance records with user/visitor data
@@ -80,8 +92,10 @@ export default function AttendanceRecordsTable() {
         visitor: visitors.find((v) => v.id === rec.user_id),
       })) || [];
 
+      console.log('Records with user data:', recordsWithUserData.length);
       setRecords(recordsWithUserData);
     } catch (e: any) {
+      console.error('Error fetching attendance records:', e);
       setError(e.message || "Failed to fetch attendance records.");
       toast({
         title: "Error",
