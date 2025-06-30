@@ -1,99 +1,137 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-
-type AttendanceStatus = Database['public']['Enums']['attendance_status'];
-type UserRole = Database['public']['Enums']['user_role'];
-type SystemUser = Database['public']['Tables']['system_users']['Row'];
+import { useToast } from '@/hooks/use-toast';
 
 export interface AttendanceRecord {
   id: string;
   user_id: string;
-  status: AttendanceStatus;
+  status: 'in' | 'out';
   check_in_time?: string;
   check_out_time?: string;
   created_at: string;
   notes?: string;
-  system_users: {
+  system_users?: {
+    id: string;
     first_name: string;
     last_name: string;
+    user_code?: string;
+    role: string;
+  } | null;
+  visitors?: {
     id: string;
-    role: UserRole;
-  };
+    first_name: string;
+    last_name: string;
+    organization?: string;
+    visit_purpose: string;
+  } | null;
 }
 
 export function useAttendanceRecordsState() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [debugMessage, setDebugMessage] = useState<string | null>(null);
-  const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
+  const [debugMessage, setDebugMessage] = useState('');
   const { toast } = useToast();
 
   const fetchSystemUsers = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_users')
-        .select('*');
-
+      const { data, error } = await supabase.from('system_users').select('*');
       if (error) throw error;
-      setSystemUsers(data || []);
+      console.log('System users loaded:', data?.length || 0);
     } catch (error: any) {
-      setSystemUsers([]);
-      setDebugMessage((prev: string | null) =>
-        (prev || "") + `\nFailed to load users: ${error.message}`
-      );
+      console.error('Error fetching system users:', error);
     }
   }, []);
 
-  const fetchAttendanceRecords = useCallback(async (selectedDate: string) => {
+  const fetchAttendanceRecords = useCallback(async (selectedDate: string = 'all') => {
     setIsLoading(true);
     setFetchError(null);
-    setDebugMessage(null);
-    try {
-      let query = supabase.from('attendance_records').select('*');
+    setDebugMessage('');
 
+    try {
+      console.log('Fetching attendance records for date:', selectedDate);
+
+      let query = supabase
+        .from('attendance_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Apply date filter if not 'all'
       if (selectedDate !== 'all') {
-        const startDate = new Date(selectedDate);
-        const endDate = new Date(selectedDate);
-        endDate.setDate(endDate.getDate() + 1);
-        query = query
-          .gte('created_at', startDate.toISOString())
-          .lt('created_at', endDate.toISOString());
+        const startOfDay = `${selectedDate}T00:00:00.000Z`;
+        const endOfDay = `${selectedDate}T23:59:59.999Z`;
+        query = query.gte('created_at', startOfDay).lte('created_at', endOfDay);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: attendanceData, error: attendanceError } = await query;
 
-      if (error) throw error;
+      if (attendanceError) {
+        throw attendanceError;
+      }
 
-      const merged = data?.map((record: any) => {
-        const sysUser = systemUsers.find(u => u.id === record.user_id);
+      console.log('Raw attendance data:', attendanceData?.length || 0, 'records');
+
+      if (!attendanceData || attendanceData.length === 0) {
+        setAttendanceRecords([]);
+        setDebugMessage('No attendance records found');
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(attendanceData.map(record => record.user_id))];
+      console.log('Unique user IDs:', userIds.length);
+
+      // Fetch system users
+      const { data: systemUsers, error: usersError } = await supabase
+        .from('system_users')
+        .select('id, first_name, last_name, user_code, role')
+        .in('id', userIds);
+
+      if (usersError) {
+        console.error('Error fetching system users:', usersError);
+      }
+
+      // Fetch visitors
+      const { data: visitors, error: visitorsError } = await supabase
+        .from('visitors')
+        .select('id, first_name, last_name, organization, visit_purpose')
+        .in('id', userIds);
+
+      if (visitorsError) {
+        console.error('Error fetching visitors:', visitorsError);
+      }
+
+      console.log('System users found:', systemUsers?.length || 0);
+      console.log('Visitors found:', visitors?.length || 0);
+
+      // Combine the data
+      const enrichedRecords = attendanceData.map(record => {
+        const systemUser = systemUsers?.find(user => user.id === record.user_id);
+        const visitor = visitors?.find(v => v.id === record.user_id);
+        
         return {
           ...record,
-          system_users: sysUser || null,
+          system_users: systemUser || null,
+          visitors: visitor || null
         };
-      }) || [];
+      });
 
-      setDebugMessage(
-        `Fetched ${merged.length} attendance. Raw data: ${JSON.stringify(merged, null, 2)}`
-      );
+      setAttendanceRecords(enrichedRecords);
+      setDebugMessage(`Successfully loaded ${enrichedRecords.length} attendance records`);
 
-      setAttendanceRecords(merged);
     } catch (error: any) {
-      setAttendanceRecords([]);
-      setFetchError(error.message || "Failed to fetch attendance records.");
-      setDebugMessage(error.stack || 'No stack');
+      console.error('Error fetching attendance records:', error);
+      setFetchError(error.message);
       toast({
         title: "Error",
-        description: error.message || "Failed to fetch attendance records",
+        description: `Failed to fetch attendance records: ${error.message}`,
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
-  }, [systemUsers, toast]);
+  }, [toast]);
 
   return {
     attendanceRecords,
@@ -101,7 +139,6 @@ export function useAttendanceRecordsState() {
     setIsLoading,
     fetchError,
     debugMessage,
-    systemUsers,
     fetchSystemUsers,
     fetchAttendanceRecords,
   };

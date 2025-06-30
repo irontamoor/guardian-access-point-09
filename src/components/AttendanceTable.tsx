@@ -29,7 +29,43 @@ export const AttendanceTable: React.FC<TableProps> = ({
   onToggleSelect,
 }) => {
   const allSelected = attendanceRecords.length > 0 && attendanceRecords.every((r) => selectedIds.includes(r.id));
-  const partialSelected = selectedIds.length > 0 && !allSelected;
+
+  const getName = (record: any) => {
+    if (record.system_users) {
+      return `${record.system_users.first_name} ${record.system_users.last_name}`;
+    }
+    if (record.visitors) {
+      return `${record.visitors.first_name} ${record.visitors.last_name}`;
+    }
+    return "Unknown User";
+  };
+
+  const getUserId = (record: any) => {
+    if (record.system_users) {
+      return record.system_users.user_code || record.system_users.id;
+    }
+    if (record.visitors) {
+      return record.visitors.id;
+    }
+    return record.user_id || '-';
+  };
+
+  const getRole = (record: any) => {
+    if (record.system_users) {
+      return record.system_users.role;
+    }
+    if (record.visitors) {
+      return 'visitor';
+    }
+    return 'unknown';
+  };
+
+  const getOrganization = (record: any) => {
+    if (record.visitors?.organization) {
+      return record.visitors.organization;
+    }
+    return '-';
+  };
 
   return (
     <Table>
@@ -38,14 +74,14 @@ export const AttendanceTable: React.FC<TableProps> = ({
           <TableHead>
             <Checkbox
               checked={allSelected}
-              // Removed invalid "indeterminate" prop which caused TS error
               aria-label="Select all"
               onCheckedChange={checked => onSelectAll && onSelectAll(Boolean(checked))}
             />
           </TableHead>
           <TableHead>Name</TableHead>
-          <TableHead>ID</TableHead>
+          <TableHead>ID/Code</TableHead>
           <TableHead>Role</TableHead>
+          <TableHead>Organization</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Check In</TableHead>
           <TableHead>Check Out</TableHead>
@@ -55,13 +91,10 @@ export const AttendanceTable: React.FC<TableProps> = ({
       </TableHeader>
       <TableBody>
         {attendanceRecords.map((record) => {
-          // Fallback for missing user data
-          const user = record.system_users || {};
-          const name = (user.first_name && user.last_name)
-            ? `${user.first_name} ${user.last_name}`
-            : "(unknown user)";
-          const userId = user.id || record.user_id || '-';
-          const role = user.role || 'unknown';
+          const name = getName(record);
+          const userId = getUserId(record);
+          const role = getRole(record);
+          const organization = getOrganization(record);
 
           return (
             <TableRow key={record.id}>
@@ -83,10 +116,14 @@ export const AttendanceTable: React.FC<TableProps> = ({
                   role === 'admin' ? 'bg-red-100 text-red-800' :
                   role === 'staff' ? 'bg-green-100 text-green-800' :
                   role === 'student' ? 'bg-blue-100 text-blue-800' :
+                  role === 'visitor' ? 'bg-purple-100 text-purple-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
                   {role}
                 </span>
+              </TableCell>
+              <TableCell>
+                {organization}
               </TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${
@@ -126,8 +163,8 @@ export const AttendanceTable: React.FC<TableProps> = ({
         })}
         {attendanceRecords.length === 0 && (
           <TableRow>
-            <TableCell colSpan={9} className="text-center text-gray-500 py-8">
-              No attendance records found for {formatDate(selectedDate)}
+            <TableCell colSpan={10} className="text-center text-gray-500 py-8">
+              No attendance records found for {selectedDate === 'all' ? 'any date' : formatDate(selectedDate)}
             </TableCell>
           </TableRow>
         )}
