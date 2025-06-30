@@ -1,4 +1,3 @@
-
 import nodemailer from 'nodemailer';
 
 interface EmailConfig {
@@ -29,7 +28,7 @@ class EmailService {
     // Configure transporter based on available environment variables
     if (process.env.SENDGRID_API_KEY) {
       // SendGrid configuration
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         service: 'SendGrid',
         auth: {
           user: 'apikey',
@@ -48,7 +47,7 @@ class EmailService {
         },
       };
       
-      this.transporter = nodemailer.createTransporter(config);
+      this.transporter = nodemailer.createTransport(config);
     }
   }
 
