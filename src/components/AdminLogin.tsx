@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, User, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 
 interface AdminLoginProps {
   onLogin: (adminData: any) => void;
@@ -31,18 +31,12 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     try {
-      const { data: adminUser, error } = await supabase
-        .from('system_users')
-        .select('*')
-        .eq('admin_id', adminId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      const result = await query(
+        'SELECT * FROM system_users WHERE admin_id = $1 AND role = $2 AND status = $3',
+        [adminId, 'admin', 'active']
+      );
 
-      if (error) {
-        throw error;
-      }
-
-      if (!adminUser || adminUser.password !== password) {
+      if (result.rows.length === 0) {
         toast({
           title: "Login Failed",
           description: "Invalid Admin ID or password",
@@ -52,14 +46,24 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         return;
       }
 
-      // Successful login
+      const adminUser = result.rows[0];
+
+      if (adminUser.password !== password) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid Admin ID or password",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
       toast({
         title: "Login Successful",
         description: `Welcome, ${adminUser.first_name}!`,
         variant: "default"
       });
 
-      // Simulate successful authentication -- you can enrich adminData as desired.
       setTimeout(() => {
         onLogin({
           id: adminUser.id,
@@ -73,8 +77,8 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: "An error occurred during login. " + (err.message || ""),
+        title: "Database Connection Error",
+        description: "Could not connect to database. Please check your database configuration.",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -148,4 +152,3 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 };
 
 export default AdminLogin;
-

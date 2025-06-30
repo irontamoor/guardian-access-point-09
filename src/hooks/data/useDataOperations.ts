@@ -1,33 +1,27 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { query } from "@/integrations/postgres/client";
 
 export function useDataOperations() {
-  // Add student (system_users)
   const addStudent = async (studentData: { id: string; name: string; grade: string }) => {
     const { id, name, grade } = studentData;
     const first_name = name.split(" ")[0] || name;
     const last_name = name.split(" ").slice(1).join(" ") || ".";
-    const { error } = await supabase.from('system_users').insert({
-      id,
-      first_name,
-      last_name,
-      role: 'student'
-    });
-    if (error) throw error;
+    
+    await query(
+      'INSERT INTO system_users (id, first_name, last_name, role, status) VALUES ($1, $2, $3, $4, $5)',
+      [id, first_name, last_name, 'student', 'active']
+    );
   };
 
-  // Add staff (system_users)
   const addStaff = async (staffData: { id: string; name: string; department: string }) => {
     const { id, name, department } = staffData;
     const first_name = name.split(" ")[0] || name;
     const last_name = name.split(" ").slice(1).join(" ") || ".";
-    const { error } = await supabase.from('system_users').insert({
-      id,
-      first_name,
-      last_name,
-      role: 'staff'
-    });
-    if (error) throw error;
+    
+    await query(
+      'INSERT INTO system_users (id, first_name, last_name, role, status) VALUES ($1, $2, $3, $4, $5)',
+      [id, first_name, last_name, 'staff', 'active']
+    );
   };
 
   return {
