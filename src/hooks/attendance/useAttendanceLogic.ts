@@ -26,20 +26,14 @@ export function useAttendanceLogic() {
   }, []);
 
   const createAttendanceRecord = useCallback(async (userId: string, status: "in" | "out", notes?: string) => {
-    const recordData = {
-      user_id: userId,
-      status,
-      notes: notes || null,
-      ...(status === "in" 
-        ? { check_in_time: new Date().toISOString() }
-        : { check_out_time: new Date().toISOString() }
-      )
-    };
+    const now = new Date().toISOString();
+    const checkInTime = status === "in" ? now : null;
+    const checkOutTime = status === "out" ? now : null;
 
     const result = await query(
       `INSERT INTO attendance_records (user_id, status, check_in_time, check_out_time, notes) 
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [recordData.user_id, recordData.status, recordData.check_in_time || null, recordData.check_out_time || null, recordData.notes]
+      [userId, status, checkInTime, checkOutTime, notes || null]
     );
 
     return result.rows[0];
