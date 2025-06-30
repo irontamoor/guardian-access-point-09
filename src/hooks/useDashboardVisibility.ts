@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 
 interface DashboardVisibility {
   showStudentCheckIn: boolean;
@@ -26,22 +26,15 @@ export function useDashboardVisibility() {
   const fetchVisibilitySettings = async () => {
     try {
       setError(null);
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('setting_key, setting_value')
-        .eq('setting_key', 'dashboard_visibility');
+      const result = await query(
+        "SELECT setting_key, setting_value FROM system_settings WHERE setting_key = $1",
+        ['dashboard_visibility']
+      );
 
-      if (error) {
-        console.error('Error fetching visibility settings:', error);
-        setError('Failed to load dashboard settings');
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const settingValue = data[0].setting_value;
-        // Type guard to ensure we have the correct structure
-        if (settingValue && typeof settingValue === 'object' && !Array.isArray(settingValue)) {
-          const settings = settingValue as unknown as DashboardVisibility;
+      if (result.rows && result.rows.length > 0) {
+        const settingValue = result.rows[0].setting_value;
+        if (settingValue && typeof settingValue === 'object') {
+          const settings = settingValue as DashboardVisibility;
           setVisibility(settings);
         }
       }
