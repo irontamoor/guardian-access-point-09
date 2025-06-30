@@ -41,7 +41,7 @@ export function useVMSData() {
       if (staffError) throw staffError;
       setStaff(staffData || []);
 
-      // Load recent activity - fetch attendance records first
+      // Load recent activity from merged attendance_records
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_records')
         .select('*')
@@ -51,47 +51,35 @@ export function useVMSData() {
       if (attendanceError) throw attendanceError;
 
       if (attendanceData && attendanceData.length > 0) {
-        // Get unique user IDs from attendance records
-        const userIds = [...new Set(attendanceData.map(record => record.user_id).filter(Boolean))];
+        // Get system user data for records that reference system users (missing names)
+        const userIds = [...new Set(
+          attendanceData
+            .filter(record => !record.first_name && record.user_id)
+            .map(record => record.user_id)
+        )];
 
-        // Fetch system users for these IDs
-        let systemUsers: any[] = [];
+        let systemUsersMap = new Map();
         if (userIds.length > 0) {
-          const { data: systemUsersData, error: usersError } = await supabase
+          const { data: systemUsersData } = await supabase
             .from('system_users')
             .select('id, first_name, last_name, user_code, admin_id, role')
             .in('id', userIds);
 
-          if (!usersError && systemUsersData) {
-            systemUsers = systemUsersData;
+          if (systemUsersData) {
+            systemUsersMap = new Map(systemUsersData.map(u => [u.id, u]));
           }
         }
 
-        // Get visitor IDs (those not found in system_users)
-        const systemUserIds = systemUsers.map(u => u.id);
-        const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
-        
-        let visitors: any[] = [];
-        if (visitorIds.length > 0) {
-          const { data: visitorsData, error: visitorsError } = await supabase
-            .from('visitors')
-            .select('id, first_name, last_name, organization, visit_purpose')
-            .in('id', visitorIds);
-
-          if (!visitorsError && visitorsData) {
-            visitors = visitorsData;
-          }
-        }
-
-        // Combine the data with user information
+        // Enrich activity data
         const enrichedActivity = attendanceData.map(record => {
-          const systemUser = systemUsers.find(user => user.id === record.user_id);
-          const visitor = visitors.find(v => v.id === record.user_id);
+          const systemUser = systemUsersMap.get(record.user_id);
           
           return {
             ...record,
             system_users: systemUser || null,
-            visitors: visitor || null
+            // Use merged data first, fall back to system user
+            first_name: record.first_name || systemUser?.first_name,
+            last_name: record.last_name || systemUser?.last_name
           };
         });
 
@@ -110,9 +98,15 @@ export function useVMSData() {
   const updateStudentStatus = async (userId: string, status: "present" | "absent") => {
     setIsLoading(true);
     try {
-      // Create attendance record for today
       const now = new Date();
       const attendanceStatus = status === "present" ? "in" : "out";
+      
+      // Get student info for merged structure
+      const { data: student } = await supabase
+        .from('system_users')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .single();
       
       const { error } = await supabase
         .from('attendance_records')
@@ -121,13 +115,14 @@ export function useVMSData() {
           status: attendanceStatus,
           check_in_time: status === "present" ? now.toISOString() : null,
           check_out_time: status === "absent" ? now.toISOString() : null,
-          notes: `Status updated to ${status} via admin panel`
+          notes: `Status updated to ${status} via admin panel`,
+          first_name: student?.first_name,
+          last_name: student?.last_name
         });
 
       if (error) throw error;
 
       console.log(`Student ${userId} attendance updated to ${status}`);
-      // Reload data to refresh the dashboard
       await loadData();
     } catch (error: any) {
       console.error('Error updating student status:', error);
@@ -140,9 +135,15 @@ export function useVMSData() {
   const updateStaffStatus = async (userId: string, status: "present" | "absent") => {
     setIsLoading(true);
     try {
-      // Create attendance record for today
       const now = new Date();
       const attendanceStatus = status === "present" ? "in" : "out";
+      
+      // Get staff info for merged structure
+      const { data: staff } = await supabase
+        .from('system_users')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .single();
       
       const { error } = await supabase
         .from('attendance_records')
@@ -151,13 +152,14 @@ export function useVMSData() {
           status: attendanceStatus,
           check_in_time: status === "present" ? now.toISOString() : null,
           check_out_time: status === "absent" ? now.toISOString() : null,
-          notes: `Status updated to ${status} via admin panel`
+          notes: `Status updated to ${status} via admin panel`,
+          first_name: staff?.first_name,
+          last_name: staff?.last_name
         });
 
       if (error) throw error;
 
       console.log(`Staff ${userId} attendance updated to ${status}`);
-      // Reload data to refresh the dashboard
       await loadData();
     } catch (error: any) {
       console.error('Error updating staff status:', error);

@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { useSignInOptionsJson } from '@/hooks/useSignInOptionsJson';
 import { supabase } from '@/integrations/supabase/client';
 import { VisitorFormFields } from './VisitorFormFields';
 import { VisitorFormActions } from './VisitorFormActions';
@@ -20,7 +19,7 @@ export function VisitorForm() {
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { options: visitTypes, loading: visitTypesLoading } = useSignInOptions("both", "visit_type");
+  const { options: visitTypes, loading: visitTypesLoading } = useSignInOptionsJson("both", "visit_type");
 
   const handleInputChange = (field: string, value: string) => {
     setVisitorData(prev => ({ ...prev, [field]: value }));
@@ -38,54 +37,35 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
-      // First, create the visitor record
-      const { data: visitor, error: visitorError } = await supabase
-        .from('visitors')
+      // Create attendance record directly with visitor data in the merged structure
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
         .insert({
+          user_id: crypto.randomUUID(), // Generate a unique ID for this visitor
+          status: 'in',
+          check_in_time: new Date().toISOString(),
           first_name: visitorData.firstName,
           last_name: visitorData.lastName,
           organization: visitorData.organization,
           visit_purpose: visitorData.visitPurpose,
           host_name: visitorData.hostName,
           phone_number: visitorData.phoneNumber,
-          notes: visitorData.notes
-        })
-        .select()
-        .single();
-
-      if (visitorError) throw visitorError;
-
-      // Then create the attendance record using the visitor's ID
-      // Note: We use the visitor's ID directly as user_id since the attendance system 
-      // is designed to track both system users and visitors
-      const { error: attendanceError } = await supabase
-        .from('attendance_records')
-        .insert({
-          user_id: visitor.id,
-          status: 'in',
-          check_in_time: new Date().toISOString(),
+          notes: visitorData.notes,
+          // Keep legacy fields for compatibility
           company: visitorData.organization,
-          purpose: visitorData.visitPurpose,
-          host_name: visitorData.hostName,
-          notes: visitorData.notes
+          purpose: visitorData.visitPurpose
         });
 
       if (attendanceError) {
         console.error('Attendance record error:', attendanceError);
-        // If attendance record fails, we still want to show success for visitor registration
-        // but log the error for debugging
-        toast({
-          title: "Visitor Registered!",
-          description: `${visitorData.firstName} ${visitorData.lastName} has been registered. Note: Check-in record may need manual entry.`,
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "Visitor Registered!",
-          description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in. Badge will be printed.`,
-          variant: "default"
-        });
+        throw attendanceError;
       }
+
+      toast({
+        title: "Visitor Registered!",
+        description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in.`,
+        variant: "default"
+      });
 
       setVisitorData({
         firstName: '',

@@ -10,11 +10,9 @@ import type { Database } from "@/integrations/supabase/types";
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'];
-type Visitor = Database['public']['Tables']['visitors']['Row'];
 
 interface AttendanceRecordWithUser extends AttendanceRecord {
   system_users?: SystemUser;
-  visitors?: Visitor;
 }
 
 export default function AttendanceRecordsTable() {
@@ -29,7 +27,7 @@ export default function AttendanceRecordsTable() {
     try {
       console.log('AttendanceRecordsTable: Fetching attendance records...');
       
-      // Fetch all attendance records
+      // Fetch all attendance records with new merged structure
       const { data: attendance, error: attendanceError } = await supabase
         .from('attendance_records')
         .select('*')
@@ -37,67 +35,45 @@ export default function AttendanceRecordsTable() {
 
       if (attendanceError) throw attendanceError;
       console.log('AttendanceRecordsTable: Raw attendance records found:', attendance?.length || 0);
-      console.log('AttendanceRecordsTable: Attendance data:', attendance);
 
       if (!attendance || attendance.length === 0) {
         setRecords([]);
         return;
       }
 
-      // Get unique user IDs for lookups
+      // Get system user data for records that reference system users
       const userIds = Array.from(
         new Set(
           attendance
-            ?.map((rec: any) => rec.user_id)
-            .filter((id) => id) || []
+            ?.filter(rec => !rec.first_name || !rec.last_name) // Only for records missing name data
+            .map(rec => rec.user_id)
+            .filter(id => id) || []
         )
       );
-      console.log('AttendanceRecordsTable: Unique user IDs:', userIds);
 
-      // Fetch ALL system users and visitors, then filter
-      const [systemUsersResponse, visitorsResponse] = await Promise.all([
-        supabase.from('system_users').select('*'),
-        supabase.from('visitors').select('*')
-      ]);
+      let systemUsersMap = new Map();
+      if (userIds.length > 0) {
+        const { data: systemUsers } = await supabase
+          .from('system_users')
+          .select('*')
+          .in('id', userIds);
 
-      if (systemUsersResponse.error) {
-        console.error('AttendanceRecordsTable: Error fetching system users:', systemUsersResponse.error);
-      }
-      
-      if (visitorsResponse.error) {
-        console.error('AttendanceRecordsTable: Error fetching visitors:', visitorsResponse.error);
+        if (systemUsers) {
+          systemUsersMap = new Map(systemUsers.map(user => [user.id, user]));
+        }
       }
 
-      const allSystemUsers = systemUsersResponse.data || [];
-      const allVisitors = visitorsResponse.data || [];
-
-      console.log('AttendanceRecordsTable: All system users found:', allSystemUsers.length);
-      console.log('AttendanceRecordsTable: All visitors found:', allVisitors.length);
-      console.log('AttendanceRecordsTable: All visitors data:', allVisitors);
-
-      // Create lookup maps
-      const systemUsersMap = new Map(allSystemUsers.map(user => [user.id, user]));
-      const visitorsMap = new Map(allVisitors.map(visitor => [visitor.id, visitor]));
-
-      console.log('AttendanceRecordsTable: System users map keys:', Array.from(systemUsersMap.keys()));
-      console.log('AttendanceRecordsTable: Visitors map keys:', Array.from(visitorsMap.keys()));
-
-      // Merge attendance records with user/visitor data
+      // Merge attendance records with system user data where needed
       const recordsWithUserData = attendance?.map((rec: any) => {
         const systemUser = systemUsersMap.get(rec.user_id);
-        const visitor = visitorsMap.get(rec.user_id);
-        
-        console.log(`AttendanceRecordsTable: Record ${rec.id}: user_id=${rec.user_id}, found systemUser=${!!systemUser}, found visitor=${!!visitor}`);
         
         return {
           ...rec,
           system_users: systemUser || null,
-          visitors: visitor || null,
         };
       }) || [];
 
       console.log('AttendanceRecordsTable: Records with user data:', recordsWithUserData.length);
-      console.log('AttendanceRecordsTable: Final records:', recordsWithUserData);
       setRecords(recordsWithUserData);
     } catch (e: any) {
       console.error('AttendanceRecordsTable: Error fetching attendance records:', e);
@@ -121,11 +97,12 @@ export default function AttendanceRecordsTable() {
     dt ? new Date(dt).toLocaleString() : "-";
 
   const getPersonName = (record: AttendanceRecordWithUser) => {
+    // Use merged data first, then fall back to system user data
+    if (record.first_name && record.last_name) {
+      return `${record.first_name} ${record.last_name}`;
+    }
     if (record.system_users) {
       return `${record.system_users.first_name} ${record.system_users.last_name}`;
-    }
-    if (record.visitors) {
-      return `${record.visitors.first_name} ${record.visitors.last_name}`;
     }
     return `Unknown User (${record.user_id})`;
   };
@@ -134,27 +111,29 @@ export default function AttendanceRecordsTable() {
     if (record.system_users) {
       return record.system_users.role;
     }
-    if (record.visitors) {
+    // If we have visitor data (organization or visit_purpose), it's a visitor
+    if (record.organization || record.visit_purpose) {
       return "visitor";
     }
     return "unknown";
   };
 
   const getContactInfo = (record: AttendanceRecordWithUser) => {
+    if (record.phone_number) {
+      return record.phone_number;
+    }
     if (record.system_users) {
       return record.system_users.email || "-";
-    }
-    if (record.visitors) {
-      return record.visitors.phone_number || "-";
     }
     return "-";
   };
 
   const getOrganization = (record: AttendanceRecordWithUser) => {
-    if (record.visitors) {
-      return record.visitors.organization || "-";
-    }
-    return record.company || "-";
+    return record.organization || record.company || "-";
+  };
+
+  const getPurpose = (record: AttendanceRecordWithUser) => {
+    return record.visit_purpose || record.purpose || "-";
   };
 
   return (
@@ -227,8 +206,8 @@ export default function AttendanceRecordsTable() {
                     <TableCell>{formatDateTime(rec.check_out_time)}</TableCell>
                     <TableCell>{formatDateTime(rec.created_at)}</TableCell>
                     <TableCell>{getOrganization(rec)}</TableCell>
-                    <TableCell>{rec.host_name || rec.visitors?.host_name || "-"}</TableCell>
-                    <TableCell>{rec.purpose || rec.visitors?.visit_purpose || "-"}</TableCell>
+                    <TableCell>{rec.host_name || "-"}</TableCell>
+                    <TableCell>{getPurpose(rec)}</TableCell>
                     <TableCell>{rec.notes || "-"}</TableCell>
                   </TableRow>
                 ))

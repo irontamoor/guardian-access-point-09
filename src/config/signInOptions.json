@@ -1,0 +1,45 @@
+
+[
+  {
+    "id": "meeting",
+    "label": "Meeting",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  },
+  {
+    "id": "delivery",
+    "label": "Delivery",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  },
+  {
+    "id": "interview",
+    "label": "Interview",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  },
+  {
+    "id": "maintenance",
+    "label": "Maintenance",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  },
+  {
+    "id": "parent_conference",
+    "label": "Parent Conference",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  },
+  {
+    "id": "event",
+    "label": "Event",
+    "applies_to": "both",
+    "category": "visit_type",
+    "is_active": true
+  }
+]

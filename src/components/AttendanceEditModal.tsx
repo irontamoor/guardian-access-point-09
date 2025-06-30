@@ -27,13 +27,15 @@ export const AttendanceEditModal: React.FC<Props> = ({
 }) => {
   if (!editingRecord) return null;
 
-  // Get the person's name - handle both system users and visitors
+  // Get the person's name from merged data structure
   const getPersonName = () => {
+    // Use merged data first
+    if (editingRecord.first_name && editingRecord.last_name) {
+      return `${editingRecord.first_name} ${editingRecord.last_name}`;
+    }
+    // Fall back to system user data
     if (editingRecord.system_users) {
       return `${editingRecord.system_users.first_name} ${editingRecord.system_users.last_name}`;
-    }
-    if (editingRecord.visitors) {
-      return `${editingRecord.visitors.first_name} ${editingRecord.visitors.last_name}`;
     }
     return `Unknown User (${editingRecord.user_id})`;
   };
@@ -43,7 +45,8 @@ export const AttendanceEditModal: React.FC<Props> = ({
     if (editingRecord.system_users) {
       return editingRecord.system_users.role;
     }
-    if (editingRecord.visitors) {
+    // If has visitor data, it's a visitor
+    if (editingRecord.organization || editingRecord.visit_purpose || editingRecord.phone_number) {
       return 'visitor';
     }
     return 'unknown';

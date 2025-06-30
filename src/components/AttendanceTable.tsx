@@ -31,11 +31,13 @@ export const AttendanceTable: React.FC<TableProps> = ({
   const allSelected = attendanceRecords.length > 0 && attendanceRecords.every((r) => selectedIds.includes(r.id));
 
   const getName = (record: any) => {
+    // Use merged data first (from new structure)
+    if (record.first_name && record.last_name) {
+      return `${record.first_name} ${record.last_name}`;
+    }
+    // Fall back to system user data
     if (record.system_users) {
       return `${record.system_users.first_name} ${record.system_users.last_name}`;
-    }
-    if (record.visitors) {
-      return `${record.visitors.first_name} ${record.visitors.last_name}`;
     }
     return `Unknown User (${record.user_id})`;
   };
@@ -44,8 +46,9 @@ export const AttendanceTable: React.FC<TableProps> = ({
     if (record.system_users) {
       return record.system_users.user_code || record.system_users.admin_id || record.system_users.id.substring(0, 8);
     }
-    if (record.visitors) {
-      return `V-${record.visitors.id.substring(0, 8)}`;
+    // For visitors, use phone number or truncated ID
+    if (record.phone_number) {
+      return record.phone_number;
     }
     return record.user_id?.substring(0, 8) || 'N/A';
   };
@@ -54,30 +57,19 @@ export const AttendanceTable: React.FC<TableProps> = ({
     if (record.system_users) {
       return record.system_users.role;
     }
-    if (record.visitors) {
+    // If has visitor data, it's a visitor
+    if (record.organization || record.visit_purpose || record.phone_number) {
       return 'visitor';
     }
     return 'unknown';
   };
 
   const getOrganization = (record: any) => {
-    if (record.visitors?.organization) {
-      return record.visitors.organization;
-    }
-    if (record.company) {
-      return record.company;
-    }
-    return '-';
+    return record.organization || record.company || '-';
   };
 
   const getPurpose = (record: any) => {
-    if (record.visitors?.visit_purpose) {
-      return record.visitors.visit_purpose;
-    }
-    if (record.purpose) {
-      return record.purpose;
-    }
-    return '-';
+    return record.visit_purpose || record.purpose || '-';
   };
 
   return (

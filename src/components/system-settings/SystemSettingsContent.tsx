@@ -5,70 +5,18 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
-interface DashboardVisibility {
-  showStudentCheckIn: boolean;
-  showStaffSignIn: boolean;
-  showVisitorRegistration: boolean;
-  showParentPickup: boolean;
-}
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 
 export function SystemSettingsContent() {
-  const [visibility, setVisibility] = useState<DashboardVisibility>({
-    showStudentCheckIn: true,
-    showStaffSignIn: true,
-    showVisitorRegistration: true,
-    showParentPickup: true,
-  });
-  const [loading, setLoading] = useState(false);
+  const { settings, loading, updateSetting } = useSystemSettings();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchVisibilitySettings();
-  }, []);
-
-  const fetchVisibilitySettings = async () => {
+  const updateVisibilitySetting = async (key: keyof typeof settings.dashboard_visibility, value: boolean) => {
     try {
       setError(null);
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('setting_key, setting_value')
-        .eq('setting_key', 'dashboard_visibility')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (data && data.setting_value && typeof data.setting_value === 'object' && !Array.isArray(data.setting_value)) {
-        const settings = data.setting_value as unknown as DashboardVisibility;
-        setVisibility(settings);
-      }
-    } catch (error: any) {
-      console.error('Error fetching visibility settings:', error);
-      setError('Failed to load settings. Please check your permissions.');
-    }
-  };
-
-  const updateVisibilitySetting = async (key: keyof DashboardVisibility, value: boolean) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const newVisibility = { ...visibility, [key]: value };
-      
-      const { error } = await supabase
-        .from('system_settings')
-        .upsert({
-          setting_key: 'dashboard_visibility',
-          setting_value: newVisibility,
-          description: 'Controls visibility of dashboard cards',
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      setVisibility(newVisibility);
+      const newVisibility = { ...settings.dashboard_visibility, [key]: value };
+      updateSetting('dashboard_visibility', newVisibility);
 
       toast({
         title: "Setting Updated",
@@ -76,14 +24,12 @@ export function SystemSettingsContent() {
       });
     } catch (error: any) {
       console.error('Error updating setting:', error);
-      setError('Failed to update setting. Please check your permissions.');
+      setError('Failed to update setting.');
       toast({
         title: "Error",
-        description: error.message || "Failed to update setting. Please check your permissions.",
+        description: "Failed to update setting.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -104,7 +50,7 @@ export function SystemSettingsContent() {
             <Label htmlFor="student-checkin">Student Check-In</Label>
             <Switch
               id="student-checkin"
-              checked={visibility.showStudentCheckIn}
+              checked={settings.dashboard_visibility.showStudentCheckIn}
               onCheckedChange={(checked) => updateVisibilitySetting('showStudentCheckIn', checked)}
               disabled={loading}
             />
@@ -114,7 +60,7 @@ export function SystemSettingsContent() {
             <Label htmlFor="staff-signin">Staff Sign-In</Label>
             <Switch
               id="staff-signin"
-              checked={visibility.showStaffSignIn}
+              checked={settings.dashboard_visibility.showStaffSignIn}
               onCheckedChange={(checked) => updateVisibilitySetting('showStaffSignIn', checked)}
               disabled={loading}
             />
@@ -124,7 +70,7 @@ export function SystemSettingsContent() {
             <Label htmlFor="visitor-registration">Visitor Registration</Label>
             <Switch
               id="visitor-registration"
-              checked={visibility.showVisitorRegistration}
+              checked={settings.dashboard_visibility.showVisitorRegistration}
               onCheckedChange={(checked) => updateVisibilitySetting('showVisitorRegistration', checked)}
               disabled={loading}
             />
@@ -134,7 +80,7 @@ export function SystemSettingsContent() {
             <Label htmlFor="parent-pickup">Parent Pickup</Label>
             <Switch
               id="parent-pickup"
-              checked={visibility.showParentPickup}
+              checked={settings.dashboard_visibility.showParentPickup}
               onCheckedChange={(checked) => updateVisibilitySetting('showParentPickup', checked)}
               disabled={loading}
             />

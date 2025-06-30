@@ -54,12 +54,17 @@ export type Database = {
           company: string | null
           created_at: string
           created_by: string | null
+          first_name: string | null
           host_name: string | null
           id: string
+          last_name: string | null
           notes: string | null
+          organization: string | null
+          phone_number: string | null
           purpose: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           user_id: string
+          visit_purpose: string | null
         }
         Insert: {
           check_in_time?: string | null
@@ -67,12 +72,17 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          first_name?: string | null
           host_name?: string | null
           id?: string
+          last_name?: string | null
           notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
           purpose?: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           user_id: string
+          visit_purpose?: string | null
         }
         Update: {
           check_in_time?: string | null
@@ -80,80 +90,17 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          first_name?: string | null
           host_name?: string | null
           id?: string
+          last_name?: string | null
           notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
           purpose?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      sign_in_options: {
-        Row: {
-          applies_to: string
-          category: string
-          created_at: string
-          id: string
-          is_active: boolean
-          label: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          applies_to?: string
-          category?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          label: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          applies_to?: string
-          category?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          label?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sign_in_options_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "system_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      system_settings: {
-        Row: {
-          description: string | null
-          id: string
-          setting_key: string
-          setting_value: Json | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          description?: string | null
-          id?: string
-          setting_key: string
-          setting_value?: Json | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          description?: string | null
-          id?: string
-          setting_key?: string
-          setting_value?: Json | null
-          updated_at?: string
-          updated_by?: string | null
+          visit_purpose?: string | null
         }
         Relationships: []
       }
@@ -199,77 +146,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
           user_code?: string | null
-        }
-        Relationships: []
-      }
-      user_role_assignments: {
-        Row: {
-          assigned_at: string
-          assigned_by: string | null
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string
-          assigned_by?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string
-          assigned_by?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_role_assignments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "system_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      visitors: {
-        Row: {
-          created_at: string
-          first_name: string
-          host_name: string | null
-          id: string
-          last_name: string
-          notes: string | null
-          organization: string | null
-          phone_number: string | null
-          updated_at: string
-          visit_purpose: string
-        }
-        Insert: {
-          created_at?: string
-          first_name: string
-          host_name?: string | null
-          id?: string
-          last_name: string
-          notes?: string | null
-          organization?: string | null
-          phone_number?: string | null
-          updated_at?: string
-          visit_purpose: string
-        }
-        Update: {
-          created_at?: string
-          first_name?: string
-          host_name?: string | null
-          id?: string
-          last_name?: string
-          notes?: string | null
-          organization?: string | null
-          phone_number?: string | null
-          updated_at?: string
-          visit_purpose?: string
         }
         Relationships: []
       }

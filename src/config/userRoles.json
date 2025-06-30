@@ -1,0 +1,27 @@
+
+{
+  "admin": {
+    "label": "Administrator",
+    "permissions": ["read", "write", "delete", "admin"]
+  },
+  "staff": {
+    "label": "Staff Member",
+    "permissions": ["read", "write"]
+  },
+  "student": {
+    "label": "Student",
+    "permissions": ["read"]
+  },
+  "parent": {
+    "label": "Parent",
+    "permissions": ["read"]
+  },
+  "visitor": {
+    "label": "Visitor",
+    "permissions": ["read"]
+  },
+  "reader": {
+    "label": "Reader",
+    "permissions": ["read"]
+  }
+}
