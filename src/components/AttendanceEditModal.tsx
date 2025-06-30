@@ -26,12 +26,35 @@ export const AttendanceEditModal: React.FC<Props> = ({
   handleEditAttendance
 }) => {
   if (!editingRecord) return null;
+
+  // Get the person's name - handle both system users and visitors
+  const getPersonName = () => {
+    if (editingRecord.system_users) {
+      return `${editingRecord.system_users.first_name} ${editingRecord.system_users.last_name}`;
+    }
+    if (editingRecord.visitors) {
+      return `${editingRecord.visitors.first_name} ${editingRecord.visitors.last_name}`;
+    }
+    return `Unknown User (${editingRecord.user_id})`;
+  };
+
+  // Get the person's type
+  const getPersonType = () => {
+    if (editingRecord.system_users) {
+      return editingRecord.system_users.role;
+    }
+    if (editingRecord.visitors) {
+      return 'visitor';
+    }
+    return 'unknown';
+  };
+
   return (
     <Card className="border-l-4 border-l-orange-500">
       <CardHeader>
         <CardTitle>Edit Attendance Record</CardTitle>
         <CardDescription>
-          Editing attendance for {editingRecord.system_users.first_name} {editingRecord.system_users.last_name}
+          Editing attendance for {getPersonName()} ({getPersonType()})
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
