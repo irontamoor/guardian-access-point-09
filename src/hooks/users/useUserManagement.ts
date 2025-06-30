@@ -1,66 +1,54 @@
 
-import { query } from "@/integrations/postgres/client";
-import type { SystemUser } from "@/integrations/postgres/types";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-type SystemUserInsert = Omit<SystemUser, 'id' | 'created_at' | 'updated_at'>;
-type SystemUserUpdate = Partial<SystemUserInsert>;
+type SystemUser = Database['public']['Tables']['system_users']['Row'];
+type SystemUserInsert = Database['public']['Tables']['system_users']['Insert'];
+type SystemUserUpdate = Database['public']['Tables']['system_users']['Update'];
 
 export const useUserManagement = () => {
   const createUser = async (userData: SystemUserInsert) => {
-    const result = await query(
-      `INSERT INTO system_users (first_name, last_name, email, phone, role, status, user_code, admin_id, password) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-       RETURNING *`,
-      [
-        userData.first_name,
-        userData.last_name,
-        userData.email,
-        userData.phone,
-        userData.role,
-        userData.status,
-        userData.user_code,
-        userData.admin_id,
-        userData.password
-      ]
-    );
+    const { data, error } = await supabase
+      .from('system_users')
+      .insert(userData)
+      .select()
+      .single();
     
-    if (result.rows.length === 0) throw new Error('Failed to create user');
-    return result.rows[0];
+    if (error) throw error;
+    return data;
   };
 
   const updateUser = async (id: string, updates: SystemUserUpdate) => {
-    const updateFields = Object.keys(updates)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(', ');
+    const { data, error } = await supabase
+      .from('system_users')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
     
-    const values = [id, ...Object.values(updates)];
-    
-    const result = await query(
-      `UPDATE system_users SET ${updateFields}, updated_at = NOW() 
-       WHERE id = $1 RETURNING *`,
-      values
-    );
-    
-    if (result.rows.length === 0) throw new Error('User not found');
-    return result.rows[0];
+    if (error) throw error;
+    return data;
   };
 
   const deleteUser = async (id: string) => {
-    const result = await query(
-      "DELETE FROM system_users WHERE id = $1",
-      [id]
-    );
+    const { error } = await supabase
+      .from('system_users')
+      .delete()
+      .eq('id', id);
     
-    if (result.rowCount === 0) throw new Error('User not found');
+    if (error) throw error;
   };
 
   const fetchUsersByRole = async (role: "student" | "staff") => {
-    const result = await query(
-      "SELECT * FROM system_users WHERE role = $1 AND status = $2 ORDER BY created_at DESC",
-      [role, 'active']
-    );
+    const { data, error } = await supabase
+      .from('system_users')
+      .select('*')
+      .eq('role', role)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
     
-    return result.rows || [];
+    if (error) throw error;
+    return data || [];
   };
 
   return {

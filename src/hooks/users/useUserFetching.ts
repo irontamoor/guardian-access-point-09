@@ -1,20 +1,23 @@
 
 import { useCallback } from "react";
-import { query } from "@/integrations/postgres/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useUserFetching() {
   const fetchStudentUser = useCallback(async (userCode: string) => {
     try {
-      const result = await query(
-        "SELECT * FROM system_users WHERE user_code = $1 AND role = $2 AND status = $3",
-        [userCode, 'student', 'active']
-      );
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('user_code', userCode)
+        .eq('role', 'student')
+        .eq('status', 'active')
+        .single();
 
-      if (result.rows.length === 0) {
-        console.error('Student not found');
+      if (error) {
+        console.error('Student not found:', error);
         return null;
       }
-      return result.rows[0];
+      return data;
     } catch (error) {
       console.error('Error fetching student:', error);
       return null;
@@ -23,16 +26,19 @@ export function useUserFetching() {
 
   const fetchStaffUser = useCallback(async (userCode: string) => {
     try {
-      const result = await query(
-        "SELECT * FROM system_users WHERE user_code = $1 AND role = $2 AND status = $3",
-        [userCode, 'staff', 'active']
-      );
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('user_code', userCode)
+        .eq('role', 'staff')
+        .eq('status', 'active')
+        .single();
 
-      if (result.rows.length === 0) {
-        console.error('Staff not found');
+      if (error) {
+        console.error('Staff not found:', error);
         return null;
       }
-      return result.rows[0];
+      return data;
     } catch (error) {
       console.error('Error fetching staff:', error);
       return null;

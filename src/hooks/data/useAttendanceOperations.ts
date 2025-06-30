@@ -1,5 +1,5 @@
 
-import { query } from "@/integrations/postgres/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useAttendanceOperations() {
   // Update student attendance
@@ -8,10 +8,17 @@ export function useAttendanceOperations() {
     const attendanceStatus = status === "present" ? "in" : "out";
     const timeField = status === "present" ? "check_in_time" : "check_out_time";
     
-    await query(
-      `INSERT INTO attendance_records (user_id, status, ${timeField}) VALUES ($1, $2, $3)`,
-      [userId, attendanceStatus, timestamp]
-    );
+    const insertData: any = {
+      user_id: userId,
+      status: attendanceStatus,
+    };
+    insertData[timeField] = timestamp;
+
+    const { error } = await supabase
+      .from('attendance_records')
+      .insert(insertData);
+
+    if (error) throw error;
   };
 
   // Update staff attendance
@@ -20,10 +27,17 @@ export function useAttendanceOperations() {
     const attendanceStatus = status === "present" ? "in" : "out";
     const timeField = status === "present" ? "check_in_time" : "check_out_time";
     
-    await query(
-      `INSERT INTO attendance_records (user_id, status, ${timeField}) VALUES ($1, $2, $3)`,
-      [userId, attendanceStatus, timestamp]
-    );
+    const insertData: any = {
+      user_id: userId,
+      status: attendanceStatus,
+    };
+    insertData[timeField] = timestamp;
+
+    const { error } = await supabase
+      .from('attendance_records')
+      .insert(insertData);
+
+    if (error) throw error;
   };
 
   return {

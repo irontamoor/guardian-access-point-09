@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { query } from "@/integrations/postgres/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AttendanceStatusMap = Record<string, 'present' | 'absent'>;
 
@@ -9,16 +9,18 @@ export function useAttendanceMapping() {
     const today = new Date().toISOString().split('T')[0];
     
     try {
-      const result = await query(
-        `SELECT user_id, status FROM attendance_records 
-         WHERE DATE(created_at) = $1 
-         ORDER BY created_at DESC`,
-        [today]
-      );
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('user_id, status')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
 
       const statusMap: AttendanceStatusMap = {};
       
-      result.rows?.forEach((record: any) => {
+      data?.forEach((record: any) => {
         if (!statusMap[record.user_id]) {
           statusMap[record.user_id] = record.status === 'in' ? 'present' : 'absent';
         }

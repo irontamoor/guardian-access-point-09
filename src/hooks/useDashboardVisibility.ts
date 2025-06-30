@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useDashboardVisibility = () => {
   const [visibility, setVisibility] = useState({
@@ -14,14 +14,16 @@ export const useDashboardVisibility = () => {
   useEffect(() => {
     const fetchVisibilitySettings = async () => {
       try {
-        const result = await query(
-          "SELECT setting_value FROM system_settings WHERE setting_key = $1",
-          ['dashboard_visibility']
-        );
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('setting_value')
+          .eq('setting_key', 'dashboard_visibility')
+          .single();
 
-        if (result.rows.length > 0) {
-          const settings = result.rows[0].setting_value;
-          setVisibility(settings);
+        if (error) throw error;
+
+        if (data && data.setting_value) {
+          setVisibility(data.setting_value as any);
         }
       } catch (error) {
         console.error('Error fetching dashboard visibility:', error);

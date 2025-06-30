@@ -8,11 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { query } from '@/integrations/postgres/client';
-import type { SystemUser, UserRole, UserStatus } from '@/integrations/postgres/types';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useEnumValues } from "@/hooks/useEnumValues";
 import { useVMSData } from "@/hooks/useVMSData";
 import { Switch } from "@/components/ui/switch";
+
+type SystemUser = Database['public']['Tables']['system_users']['Row'];
+type UserRole = Database['public']['Enums']['user_role'];
+type UserStatus = Database['public']['Enums']['user_status'];
 
 const UserManagement = () => {
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -41,10 +45,13 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      const result = await query(
-        'SELECT * FROM system_users ORDER BY created_at DESC'
-      );
-      setUsers(result.rows || []);
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -67,22 +74,21 @@ const UserManagement = () => {
       }
 
       if (editingUser) {
-        await query(
-          `UPDATE system_users SET 
-           first_name = $1, last_name = $2, email = $3, phone = $4, 
-           user_code = $5, role = $6, status = $7, updated_at = NOW()
-           WHERE id = $8`,
-          [
-            formData.first_name,
-            formData.last_name,
-            formData.email,
-            formData.phone || null,
-            formData.user_code,
-            formData.role,
-            formData.status,
-            editingUser.id
-          ]
-        );
+        const { error } = await supabase
+          .from('system_users')
+          .update({
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone: formData.phone || null,
+            user_code: formData.user_code,
+            role: formData.role,
+            status: formData.status,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingUser.id);
+
+        if (error) throw error;
 
         toast({
           title: "Success",
@@ -90,19 +96,19 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        await query(
-          `INSERT INTO system_users (first_name, last_name, email, phone, user_code, role, status) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            formData.first_name,
-            formData.last_name,
-            formData.email,
-            formData.phone || null,
-            formData.user_code,
-            formData.role,
-            formData.status
-          ]
-        );
+        const { error } = await supabase
+          .from('system_users')
+          .insert({
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone: formData.phone || null,
+            user_code: formData.user_code,
+            role: formData.role,
+            status: formData.status
+          });
+
+        if (error) throw error;
 
         toast({
           title: "Success",
@@ -156,7 +162,12 @@ const UserManagement = () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      await query('DELETE FROM system_users WHERE id = $1', [user.id]);
+      const { error } = await supabase
+        .from('system_users')
+        .delete()
+        .eq('id', user.id);
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -182,14 +193,15 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchUserAttendance = async () => {
       try {
-        const result = await query(`
-          SELECT user_id, status 
-          FROM attendance_records 
-          ORDER BY created_at DESC
-        `);
-        const data = result.rows || [];
+        const { data, error } = await supabase
+          .from('attendance_records')
+          .select('user_id, status')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
         const seen: Record<string, "present" | "absent"> = {};
-        data.forEach((a: any) => {
+        data?.forEach((a: any) => {
           if (!(a.user_id in seen)) {
             seen[a.user_id] = a.status === "in" ? "present" : "absent";
           }

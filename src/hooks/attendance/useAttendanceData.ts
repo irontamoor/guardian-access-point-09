@@ -1,60 +1,62 @@
 
-import { query } from "@/integrations/postgres/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAttendanceQueries } from "./useAttendanceQueries";
 
 export const useAttendanceData = () => {
   const attendanceQueries = useAttendanceQueries();
 
   const fetchAttendanceRecords = async (filters?: any) => {
-    let sql = `
-      SELECT ar.*, su.id, su.first_name, su.last_name, su.user_code, su.role
-      FROM attendance_records ar
-      LEFT JOIN system_users su ON ar.user_id = su.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
-    let paramIndex = 1;
+    let query = supabase
+      .from('attendance_records')
+      .select(`
+        *,
+        user:system_users(id, first_name, last_name, user_code, role)
+      `);
 
     if (filters?.startDate) {
-      sql += ` AND ar.created_at >= $${paramIndex}`;
-      params.push(filters.startDate);
-      paramIndex++;
+      query = query.gte('created_at', filters.startDate);
     }
     if (filters?.endDate) {
-      sql += ` AND ar.created_at <= $${paramIndex}`;
-      params.push(filters.endDate);
-      paramIndex++;
+      query = query.lte('created_at', filters.endDate);
     }
     if (filters?.status) {
-      sql += ` AND ar.status = $${paramIndex}`;
-      params.push(filters.status);
-      paramIndex++;
+      query = query.eq('status', filters.status);
     }
     if (filters?.role) {
-      sql += ` AND su.role = $${paramIndex}`;
-      params.push(filters.role);
-      paramIndex++;
+      query = query.eq('system_users.role', filters.role);
     }
 
-    sql += ` ORDER BY ar.created_at DESC`;
+    query = query.order('created_at', { ascending: false });
 
-    const result = await query(sql, params);
-    return result.rows || [];
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
   };
 
   const updateAttendanceRecord = async (id: string, updates: any) => {
-    const result = await query(
-      `UPDATE attendance_records SET 
-       status = $1, check_in_time = $2, check_out_time = $3, notes = $4 
-       WHERE id = $5 RETURNING *`,
-      [updates.status, updates.check_in_time, updates.check_out_time, updates.notes, id]
-    );
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .update({
+        status: updates.status,
+        check_in_time: updates.check_in_time,
+        check_out_time: updates.check_out_time,
+        notes: updates.notes
+      })
+      .eq('id', id)
+      .select()
+      .single();
     
-    return result.rows[0];
+    if (error) throw error;
+    return data;
   };
 
   const deleteAttendanceRecord = async (id: string) => {
-    await query('DELETE FROM attendance_records WHERE id = $1', [id]);
+    const { error } = await supabase
+      .from('attendance_records')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   };
 
   return {

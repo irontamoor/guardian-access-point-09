@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 import { VisitorFormFields } from './VisitorFormFields';
 import { VisitorFormActions } from './VisitorFormActions';
 
@@ -38,36 +38,35 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
-      const visitorResult = await query(
-        `INSERT INTO visitors (first_name, last_name, organization, visit_purpose, host_name, phone_number, notes) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [
-          visitorData.firstName,
-          visitorData.lastName,
-          visitorData.organization,
-          visitorData.visitPurpose,
-          visitorData.hostName,
-          visitorData.phoneNumber,
-          visitorData.notes
-        ]
-      );
+      const { data: visitor, error: visitorError } = await supabase
+        .from('visitors')
+        .insert({
+          first_name: visitorData.firstName,
+          last_name: visitorData.lastName,
+          organization: visitorData.organization,
+          visit_purpose: visitorData.visitPurpose,
+          host_name: visitorData.hostName,
+          phone_number: visitorData.phoneNumber,
+          notes: visitorData.notes
+        })
+        .select()
+        .single();
 
-      if (visitorResult.rows.length === 0) throw new Error('Failed to create visitor');
-      const visitor = visitorResult.rows[0];
+      if (visitorError) throw visitorError;
 
-      await query(
-        `INSERT INTO attendance_records (user_id, status, check_in_time, company, purpose, host_name, notes) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          visitor.id,
-          'in',
-          new Date().toISOString(),
-          visitorData.organization,
-          visitorData.visitPurpose,
-          visitorData.hostName,
-          visitorData.notes
-        ]
-      );
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
+        .insert({
+          user_id: visitor.id,
+          status: 'in',
+          check_in_time: new Date().toISOString(),
+          company: visitorData.organization,
+          purpose: visitorData.visitPurpose,
+          host_name: visitorData.hostName,
+          notes: visitorData.notes
+        });
+
+      if (attendanceError) throw attendanceError;
 
       toast({
         title: "Visitor Registered!",

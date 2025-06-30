@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { query } from "@/integrations/postgres/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useAttendanceLogic() {
   const isValidCode = useCallback((code: string): boolean => {
@@ -11,14 +11,17 @@ export function useAttendanceLogic() {
     const today = new Date().toISOString().split('T')[0];
     
     try {
-      const result = await query(
-        `SELECT id FROM attendance_records 
-         WHERE user_id = $1 AND status = $2 AND DATE(created_at) = $3 
-         LIMIT 1`,
-        [userId, "in", today]
-      );
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'in')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .limit(1);
 
-      return (result.rows && result.rows.length > 0);
+      if (error) throw error;
+      return (data && data.length > 0);
     } catch (error) {
       console.error('Error checking today sign-in:', error);
       return false;
@@ -30,13 +33,20 @@ export function useAttendanceLogic() {
     const checkInTime = status === "in" ? now : null;
     const checkOutTime = status === "out" ? now : null;
 
-    const result = await query(
-      `INSERT INTO attendance_records (user_id, status, check_in_time, check_out_time, notes) 
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [userId, status, checkInTime, checkOutTime, notes || null]
-    );
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .insert({
+        user_id: userId,
+        status,
+        check_in_time: checkInTime,
+        check_out_time: checkOutTime,
+        notes: notes || null
+      })
+      .select()
+      .single();
 
-    return result.rows[0];
+    if (error) throw error;
+    return data;
   }, []);
 
   return {
