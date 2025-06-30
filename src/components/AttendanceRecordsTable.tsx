@@ -43,7 +43,7 @@ export default function AttendanceRecordsTable() {
         return;
       }
 
-      // Get unique user IDs for system_users lookup
+      // Get unique user IDs for lookups
       const userIds = Array.from(
         new Set(
           attendance
@@ -53,44 +53,46 @@ export default function AttendanceRecordsTable() {
       );
       console.log('Unique user IDs:', userIds);
 
-      // Fetch system users with all required fields
-      let systemUsers: SystemUser[] = [];
-      if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('system_users')
-          .select('*')
-          .in('id', userIds);
+      // Fetch ALL system users and visitors, then filter
+      const [systemUsersResponse, visitorsResponse] = await Promise.all([
+        supabase.from('system_users').select('*'),
+        supabase.from('visitors').select('*')
+      ]);
 
-        if (usersError) throw usersError;
-        systemUsers = usersData || [];
-        console.log('System users found:', systemUsers.length);
+      if (systemUsersResponse.error) {
+        console.error('Error fetching system users:', systemUsersResponse.error);
+      }
+      
+      if (visitorsResponse.error) {
+        console.error('Error fetching visitors:', visitorsResponse.error);
       }
 
-      // Get unique visitor IDs (those not found in system_users)
-      const visitorIds = userIds.filter(
-        (id) => !systemUsers.find((user) => user.id === id)
-      );
-      console.log('Visitor IDs:', visitorIds);
+      const allSystemUsers = systemUsersResponse.data || [];
+      const allVisitors = visitorsResponse.data || [];
 
-      // Fetch visitors with all required fields
-      let visitors: Visitor[] = [];
-      if (visitorIds.length > 0) {
-        const { data: visitorsData, error: visitorsError } = await supabase
-          .from('visitors')
-          .select('*')
-          .in('id', visitorIds);
+      console.log('All system users found:', allSystemUsers.length);
+      console.log('All visitors found:', allVisitors.length);
 
-        if (visitorsError) throw visitorsError;
-        visitors = visitorsData || [];
-        console.log('Visitors found:', visitors.length);
-      }
+      // Filter users that match our attendance records
+      const systemUsers = allSystemUsers.filter(user => userIds.includes(user.id));
+      const visitors = allVisitors.filter(visitor => userIds.includes(visitor.id));
+
+      console.log('Matching system users:', systemUsers.length);
+      console.log('Matching visitors:', visitors.length);
 
       // Merge attendance records with user/visitor data
-      const recordsWithUserData = attendance?.map((rec: any) => ({
-        ...rec,
-        system_user: systemUsers.find((u) => u.id === rec.user_id),
-        visitor: visitors.find((v) => v.id === rec.user_id),
-      })) || [];
+      const recordsWithUserData = attendance?.map((rec: any) => {
+        const systemUser = systemUsers.find((u) => u.id === rec.user_id);
+        const visitor = visitors.find((v) => v.id === rec.user_id);
+        
+        console.log(`Record ${rec.id}: user_id=${rec.user_id}, found systemUser=${!!systemUser}, found visitor=${!!visitor}`);
+        
+        return {
+          ...rec,
+          system_user: systemUser || null,
+          visitor: visitor || null,
+        };
+      }) || [];
 
       console.log('Records with user data:', recordsWithUserData.length);
       setRecords(recordsWithUserData);

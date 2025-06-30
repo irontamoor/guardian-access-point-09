@@ -91,41 +91,49 @@ export function useAttendanceRecordsState() {
       const userIds = [...new Set(attendanceData.map(record => record.user_id).filter(Boolean))];
       console.log('Unique user IDs from attendance records:', userIds);
 
-      // Fetch system users for these IDs
-      let systemUsers: any[] = [];
-      if (userIds.length > 0) {
-        const { data: systemUsersData, error: usersError } = await supabase
-          .from('system_users')
-          .select('id, first_name, last_name, user_code, admin_id, role')
-          .in('id', userIds);
+      // Fetch ALL system users first
+      const { data: allSystemUsers, error: allSystemUsersError } = await supabase
+        .from('system_users')
+        .select('id, first_name, last_name, user_code, admin_id, role');
 
-        if (!usersError && systemUsersData) {
-          systemUsers = systemUsersData;
-          console.log('System users found:', systemUsers.length);
-        }
+      if (allSystemUsersError) {
+        console.error('Error fetching all system users:', allSystemUsersError);
       }
+
+      const systemUsers = allSystemUsers || [];
+      console.log('All system users found:', systemUsers.length);
+
+      // Filter system users that match our attendance records
+      const matchingSystemUsers = systemUsers.filter(user => userIds.includes(user.id));
+      console.log('Matching system users found:', matchingSystemUsers.length);
 
       // Get visitor IDs (those not found in system_users)
-      const systemUserIds = systemUsers.map(u => u.id);
+      const systemUserIds = matchingSystemUsers.map(u => u.id);
       const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
-      
-      let visitors: any[] = [];
-      if (visitorIds.length > 0) {
-        const { data: visitorsData, error: visitorsError } = await supabase
-          .from('visitors')
-          .select('id, first_name, last_name, organization, visit_purpose')
-          .in('id', visitorIds);
+      console.log('Visitor IDs to fetch:', visitorIds);
 
-        if (!visitorsError && visitorsData) {
-          visitors = visitorsData;
-          console.log('Visitors found:', visitors.length);
-        }
+      // Fetch ALL visitors first, then filter
+      const { data: allVisitors, error: allVisitorsError } = await supabase
+        .from('visitors')
+        .select('id, first_name, last_name, organization, visit_purpose');
+
+      if (allVisitorsError) {
+        console.error('Error fetching all visitors:', allVisitorsError);
       }
+
+      const visitors = allVisitors || [];
+      console.log('All visitors found:', visitors.length);
+
+      // Filter visitors that match our attendance records
+      const matchingVisitors = visitors.filter(visitor => visitorIds.includes(visitor.id));
+      console.log('Matching visitors found:', matchingVisitors.length);
 
       // Combine the data
       const enrichedRecords = attendanceData.map(record => {
-        const systemUser = systemUsers.find(user => user.id === record.user_id);
-        const visitor = visitors.find(v => v.id === record.user_id);
+        const systemUser = matchingSystemUsers.find(user => user.id === record.user_id);
+        const visitor = matchingVisitors.find(v => v.id === record.user_id);
+        
+        console.log(`Record ${record.id}: user_id=${record.user_id}, systemUser=${!!systemUser}, visitor=${!!visitor}`);
         
         return {
           ...record,
