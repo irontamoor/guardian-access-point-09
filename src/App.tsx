@@ -1,28 +1,115 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
+import Auth from './components/Auth';
+import Account from './components/Account';
+import StaffSignIn from './components/StaffSignIn';
+import StudentSignIn from './components/StudentSignIn';
+import VisitorSignIn from './components/VisitorSignIn';
+import AttendanceRecordsTable from './components/AttendanceRecordsTable';
+import AttendanceManagement from './components/AttendanceManagement';
+import ParentPickup from './components/ParentPickup';
+import ReaderDashboard from './components/ReaderDashboard';
 
-const queryClient = new QueryClient();
+function App() {
+  const [currentView, setCurrentView] = useState('home');
+  const session = useSession();
+  const supabase = useSupabaseClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    {/* TooltipProvider must ALWAYS be used as a JSX component, not a function! */}
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="/" element={<Index />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  useEffect(() => {
+    // Check if the user is already signed in and redirect to the appropriate page
+    if (session) {
+      setCurrentView('attendance-management');
+    } else {
+      setCurrentView('home');
+    }
+  }, [session]);
+
+  return (
+    
+      
+        
+          
+            
+              Home
+            
+            
+              Staff Sign In
+            
+            
+              Student Sign In
+            
+            
+              Visitor Sign In
+            
+            
+              Parent Pickup
+            
+            
+              Attendance
+            
+            
+              Account
+            
+            
+              Sign Out
+            
+          
+        
+
+        
+          {!session ? (
+            <Auth />
+          ) : (
+            
+              {currentView === 'home' && (
+                
+                  
+                    Welcome to the Visitor Management System!
+                  
+                  
+                    Choose an option from the menu above.
+                  
+                
+              )}
+
+              {currentView === 'staff-signin' && (
+                <StaffSignIn onBack={() => setCurrentView('home')} />
+              )}
+
+              {currentView === 'student-signin' && (
+                <StudentSignIn onBack={() => setCurrentView('home')} />
+              )}
+
+              {currentView === 'visitor-signin' && (
+                <VisitorSignIn onBack={() => setCurrentView('home')} />
+              )}
+
+              {currentView === 'attendance-records' && (
+                <AttendanceRecordsTable />
+              )}
+
+              {currentView === 'attendance-management' && (
+                <AttendanceManagement />
+              )}
+
+              {currentView === 'account' && (
+                <Account session={session} />
+              )}
+
+              {currentView === 'parent-pickup' && (
+                <ParentPickup onBack={() => setCurrentView('home')} />
+              )}
+              
+              {currentView === 'reader-dashboard' && (
+                <ReaderDashboard />
+              )}
+            
+          )}
+        
+      
+    
+  );
+}
 
 export default App;

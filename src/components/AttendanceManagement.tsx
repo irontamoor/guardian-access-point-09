@@ -11,7 +11,11 @@ import { AttendanceSearch } from './AttendanceSearch';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
 import { useAttendanceSearch } from '@/hooks/useAttendanceSearch';
 
-const AttendanceManagement = () => {
+interface AttendanceManagementProps {
+  userRole?: string;
+}
+
+const AttendanceManagement = ({ userRole = 'admin' }: AttendanceManagementProps) => {
   const {
     attendanceRecords,
     editingRecord,
@@ -73,62 +77,66 @@ const AttendanceManagement = () => {
 
   return (
     <div className="space-y-6">
-      <AttendanceDebugInfo 
-        showDebug={showDebug}
-        onToggleDebug={() => setShowDebug(v => !v)}
-      />
+      {userRole !== 'reader' && (
+        <>
+          <AttendanceDebugInfo 
+            showDebug={showDebug}
+            onToggleDebug={() => setShowDebug(v => !v)}
+          />
 
-      <AttendanceFilters
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        onRefresh={fetchAttendanceRecords}
-        isLoading={isLoading}
-        formatDate={formatDate}
-      />
+          <AttendanceFilters
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            onRefresh={fetchAttendanceRecords}
+            isLoading={isLoading}
+            formatDate={formatDate}
+          />
 
-      <AttendanceSearch 
-        onSearch={handleSearch}
-        onClear={handleClearSearch}
-      />
+          <AttendanceSearch 
+            onSearch={handleSearch}
+            onClear={handleClearSearch}
+          />
 
-      {hasActiveFilters && (
-        <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-          Showing {filteredRecords.length} of {attendanceRecords.length} records based on search filters.
-        </div>
+          {hasActiveFilters && (
+            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+              Showing {filteredRecords.length} of {attendanceRecords.length} records based on search filters.
+            </div>
+          )}
+
+          {fetchError && (
+            <div className="bg-red-100 text-red-800 rounded px-4 py-2 mb-4">
+              Attendance fetch failed: {fetchError}
+            </div>
+          )}
+
+          <AttendanceMassActions
+            selectedCount={selectedIds.size}
+            onMassEdit={openMassEdit}
+            isLoading={isLoading}
+          />
+
+          <AttendanceMassEditModal
+            open={massEditOpen}
+            onClose={closeMassEdit}
+            selectedCount={selectedIds.size}
+            status={massEditStatus}
+            onStatusChange={(v: "in" | "out") => setMassEditStatus(v)}
+            editReason={massEditReason}
+            setEditReason={setMassEditReason}
+            loading={isLoading}
+            onSubmit={onMassEditSubmit}
+          />
+
+          <AttendanceEditModal
+            editingRecord={editingRecord}
+            editReason={editReason}
+            isLoading={isLoading}
+            setEditingRecord={setEditingRecord}
+            setEditReason={setEditReason}
+            handleEditAttendance={handleEditAttendance}
+          />
+        </>
       )}
-
-      {fetchError && (
-        <div className="bg-red-100 text-red-800 rounded px-4 py-2 mb-4">
-          Attendance fetch failed: {fetchError}
-        </div>
-      )}
-
-      <AttendanceMassActions
-        selectedCount={selectedIds.size}
-        onMassEdit={openMassEdit}
-        isLoading={isLoading}
-      />
-
-      <AttendanceMassEditModal
-        open={massEditOpen}
-        onClose={closeMassEdit}
-        selectedCount={selectedIds.size}
-        status={massEditStatus}
-        onStatusChange={(v: "in" | "out") => setMassEditStatus(v)}
-        editReason={massEditReason}
-        setEditReason={setMassEditReason}
-        loading={isLoading}
-        onSubmit={onMassEditSubmit}
-      />
-
-      <AttendanceEditModal
-        editingRecord={editingRecord}
-        editReason={editReason}
-        isLoading={isLoading}
-        setEditingRecord={setEditingRecord}
-        setEditReason={setEditReason}
-        handleEditAttendance={handleEditAttendance}
-      />
 
       <Card>
         <CardHeader>
@@ -136,7 +144,8 @@ const AttendanceManagement = () => {
             Attendance Records{selectedDate !== 'all' ? ` - ${formatDate(selectedDate)}` : " (All Dates)"}
           </CardTitle>
           <CardDescription>
-            View and edit attendance records. {selectedDate === 'all' ? 'Showing all available records.' : 'Filtered by selected date.'}
+            {userRole === 'reader' ? 'View attendance records and complete pickups.' : 'View and edit attendance records.'}
+            {selectedDate === 'all' ? ' Showing all available records.' : ' Filtered by selected date.'}
             {hasActiveFilters && ' Additional search filters applied.'}
           </CardDescription>
         </CardHeader>
@@ -151,6 +160,8 @@ const AttendanceManagement = () => {
             selectedIds={Array.from(selectedIds)}
             onSelectAll={handleSelectAll}
             onToggleSelect={handleToggleSelect}
+            userRole={userRole}
+            onRefresh={fetchAttendanceRecords}
           />
         </CardContent>
       </Card>

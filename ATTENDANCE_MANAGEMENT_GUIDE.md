@@ -1,284 +1,151 @@
 
-# Attendance Management Guide
+# Attendance Management System Guide
 
 ## Overview
+The Attendance Management System tracks the presence of students, staff, visitors, and parent pickup/drop-off activities. All records are stored in a unified `attendance_records` table in the database.
 
-The Attendance Management system allows administrators to view, search, edit, and manage all attendance records in the school visitor management system. This includes students, staff, and visitors.
+## Key Features
 
-**Live Demo:** https://lovable.dev/projects/ff962135-529c-4786-89d0-86ee28962a9c
+### Unified Data Storage
+- All attendance data (students, staff, visitors, parent pickups) is stored in the `attendance_records` table
+- Records include both system user data and visitor information
+- Parent pickup/drop-off records are automatically created when using the Parent Pickup form
 
-## Features
+### User Roles and Permissions
 
-### 1. Viewing Attendance Records
+#### Admin
+- Full access to all attendance management features
+- Can edit any attendance record
+- Can perform mass edits on multiple records
+- Access to debug information and filters
 
-The main attendance table displays:
-- **Name**: Person's full name
-- **ID**: User ID or code
-- **Role**: User type (student, staff, admin, visitor)
-- **Status**: Current status (In/Out)
-- **Check In/Out Times**: Timestamps for attendance
-- **Notes**: Any additional information
-- **Actions**: Edit options
+#### Staff
+- Can edit attendance records
+- Can perform mass edits
+- Limited administrative functions
 
-### 2. Search and Filtering
+#### Reader
+- **View-only access** to attendance records
+- **Special permission**: Can edit and complete parent pickup records only
+- Cannot perform mass edits or access administrative features
+- Has access to a "Complete" button for pickup records
 
-#### Quick Search
-Use the search bar to find records by:
-- Person's name
-- User ID or code
-- Notes content
+#### Student/Parent/Visitor
+- No direct access to attendance management
 
-#### Advanced Filters
-- **Status Filter**: Show only "In" or "Out" records
-- **Role Filter**: Filter by user type (Student, Staff, Admin, Visitor)
-- **Date Range**: Filter records between specific dates
+### Parent Pickup & Drop-off System
 
-#### Using Search Filters
-The search component now properly handles empty values and provides clear filter options:
+#### How It Works
+1. Use the Parent Pickup form to record student pickups and drop-offs
+2. Records are automatically saved to the `attendance_records` table
+3. Each record includes:
+   - Student name (stored in first_name/last_name fields)
+   - Parent name (stored in host_name field)
+   - Pickup type (Early Pickup, Medical, etc.)
+   - Status: "out" for pickups, "in" for drop-offs
+   - Notes with parent and type information
+   - Organization: "Parent Pickup/Dropoff"
 
-```typescript
-// Search filters interface
-interface SearchFilters {
-  query?: string;
-  status?: 'in' | 'out';
-  role?: 'admin' | 'staff' | 'student' | 'visitor';
-  dateFrom?: string;
-  dateTo?: string;
-}
+#### Reader Role Functionality
+- Readers can view all pickup records
+- Special "Complete" button appears for incomplete pickup records
+- Completing a pickup adds "[COMPLETED]" to the notes and changes status to "in"
+- Only pickup records can be edited by readers
 
-// Example usage
-const filteredRecords = records.filter(record => {
-  // Name search
-  if (query) {
-    const name = `${record.first_name} ${record.last_name}`.toLowerCase();
-    if (!name.includes(query.toLowerCase())) return false;
-  }
-  
-  // Status filter
-  if (statusFilter && record.status !== statusFilter) return false;
-  
-  // Date range filter
-  if (dateFrom && record.created_at < dateFrom) return false;
-  
-  return true;
-});
+### Data Structure
+
+#### Attendance Records Table
+The system uses a unified table structure:
+
+```sql
+attendance_records:
+- id (UUID, primary key)
+- user_id (UUID, required)
+- status ('in' | 'out')
+- check_in_time (timestamp, nullable)
+- check_out_time (timestamp, nullable)
+- notes (text, nullable)
+- first_name (text, nullable) - Used for all record types
+- last_name (text, nullable) - Used for all record types
+- organization (text, nullable) - Company/school for visitors, "Parent Pickup/Dropoff" for pickups
+- visit_purpose (text, nullable) - Purpose of visit or "Student pickup/dropoff"
+- phone_number (text, nullable) - Contact information
+- host_name (text, nullable) - Who they're visiting or parent name for pickups
+- purpose (text, nullable) - Additional purpose information
+- company (text, nullable) - Legacy field for visitor company
+- created_at (timestamp)
+- created_by (UUID, nullable)
 ```
 
-### 3. Individual Record Editing
+### Sign-in Options Configuration
 
-#### How to Edit a Record
-1. Click the "Edit" button on any attendance row
-2. Modify the following fields:
-   - **Status**: Change between "In" and "Out"
-   - **Check-in Time**: Adjust arrival time
-   - **Check-out Time**: Adjust departure time
-   - **Notes**: Add or modify notes
-3. **Provide Edit Reason**: Required for audit trail
-4. Click "Save Changes"
+#### JSON-Based Configuration
+Options for student reasons, staff reasons, pickup types, and visitor purposes are now managed through JSON files:
 
-#### Edit Modal Fields
-```typescript
-interface EditableFields {
-  status: 'in' | 'out';
-  check_in_time?: string;
-  check_out_time?: string;
-  notes?: string;
-  edit_reason: string; // Required for all edits
-}
-```
+- **Location**: `src/config/signInOptions.json`
+- **Management**: Admin Option Management interface
+- **Storage**: Changes saved to localStorage
+- **Categories**:
+  - `sign_in` - Student/staff sign-in reasons
+  - `pickup_type` - Parent pickup types
+  - `visit_type` - Visitor purposes
 
-### 4. Mass Editing
+#### Default Options Available
+- **Student reasons**: Late, Excused, Early Leave, Medical Appointment, Sick
+- **Staff reasons**: Meeting, Offsite, Sick Leave, In-Person, Training
+- **Pickup types**: Early Pickup, Medical Pickup, Bus, Car, Walk, Emergency
+- **Visitor types**: Meeting, Delivery, Interview, Maintenance, Parent Conference, Event
 
-#### Selecting Records
-- **Individual Selection**: Click checkbox next to each record
-- **Select All**: Use header checkbox to select all visible records
-- **Clear Selection**: Use the clear button or uncheck header
+### Troubleshooting
 
-#### Mass Edit Operations
-1. Select multiple records using checkboxes
-2. Click "Mass Edit" button
-3. Choose new status (In/Out)
-4. Provide reason for mass edit
-5. Confirm changes
+#### Records Not Appearing
+1. Check that forms are properly submitting to `attendance_records` table
+2. Verify that the correct status ('in'/'out') is being set
+3. Ensure required fields (user_id, status) are populated
+4. Check for JavaScript errors in browser console
 
-### 5. Date Filtering
+#### Reader Permissions
+1. Readers can only edit records where `organization = 'Parent Pickup/Dropoff'`
+2. Complete button only shows for records without "[COMPLETED]" in notes
+3. Completing a pickup changes status to 'in' and adds completion marker
 
-#### Available Date Options
-- **Today**: Current date only
-- **Yesterday**: Previous day records
-- **This Week**: Last 7 days
-- **All**: All available records
-- **Custom Date**: Specific date selection
+#### Data Migration
+- Legacy visitor records have been migrated to attendance_records
+- System user data is merged with attendance records where applicable
+- Parent pickup records use generated UUIDs for user_id
 
-### 6. Email Notifications
+### Best Practices
 
-The system now includes comprehensive email notifications:
+#### For Administrators
+1. Regularly review attendance records for accuracy
+2. Use mass edit features for bulk corrections
+3. Monitor debug information for data quality issues
+4. Keep sign-in options updated and relevant
 
-#### Student Check-in Notifications
-```typescript
-await emailService.sendStudentCheckInNotification(
-  "John Doe",
-  "parent@email.com",
-  "08:30 AM"
-);
-```
+#### For Readers
+1. Focus on completing parent pickup records promptly
+2. Use the Complete button only when pickup is physically verified
+3. Check notes for special instructions or requirements
 
-#### Staff Attendance Alerts
-```typescript
-await emailService.sendStaffAttendanceAlert(
-  "Jane Smith",
-  "admin@school.com",
-  "in",
-  "07:45 AM"
-);
-```
+#### For Data Integrity
+1. Always fill required fields when creating records
+2. Use consistent naming conventions
+3. Include relevant notes for context
+4. Verify parent pickup records are properly categorized
 
-#### Visitor Notifications
-```typescript
-await emailService.sendVisitorNotification(
-  "Bob Johnson",
-  "Dr. Williams",
-  "host@school.com",
-  "10:15 AM"
-);
-```
+## Technical Implementation
 
-#### Daily Reports
-```typescript
-await emailService.sendDailyReport("admin@school.com", {
-  studentsPresent: 245,
-  staffPresent: 18,
-  visitors: 5
-});
-```
+### Database Schema
+- Single `attendance_records` table handles all record types
+- Flexible schema accommodates different user types
+- Indexes on commonly queried fields (status, created_at, user_id)
 
-## API Integration
+### Frontend Components
+- Unified AttendanceTable component with role-based permissions
+- Separate forms for different record types (student, staff, visitor, pickup)
+- Real-time updates and validation
 
-### Using Attendance Hooks
-
-```typescript
-import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
-import { useAttendanceSearch } from '@/hooks/useAttendanceSearch';
-
-function AttendanceComponent() {
-  const {
-    attendanceRecords,
-    isLoading,
-    fetchAttendanceRecords,
-    handleEditAttendance,
-    selectedIds,
-    handleToggleSelect,
-    handleSelectAll,
-  } = useAttendanceManagement();
-
-  const {
-    filteredRecords,
-    handleSearch,
-    handleClearSearch,
-    hasActiveFilters
-  } = useAttendanceSearch(attendanceRecords);
-
-  return (
-    <div>
-      <AttendanceSearch 
-        onSearch={handleSearch}
-        onClear={handleClearSearch}
-      />
-      {/* Display filteredRecords */}
-    </div>
-  );
-}
-```
-
-### Direct Database Operations
-
-```typescript
-// Fetch attendance with user information
-const { data: attendance, error } = await supabase
-  .from('attendance_records')
-  .select(`
-    *,
-    system_users(first_name, last_name, role, user_code)
-  `)
-  .order('created_at', { ascending: false });
-
-// Update attendance record
-const { data: updated, error } = await supabase
-  .from('attendance_records')
-  .update({
-    status: "out",
-    check_out_time: new Date().toISOString(),
-    notes: "Updated by admin"
-  })
-  .eq('id', recordId)
-  .select()
-  .single();
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Attendance Tab Goes Blank**
-   - This was caused by Select components with empty string values
-   - Fixed by using "all" as default value instead of empty string
-   - Ensure all SelectItem components have non-empty values
-
-2. **Search Not Working**
-   - Clear all filters and try again
-   - Check spelling in search terms
-   - Use partial names or IDs
-
-3. **Records Not Loading**
-   - Check network connection
-   - Verify date filters aren't too restrictive
-   - Check browser console for errors
-
-4. **Edit Failures**
-   - Ensure edit reason is provided
-   - Check for validation errors
-   - Verify permissions
-
-### Debug Information
-
-Enable debug mode to see:
-- Current filters applied
-- Number of records loaded
-- Search query details
-- API response status
-
-## Self-Hosting Setup
-
-For self-hosting with PostgreSQL, see the `SELF_HOSTING_GUIDE.md` file for complete setup instructions including:
-- PostgreSQL installation and configuration
-- Environment variables setup
-- Email service configuration (SMTP/SendGrid)
-- Database schema setup
-- Security considerations
-
-## Email Service Configuration
-
-### SMTP Configuration
-```bash
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-SMTP_FROM=noreply@yourschool.com
-SMTP_SECURE=false
-```
-
-### SendGrid Configuration
-```bash
-SENDGRID_API_KEY=your_sendgrid_api_key
-```
-
-## Best Practices
-
-1. **Data Accuracy**: Always provide meaningful edit reasons
-2. **Audit Trail**: All edits are logged with reasons
-3. **Performance**: Use date filters to limit large datasets
-4. **User Experience**: Clear loading states and error handling
-5. **Security**: Verify user permissions before operations
-
-This comprehensive attendance management system provides full control over attendance tracking while maintaining data integrity and providing excellent user experience.
+### Security Considerations
+- Role-based access control enforced at component level
+- Readers limited to pickup record modifications only
+- All database operations logged and auditable

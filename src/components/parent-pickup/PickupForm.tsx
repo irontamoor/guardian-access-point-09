@@ -4,6 +4,7 @@ import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Car, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { PickupInfoFields } from './PickupInfoFields';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
@@ -19,13 +20,14 @@ export function PickupForm({ onBack }: PickupFormProps) {
     pickupType: '',
     notes: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
     setPickupData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePickup = () => {
+  const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
     if (!pickupData.studentName || !pickupData.parentName) {
       toast({
         title: "Error",
@@ -35,43 +37,63 @@ export function PickupForm({ onBack }: PickupFormProps) {
       return;
     }
 
-    toast({
-      title: "Pickup Recorded!",
-      description: `${pickupData.studentName} has been picked up by ${pickupData.parentName}`,
-      variant: "default"
-    });
+    setIsLoading(true);
+    try {
+      const now = new Date().toISOString();
+      const status = action === 'pickup' ? 'out' : 'in';
+      
+      // Create attendance record for parent pickup/dropoff
+      const { error } = await supabase
+        .from('attendance_records')
+        .insert({
+          user_id: crypto.randomUUID(), // Generate unique ID for parent pickup records
+          first_name: pickupData.studentName.split(' ')[0] || pickupData.studentName,
+          last_name: pickupData.studentName.split(' ').slice(1).join(' ') || '',
+          status,
+          check_in_time: action === 'dropoff' ? now : null,
+          check_out_time: action === 'pickup' ? now : null,
+          notes: `${action === 'pickup' ? 'Picked up' : 'Dropped off'} by ${pickupData.parentName}${pickupData.pickupType ? ` - ${pickupData.pickupType}` : ''}${pickupData.notes ? ` - ${pickupData.notes}` : ''}`,
+          organization: 'Parent Pickup/Dropoff',
+          visit_purpose: `Student ${action}`,
+          phone_number: null,
+          host_name: pickupData.parentName,
+          purpose: `Student ${action}`,
+          created_by: null
+        });
 
-    setPickupData({
-      studentName: '',
-      parentName: '',
-      pickupType: '',
-      notes: ''
-    });
-  };
+      if (error) {
+        console.error('Error saving pickup record:', error);
+        throw error;
+      }
 
-  const handleDropoff = () => {
-    if (!pickupData.studentName || !pickupData.parentName) {
+      toast({
+        title: `${action === 'pickup' ? 'Pickup' : 'Drop-off'} Recorded!`,
+        description: `${pickupData.studentName} has been ${action === 'pickup' ? 'picked up' : 'dropped off'} by ${pickupData.parentName}`,
+        variant: "default"
+      });
+
+      // Reset form
+      setPickupData({
+        studentName: '',
+        parentName: '',
+        pickupType: '',
+        notes: ''
+      });
+
+    } catch (error: any) {
+      console.error(`Error recording ${action}:`, error);
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: `Failed to record ${action}. Please try again.`,
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    toast({
-      title: "Drop-off Recorded!",
-      description: `${pickupData.studentName} has been dropped off by ${pickupData.parentName}`,
-      variant: "default"
-    });
-
-    setPickupData({
-      studentName: '',
-      parentName: '',
-      pickupType: '',
-      notes: ''
-    });
   };
+
+  const handlePickup = () => savePickupRecord('pickup');
+  const handleDropoff = () => savePickupRecord('dropoff');
 
   return (
     <CardContent className="space-y-4">
@@ -95,6 +117,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
       <div className="flex space-x-3 pt-4">
         <Button 
           onClick={handlePickup}
+          disabled={isLoading}
           className="flex-1 bg-red-600 hover:bg-red-700"
         >
           <UserCheck className="h-4 w-4 mr-2" />
@@ -102,6 +125,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
         </Button>
         <Button 
           onClick={handleDropoff}
+          disabled={isLoading}
           className="flex-1 bg-green-600 hover:bg-green-700"
         >
           <Car className="h-4 w-4 mr-2" />

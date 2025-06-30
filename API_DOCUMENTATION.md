@@ -1,423 +1,325 @@
 
-# VMS API Documentation
+# API Documentation - Visitor Management System
 
 ## Overview
-
-The School Visitor Management System provides a comprehensive API for managing users, attendance records, visitors, and system settings. This API uses direct Supabase client integration for database operations.
-
-**Live Demo:** https://lovable.dev/projects/ff962135-529c-4786-89d0-86ee28962a9c
-
-## Authentication
-
-The system uses session-based authentication. Admin users must authenticate before accessing protected endpoints.
-
-```typescript
-// Example authentication check
-const { data: adminUser } = await supabase
-  .from('system_users')
-  .select('*')
-  .eq('admin_id', adminId)
-  .eq('role', 'admin')
-  .single();
-```
+This document describes the API endpoints and data structures for the Visitor Management System, including the unified attendance tracking system.
 
 ## Database Schema
 
 ### Core Tables
 
-#### system_users
-- `id` (uuid, primary key)
-- `first_name` (text, required)
-- `last_name` (text, required)
-- `email` (text, optional)
-- `phone` (text, optional)
-- `role` (enum: 'admin', 'staff', 'student', 'parent', 'visitor')
-- `status` (enum: 'active', 'inactive', 'suspended')
-- `user_code` (text, optional)
-- `admin_id` (text, optional)
-- `password` (text, optional)
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
-
 #### attendance_records
-- `id` (uuid, primary key)
-- `user_id` (uuid, foreign key to system_users or visitors)
-- `status` (enum: 'in', 'out')
-- `check_in_time` (timestamp, optional)
-- `check_out_time` (timestamp, optional)
-- `notes` (text, optional)
-- `host_name` (text, optional)
-- `company` (text, optional)
-- `purpose` (text, optional)
-- `created_by` (uuid, optional)
-- `created_at` (timestamp)
+Unified table storing all attendance data including students, staff, visitors, and parent pickups.
 
-#### visitors
-- `id` (uuid, primary key)
-- `first_name` (text, required)
-- `last_name` (text, required)
-- `organization` (text, optional)
-- `visit_purpose` (text, required)
-- `host_name` (text, optional)
-- `phone_number` (text, optional)
-- `notes` (text, optional)
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
-
-## API Methods
-
-### Direct Supabase Operations
-
-#### Users API
-
-```typescript
-// Get all users or filter by role
-const { data: users, error } = await supabase
-  .from('system_users')
-  .select('*')
-  .eq('role', 'student'); // optional filter
-
-// Create new user
-const { data: newUser, error } = await supabase
-  .from('system_users')
-  .insert({
-    first_name: "John",
-    last_name: "Doe",
-    email: "john.doe@email.com",
-    role: "student",
-    status: "active",
-    user_code: "STU001"
-  })
-  .select()
-  .single();
-
-// Update user
-const { data: updatedUser, error } = await supabase
-  .from('system_users')
-  .update({ status: 'inactive' })
-  .eq('id', userId)
-  .select()
-  .single();
-
-// Delete user
-const { error } = await supabase
-  .from('system_users')
-  .delete()
-  .eq('id', userId);
+```sql
+CREATE TABLE attendance_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  status attendance_status NOT NULL, -- 'in' | 'out'
+  check_in_time TIMESTAMPTZ,
+  check_out_time TIMESTAMPTZ,
+  notes TEXT,
+  first_name TEXT, -- Person's first name (all record types)
+  last_name TEXT,  -- Person's last name (all record types)
+  organization TEXT, -- Company/school or "Parent Pickup/Dropoff"
+  visit_purpose TEXT, -- Purpose of visit or pickup type
+  phone_number TEXT, -- Contact information
+  host_name TEXT, -- Who they're visiting or parent name
+  purpose TEXT, -- Additional purpose information
+  company TEXT, -- Legacy field for visitor company
+  created_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID
+);
 ```
 
-#### Attendance API
+#### system_users
+Stores information for staff, students, and administrators.
 
-```typescript
-// Get attendance records with user information
-const { data: attendance, error } = await supabase
-  .from('attendance_records')
-  .select(`
-    *,
-    system_users(first_name, last_name, role, user_code)
-  `)
-  .order('created_at', { ascending: false });
-
-// Get attendance for specific date
-const { data: todayAttendance, error } = await supabase
-  .from('attendance_records')
-  .select(`
-    *,
-    system_users(first_name, last_name, role, user_code)
-  `)
-  .gte('created_at', '2024-01-15T00:00:00Z')
-  .lt('created_at', '2024-01-16T00:00:00Z');
-
-// Create attendance record
-const { data: newRecord, error } = await supabase
-  .from('attendance_records')
-  .insert({
-    user_id: "user-uuid",
-    status: "in",
-    check_in_time: new Date().toISOString(),
-    notes: "Regular check-in"
-  })
-  .select()
-  .single();
-
-// Update attendance record
-const { data: updated, error } = await supabase
-  .from('attendance_records')
-  .update({
-    status: "out",
-    check_out_time: new Date().toISOString(),
-    notes: "Updated by admin"
-  })
-  .eq('id', recordId)
-  .select()
-  .single();
+```sql
+CREATE TABLE system_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  user_code TEXT, -- Student ID or employee code
+  admin_id TEXT, -- Administrator identifier
+  role user_role DEFAULT 'student', -- 'admin' | 'staff' | 'student' | 'parent' | 'visitor' | 'reader'
+  status user_status DEFAULT 'active', -- 'active' | 'inactive' | 'suspended'
+  password TEXT, -- Hashed password for admin users
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-#### Visitors API
+#### attendance_edits
+Tracks all modifications to attendance records for audit purposes.
 
-```typescript
-// Get all visitors
-const { data: visitors, error } = await supabase
-  .from('visitors')
-  .select('*')
-  .order('created_at', { ascending: false });
-
-// Register new visitor
-const { data: newVisitor, error } = await supabase
-  .from('visitors')
-  .insert({
-    first_name: "Jane",
-    last_name: "Smith",
-    organization: "ABC Company",
-    visit_purpose: "Meeting with principal",
-    host_name: "Dr. Johnson",
-    phone_number: "555-1234"
-  })
-  .select()
-  .single();
+```sql
+CREATE TABLE attendance_edits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  attendance_record_id UUID NOT NULL REFERENCES attendance_records(id),
+  admin_user_id UUID NOT NULL,
+  old_status attendance_status,
+  new_status attendance_status NOT NULL,
+  edit_reason TEXT NOT NULL,
+  edited_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-#### Settings API
+## API Endpoints
 
+### Attendance Records
+
+#### Create Attendance Record
 ```typescript
-// Get system settings
-const { data: settings, error } = await supabase
-  .from('system_settings')
-  .select('*');
+// Student/Staff Sign-in
+POST /attendance_records
+{
+  user_id: string,
+  status: 'in' | 'out',
+  check_in_time?: string,
+  check_out_time?: string,
+  notes?: string
+}
 
-// Update or create setting
-const { data: setting, error } = await supabase
-  .from('system_settings')
-  .upsert({
-    setting_key: 'school_name',
-    setting_value: { value: 'My School' },
-    description: 'School name for display'
-  })
-  .select()
-  .single();
-```
+// Visitor Sign-in
+POST /attendance_records
+{
+  user_id: string, // Generated UUID for visitors
+  status: 'in' | 'out',
+  first_name: string,
+  last_name: string,
+  organization?: string,
+  visit_purpose?: string,
+  phone_number?: string,
+  host_name?: string,
+  check_in_time?: string,
+  check_out_time?: string,
+  notes?: string
+}
 
-## Advanced Usage
-
-### Attendance Search and Filtering
-
-The system provides comprehensive search capabilities:
-
-```typescript
-import { useAttendanceSearch } from '@/hooks/useAttendanceSearch';
-import { AttendanceSearch } from '@/components/AttendanceSearch';
-
-function AttendanceManagement() {
-  const {
-    filteredRecords,
-    handleSearch,
-    handleClearSearch,
-    hasActiveFilters
-  } = useAttendanceSearch(attendanceRecords);
-
-  return (
-    <div>
-      <AttendanceSearch 
-        onSearch={handleSearch}
-        onClear={handleClearSearch}
-      />
-      {/* Display filteredRecords */}
-    </div>
-  );
+// Parent Pickup/Drop-off
+POST /attendance_records
+{
+  user_id: string, // Generated UUID
+  status: 'out' | 'in', // 'out' for pickup, 'in' for drop-off
+  first_name: string, // Student's first name
+  last_name: string,  // Student's last name
+  organization: 'Parent Pickup/Dropoff',
+  visit_purpose: 'Student pickup' | 'Student dropoff',
+  host_name: string, // Parent's name
+  notes: string, // Includes parent info and pickup type
+  check_in_time?: string,
+  check_out_time?: string
 }
 ```
 
-### Mass Operations
-
+#### Get Attendance Records
 ```typescript
-// Mass update attendance records
-const { error } = await supabase
-  .from('attendance_records')
-  .update({ 
-    status: 'out',
-    check_out_time: new Date().toISOString()
-  })
-  .in('id', selectedRecordIds);
+GET /attendance_records
+Query Parameters:
+- date?: string (YYYY-MM-DD format, 'all' for all dates)
+- status?: 'in' | 'out'
+- role?: 'admin' | 'staff' | 'student' | 'visitor' | 'reader'
+
+Response: AttendanceRecord[]
 ```
 
-### Email Notifications
+#### Update Attendance Record
+```typescript
+PUT /attendance_records/:id
+{
+  status?: 'in' | 'out',
+  check_in_time?: string,
+  check_out_time?: string,
+  notes?: string,
+  edit_reason: string // Required for audit trail
+}
+```
+
+### System Users
+
+#### Create System User
+```typescript
+POST /system_users
+{
+  first_name: string,
+  last_name: string,
+  email?: string,
+  phone?: string,
+  user_code?: string,
+  role: 'admin' | 'staff' | 'student' | 'parent' | 'reader',
+  status?: 'active' | 'inactive' | 'suspended'
+}
+```
+
+#### Get System Users
+```typescript
+GET /system_users
+Query Parameters:
+- role?: 'admin' | 'staff' | 'student' | 'parent' | 'reader'
+- status?: 'active' | 'inactive' | 'suspended'
+
+Response: SystemUser[]
+```
+
+## Data Types
+
+### TypeScript Interfaces
 
 ```typescript
-import { emailService } from '@/utils/emailService';
+interface AttendanceRecord {
+  id: string;
+  user_id: string;
+  status: 'in' | 'out';
+  check_in_time?: string;
+  check_out_time?: string;
+  created_at: string;
+  notes?: string;
+  // Merged fields for all record types
+  first_name?: string;
+  last_name?: string;
+  organization?: string;
+  visit_purpose?: string;
+  phone_number?: string;
+  host_name?: string;
+  purpose?: string;
+  company?: string; // Legacy field
+  created_by?: string;
+  // Optional system user data
+  system_users?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    user_code?: string;
+    role: UserRole;
+  } | null;
+}
 
-// Send student check-in notification
-await emailService.sendStudentCheckInNotification(
-  "John Doe",
-  "parent@email.com",
-  "08:30 AM"
-);
+interface SystemUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  user_code?: string;
+  admin_id?: string;
+  role: 'admin' | 'staff' | 'student' | 'parent' | 'visitor' | 'reader';
+  status: 'active' | 'inactive' | 'suspended';
+  created_at: string;
+  updated_at: string;
+}
 
-// Send staff attendance alert
-await emailService.sendStaffAttendanceAlert(
-  "Jane Smith",
-  "admin@school.com",
-  "in",
-  "07:45 AM"
-);
-
-// Send visitor notification
-await emailService.sendVisitorNotification(
-  "Bob Johnson",
-  "Dr. Williams",
-  "host@school.com",
-  "10:15 AM"
-);
-
-// Send daily report
-await emailService.sendDailyReport("admin@school.com", {
-  studentsPresent: 245,
-  staffPresent: 18,
-  visitors: 5
-});
+interface AttendanceEdit {
+  id: string;
+  attendance_record_id: string;
+  admin_user_id: string;
+  old_status?: 'in' | 'out';
+  new_status: 'in' | 'out';
+  edit_reason: string;
+  edited_at: string;
+}
 ```
+
+## Configuration Management
+
+### Sign-in Options
+Options for dropdowns and quick selections are managed through JSON configuration:
+
+```typescript
+// Located in: src/config/signInOptions.json
+interface SignInOption {
+  id: string;
+  label: string;
+  applies_to: 'student' | 'staff' | 'both' | 'visitor';
+  category: 'sign_in' | 'pickup_type' | 'visit_type';
+  is_active: boolean;
+}
+```
+
+### User Roles
+Role definitions and permissions:
+
+```typescript
+// Located in: src/config/userRoles.json
+interface UserRole {
+  label: string;
+  permissions: string[];
+}
+
+// Available roles:
+// - admin: Full system access
+// - staff: Can manage attendance, limited admin functions
+// - student: Basic sign-in only
+// - parent: Parent pickup functionality
+// - visitor: Visitor sign-in only
+// - reader: View attendance, complete pickups only
+```
+
+## Role-Based Access Control
+
+### Admin
+- Full CRUD access to all records
+- Mass edit capabilities
+- User management
+- System configuration
+
+### Staff
+- Edit attendance records
+- Mass edit functionality
+- Limited user management
+
+### Reader
+- Read-only access to attendance records
+- Special permission: Edit parent pickup records only
+- Can mark pickups as completed
+- No mass edit or administrative functions
+
+### Student/Parent/Visitor
+- Create their own attendance records only
+- No edit or administrative access
+
+## Authentication & Security
+
+### Current Implementation
+- No authentication system implemented
+- Role-based access control at component level
+- Database access through Supabase client-side SDK
+
+### Recommended Enhancements
+1. Implement proper authentication system
+2. Add Row Level Security (RLS) policies
+3. Server-side API endpoints with proper authorization
+4. Session management and user verification
 
 ## Error Handling
 
-Always implement proper error handling:
-
+### Common Error Responses
 ```typescript
-try {
-  const { data, error } = await supabase
-    .from('system_users')
-    .select('*');
-    
-  if (error) throw error;
-  
-  // Process data
-} catch (error) {
-  console.error('Database operation failed:', error);
-  // Handle error appropriately
+interface ErrorResponse {
+  error: string;
+  message: string;
+  details?: any;
 }
+
+// Common errors:
+// - 400: Bad Request (missing required fields)
+// - 401: Unauthorized (insufficient permissions)
+// - 404: Not Found (record doesn't exist)
+// - 500: Internal Server Error (database/server issues)
 ```
 
-## Real-time Subscriptions
+## Migration Notes
 
-Listen for real-time updates:
+### From Previous Version
+1. Visitor records migrated to unified attendance_records table
+2. System settings moved from database to JSON files
+3. Sign-in options configuration moved to JSON
+4. Enhanced role-based access control implemented
 
-```typescript
-const subscription = supabase
-  .from('attendance_records')
-  .on('INSERT', payload => {
-    console.log('New attendance record:', payload.new);
-    // Update UI
-  })
-  .on('UPDATE', payload => {
-    console.log('Updated attendance record:', payload.new);
-    // Update UI
-  })
-  .subscribe();
-
-// Clean up subscription
-return () => subscription.unsubscribe();
-```
-
-## Environment Variables
-
-Required environment variables for full functionality:
-
-```bash
-# Database (handled by Supabase)
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Email Service (choose one)
-SENDGRID_API_KEY=your_sendgrid_key
-# OR
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-SMTP_FROM=noreply@yourschool.com
-SMTP_SECURE=false
-
-# Optional
-SCHOOL_NAME=Your School Name
-```
-
-## Performance Optimization
-
-### Efficient Queries
-
-```typescript
-// Use select() to fetch only needed columns
-const { data } = await supabase
-  .from('attendance_records')
-  .select('id, status, created_at, system_users(first_name, last_name)')
-  .limit(100);
-
-// Use indexes for common queries
-const { data } = await supabase
-  .from('attendance_records')
-  .select('*')
-  .eq('status', 'in')
-  .gte('created_at', startDate)
-  .order('created_at', { ascending: false });
-```
-
-### Pagination
-
-```typescript
-const { data, error } = await supabase
-  .from('attendance_records')
-  .select('*')
-  .range(0, 49) // First 50 records
-  .order('created_at', { ascending: false });
-```
-
-## Security Best Practices
-
-1. **Row Level Security (RLS)**: Enable RLS policies on sensitive tables
-2. **Input Validation**: Always validate user input before database operations
-3. **Authentication**: Verify user permissions before allowing operations
-4. **Audit Trail**: Log important changes for accountability
-
-## Integration Examples
-
-### React Hook Integration
-
-```typescript
-import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
-
-function AttendanceComponent() {
-  const {
-    attendanceRecords,
-    isLoading,
-    fetchAttendanceRecords,
-    handleEditAttendance,
-    selectedIds,
-    handleToggleSelect,
-    handleSelectAll,
-  } = useAttendanceManagement();
-
-  // Component logic here
-}
-```
-
-### Custom Dashboard
-
-```typescript
-async function loadDashboardData() {
-  const [users, attendance, visitors] = await Promise.all([
-    supabase.from('system_users').select('*'),
-    supabase.from('attendance_records').select('*'),
-    supabase.from('visitors').select('*')
-  ]);
-
-  return {
-    totalUsers: users.data?.length || 0,
-    todayAttendance: attendance.data?.filter(r => 
-      new Date(r.created_at).toDateString() === new Date().toDateString()
-    ) || [],
-    activeVisitors: visitors.data?.filter(v => 
-      new Date(v.created_at).toDateString() === new Date().toDateString()
-    ) || []
-  };
-}
-```
-
-This comprehensive API reference provides everything needed to integrate with and extend the School Visitor Management System.
+### Data Consistency
+- All attendance data now in single table
+- Consistent field naming across record types
+- Audit trail maintained through attendance_edits table
+- Legacy fields preserved for backward compatibility

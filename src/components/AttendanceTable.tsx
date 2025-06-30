@@ -1,9 +1,11 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, MessageSquare, UserCheck, UserX } from 'lucide-react';
+import { Edit, MessageSquare, UserCheck, UserX, CheckCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import React from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
 
 interface TableProps {
   attendanceRecords: any[];
@@ -15,6 +17,8 @@ interface TableProps {
   selectedIds?: string[];
   onSelectAll?: (checked: boolean) => void;
   onToggleSelect?: (id: string, checked: boolean) => void;
+  userRole?: string;
+  onRefresh?: () => void;
 }
 
 export const AttendanceTable: React.FC<TableProps> = ({
@@ -27,7 +31,12 @@ export const AttendanceTable: React.FC<TableProps> = ({
   selectedIds = [],
   onSelectAll,
   onToggleSelect,
+  userRole = 'admin',
+  onRefresh
 }) => {
+  const [completingRecords, setCompletingRecords] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
+  
   const allSelected = attendanceRecords.length > 0 && attendanceRecords.every((r) => selectedIds.includes(r.id));
 
   const getName = (record: any) => {
@@ -72,6 +81,63 @@ export const AttendanceTable: React.FC<TableProps> = ({
     return record.visit_purpose || record.purpose || '-';
   };
 
+  const isPickupRecord = (record: any) => {
+    return record.organization === 'Parent Pickup/Dropoff' || 
+           (record.visit_purpose && record.visit_purpose.includes('pickup'));
+  };
+
+  const handleCompletePickup = async (record: any) => {
+    setCompletingRecords(prev => new Set(prev).add(record.id));
+    
+    try {
+      const { error } = await supabase
+        .from('attendance_records')
+        .update({
+          notes: (record.notes || '') + ' [COMPLETED]',
+          status: 'in'
+        })
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pickup Completed",
+        description: `Pickup for ${getName(record)} has been marked as completed`,
+        variant: "default"
+      });
+
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error: any) {
+      console.error('Error completing pickup:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete pickup. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setCompletingRecords(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(record.id);
+        return newSet;
+      });
+    }
+  };
+
+  const canEdit = (record: any) => {
+    if (userRole === 'reader') {
+      return isPickupRecord(record);
+    }
+    return ['admin', 'staff'].includes(userRole);
+  };
+
+  const showCompleteButton = (record: any) => {
+    return userRole === 'reader' && 
+           isPickupRecord(record) && 
+           !record.notes?.includes('[COMPLETED]');
+  };
+
   return (
     <div className="space-y-4">
       {attendanceRecords.length === 0 && (
@@ -90,13 +156,15 @@ export const AttendanceTable: React.FC<TableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <Checkbox
-                  checked={allSelected}
-                  aria-label="Select all"
-                  onCheckedChange={checked => onSelectAll && onSelectAll(Boolean(checked))}
-                />
-              </TableHead>
+              {userRole !== 'reader' && (
+                <TableHead>
+                  <Checkbox
+                    checked={allSelected}
+                    aria-label="Select all"
+                    onCheckedChange={checked => onSelectAll && onSelectAll(Boolean(checked))}
+                  />
+                </TableHead>
+              )}
               <TableHead>Name</TableHead>
               <TableHead>ID/Code</TableHead>
               <TableHead>Role</TableHead>
@@ -119,13 +187,15 @@ export const AttendanceTable: React.FC<TableProps> = ({
 
               return (
                 <TableRow key={record.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.includes(record.id)}
-                      aria-label="Select row"
-                      onCheckedChange={checked => onToggleSelect && onToggleSelect(record.id, Boolean(checked))}
-                    />
-                  </TableCell>
+                  {userRole !== 'reader' && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(record.id)}
+                        aria-label="Select row"
+                        onCheckedChange={checked => onToggleSelect && onToggleSelect(record.id, Boolean(checked))}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     {name}
                   </TableCell>
@@ -173,15 +243,31 @@ export const AttendanceTable: React.FC<TableProps> = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingRecord(record)}
-                      disabled={editingRecord?.id === record.id}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
+                    <div className="flex space-x-2">
+                      {canEdit(record) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingRecord(record)}
+                          disabled={editingRecord?.id === record.id}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                      {showCompleteButton(record) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCompletePickup(record)}
+                          disabled={completingRecords.has(record.id)}
+                          className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                        >
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Complete
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
