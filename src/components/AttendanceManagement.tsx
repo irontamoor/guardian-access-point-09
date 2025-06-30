@@ -7,7 +7,9 @@ import { AttendanceMassEditModal } from './AttendanceMassEditModal';
 import { AttendanceDebugInfo } from './attendance/AttendanceDebugInfo';
 import { AttendanceFilters } from './attendance/AttendanceFilters';
 import { AttendanceMassActions } from './attendance/AttendanceMassActions';
+import { AttendanceSearch } from './AttendanceSearch';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
+import { useAttendanceSearch } from '@/hooks/useAttendanceSearch';
 
 const AttendanceManagement = () => {
   const {
@@ -27,6 +29,13 @@ const AttendanceManagement = () => {
     handleSelectAll,
     fetchAttendanceRecords,
   } = useAttendanceManagement();
+
+  const {
+    filteredRecords,
+    handleSearch,
+    handleClearSearch,
+    hasActiveFilters
+  } = useAttendanceSearch(attendanceRecords);
 
   const [showDebug, setShowDebug] = useState(false);
   const [massEditOpen, setMassEditOpen] = useState(false);
@@ -59,6 +68,9 @@ const AttendanceManagement = () => {
     setMassEditReason("");
   };
 
+  // Use filtered records instead of original records
+  const recordsToDisplay = hasActiveFilters ? filteredRecords : attendanceRecords;
+
   return (
     <div className="space-y-6">
       <AttendanceDebugInfo 
@@ -73,6 +85,17 @@ const AttendanceManagement = () => {
         isLoading={isLoading}
         formatDate={formatDate}
       />
+
+      <AttendanceSearch 
+        onSearch={handleSearch}
+        onClear={handleClearSearch}
+      />
+
+      {hasActiveFilters && (
+        <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+          Showing {filteredRecords.length} of {attendanceRecords.length} records based on search filters.
+        </div>
+      )}
 
       {fetchError && (
         <div className="bg-red-100 text-red-800 rounded px-4 py-2 mb-4">
@@ -114,11 +137,12 @@ const AttendanceManagement = () => {
           </CardTitle>
           <CardDescription>
             View and edit attendance records. {selectedDate === 'all' ? 'Showing all available records.' : 'Filtered by selected date.'}
+            {hasActiveFilters && ' Additional search filters applied.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AttendanceTable
-            attendanceRecords={attendanceRecords}
+            attendanceRecords={recordsToDisplay}
             editingRecord={editingRecord}
             setEditingRecord={setEditingRecord}
             formatTime={formatTime}
