@@ -8,15 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { query } from '@/integrations/postgres/client';
+import type { SystemUser, UserRole, UserStatus } from '@/integrations/postgres/types';
 import { useEnumValues } from "@/hooks/useEnumValues";
 import { useVMSData } from "@/hooks/useVMSData";
 import { Switch } from "@/components/ui/switch";
-
-type SystemUser = Database['public']['Tables']['system_users']['Row'];
-type UserRole = Database['public']['Enums']['user_role'];
-type UserStatus = Database['public']['Enums']['user_status'];
 
 const UserManagement = () => {
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -35,10 +31,8 @@ const UserManagement = () => {
   });
   const { toast } = useToast();
   const { updateStudentStatus, updateStaffStatus } = useVMSData();
-  const [attendanceStatusMap, setAttendanceStatusMap] = useState<Record<string, "present" | "absent">>({}); // track UI state
-  const [attendanceLoading, setAttendanceLoading] = useState<string | null>(null); // user id currently updating
-
-  // New: role filter dropdown state
+  const [attendanceStatusMap, setAttendanceStatusMap] = useState<Record<string, "present" | "absent">>({});
+  const [attendanceLoading, setAttendanceLoading] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("all");
 
   useEffect(() => {
@@ -47,13 +41,10 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
+      const result = await query(
+        'SELECT * FROM system_users ORDER BY created_at DESC'
+      );
+      setUsers(result.rows || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -66,7 +57,6 @@ const UserManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Validate user_code is set
       if (!formData.user_code) {
         toast({
           title: "Error",
@@ -77,46 +67,22 @@ const UserManagement = () => {
       }
 
       if (editingUser) {
-        // Update existing user
-        const { error } = await supabase
-          .from('system_users')
-          .update({
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            email: formData.email,
-            phone: formData.phone || null,
-            user_code: formData.user_code,
-            role: formData.role,
-            status: formData.status,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingUser.id);
-
-        if (error) throw error;
-
-        // If admin and password was set, update auth password
-        if (editingUser.role === "admin" && formData.password) {
-          // Call Supabase admin API to update user's password
-          // Password reset logic for admin
-          // ! You must implement using service role from a backend function for security in production;
-          // client-side Supabase JS can't update another user's password directly.
-          const { error: passError } = await supabase.auth.admin.updateUserById(editingUser.id, {
-            password: formData.password,
-          });
-          if (passError) {
-            toast({
-              title: "Warning",
-              description: "Password change failed: " + passError.message,
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "Success",
-              description: "Password updated for admin",
-              variant: "default"
-            });
-          }
-        }        
+        await query(
+          `UPDATE system_users SET 
+           first_name = $1, last_name = $2, email = $3, phone = $4, 
+           user_code = $5, role = $6, status = $7, updated_at = NOW()
+           WHERE id = $8`,
+          [
+            formData.first_name,
+            formData.last_name,
+            formData.email,
+            formData.phone || null,
+            formData.user_code,
+            formData.role,
+            formData.status,
+            editingUser.id
+          ]
+        );
 
         toast({
           title: "Success",
@@ -124,55 +90,19 @@ const UserManagement = () => {
           variant: "default"
         });
       } else {
-        // Create new user
-        const { data: newUser, error: userError } = await supabase
-          .from('system_users')
-          .insert({
-            id: undefined,
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            email: formData.email,
-            phone: formData.phone || null,
-            user_code: formData.user_code,
-            role: formData.role,
-            status: formData.status,
-          } as any)
-          .select()
-          .single();
-
-        if (userError) throw userError;
-
-        // Auth sign up for created user (if password set)
-        if (formData.password) {
-          const { error: authError } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/`,
-              data: {
-                first_name: formData.first_name,
-                last_name: formData.last_name
-              }
-            }
-          });
-
-          if (authError) {
-            await supabase.from('system_users').delete().eq('id', newUser.id);
-            throw authError;
-          }
-        }
-
-        // Create role assignment
-        if (newUser) {
-          const { error: roleError } = await supabase
-            .from('user_role_assignments')
-            .insert({
-              user_id: newUser.id,
-              role: formData.role
-            });
-
-          if (roleError) throw roleError;
-        }
+        await query(
+          `INSERT INTO system_users (first_name, last_name, email, phone, user_code, role, status) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            formData.first_name,
+            formData.last_name,
+            formData.email,
+            formData.phone || null,
+            formData.user_code,
+            formData.role,
+            formData.status
+          ]
+        );
 
         toast({
           title: "Success",
@@ -226,12 +156,7 @@ const UserManagement = () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const { error } = await supabase
-        .from('system_users')
-        .delete()
-        .eq('id', user.id);
-
-      if (error) throw error;
+      await query('DELETE FROM system_users WHERE id = $1', [user.id]);
 
       toast({
         title: "Success",
@@ -249,26 +174,22 @@ const UserManagement = () => {
     }
   };
 
-  // Filter users by selected role
-  // "user" is no longer a valid role, so no need to filter out
   const filteredUsers =
     selectedRole === "all"
       ? users
       : users.filter((u) => u.role === selectedRole);
 
   useEffect(() => {
-    // Fetch the latest attendance for all users to show status checkboxes
     const fetchUserAttendance = async () => {
       try {
-        // Use attendance_records table to build last status map
-        const { data, error } = await supabase
-          .from("attendance_records")
-          .select("user_id, status")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
+        const result = await query(`
+          SELECT user_id, status 
+          FROM attendance_records 
+          ORDER BY created_at DESC
+        `);
+        const data = result.rows || [];
         const seen: Record<string, "present" | "absent"> = {};
-        (data || []).forEach((a) => {
+        data.forEach((a: any) => {
           if (!(a.user_id in seen)) {
             seen[a.user_id] = a.status === "in" ? "present" : "absent";
           }
@@ -281,7 +202,6 @@ const UserManagement = () => {
     fetchUserAttendance();
   }, [users]);
 
-  // Handler for attendance checkbox toggle
   const handleStatusToggle = async (user: SystemUser, checked: boolean) => {
     setAttendanceLoading(user.id);
     try {
@@ -290,7 +210,6 @@ const UserManagement = () => {
       } else if (user.role === "staff") {
         await updateStaffStatus(user.id, checked ? "present" : "absent");
       }
-      // Set UI state
       setAttendanceStatusMap((prev) => ({ ...prev, [user.id]: checked ? "present" : "absent" }));
       toast({ title: "Attendance updated", description: `${user.first_name} ${user.last_name} is now marked as ${checked ? "present" : "absent"}` });
     } catch (e: any) {
@@ -308,7 +227,6 @@ const UserManagement = () => {
           <p className="text-sm text-gray-500">Manage system users and their roles</p>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
-          {/* Role filter dropdown */}
           <div>
             <Label htmlFor="filter-role" className="mb-1 block">Role</Label>
             <Select
@@ -405,20 +323,6 @@ const UserManagement = () => {
                   />
                 </div>
 
-                {/* Password field: For adding any user, and for editing admins */}
-                {(editingUser?.role === "admin" || (!editingUser)) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{editingUser ? "Reset Password" : "Password"}</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder={editingUser ? "Leave blank to keep current password" : "Leave blank for users without auth access"}
-                    />
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <Label htmlFor="user_code">
                     User Code (Staff/Student/Visitor Code)<span className="text-red-600">*</span>
@@ -430,7 +334,6 @@ const UserManagement = () => {
                     placeholder="Enter unique staff/student/visitor code"
                     required
                   />
-                  <p className="text-xs text-gray-500">Must be unique among active users.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -471,20 +374,6 @@ const UserManagement = () => {
                   </div>
                 </div>
 
-                {/* Only show Database UUID for editing existing user */}
-                {editingUser && (
-                  <div className="space-y-2">
-                    <Label htmlFor="id">Database UUID</Label>
-                    <Input
-                      id="id"
-                      value={editingUser.id}
-                      readOnly
-                      className="bg-gray-100"
-                    />
-                    <p className="text-xs text-gray-400">Auto-generated UUID. Not used for sign-in.</p>
-                  </div>
-                )}
-
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                     Cancel
@@ -522,7 +411,7 @@ const UserManagement = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>User Code</TableHead>
                   <TableHead>Database UUID</TableHead>
-                  <TableHead>Attendance</TableHead> {/* NEW COLUMN */}
+                  <TableHead>Attendance</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

@@ -1,46 +1,29 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { query } from "@/integrations/postgres/client";
 
 export const useAttendanceQueries = () => {
   const fetchAttendanceByDateRange = async (startDate: string, endDate: string) => {
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select(`
-        *,
-        system_users!attendance_records_user_id_fkey (
-          id,
-          first_name,
-          last_name,
-          user_code,
-          role
-        )
-      `)
-      .gte("created_at", startDate)
-      .lte("created_at", endDate)
-      .order("created_at", { ascending: false });
+    const result = await query(`
+      SELECT ar.*, su.id, su.first_name, su.last_name, su.user_code, su.role
+      FROM attendance_records ar
+      LEFT JOIN system_users su ON ar.user_id = su.id
+      WHERE ar.created_at >= $1 AND ar.created_at <= $2
+      ORDER BY ar.created_at DESC
+    `, [startDate, endDate]);
 
-    if (error) throw error;
-    return data || [];
+    return result.rows || [];
   };
 
   const fetchAttendanceByUser = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select(`
-        *,
-        system_users!attendance_records_user_id_fkey (
-          id,
-          first_name,
-          last_name,
-          user_code,
-          role
-        )
-      `)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+    const result = await query(`
+      SELECT ar.*, su.id, su.first_name, su.last_name, su.user_code, su.role
+      FROM attendance_records ar
+      LEFT JOIN system_users su ON ar.user_id = su.id
+      WHERE ar.user_id = $1
+      ORDER BY ar.created_at DESC
+    `, [userId]);
 
-    if (error) throw error;
-    return data || [];
+    return result.rows || [];
   };
 
   const fetchTodayAttendance = async () => {

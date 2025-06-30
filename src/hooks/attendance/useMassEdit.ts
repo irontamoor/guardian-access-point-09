@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 import type { AttendanceRecord } from './useAttendanceRecordsState';
 
 export function useMassEdit() {
@@ -17,30 +17,33 @@ export function useMassEdit() {
     if (selectedIds.length === 0 || !massEditReason.trim()) return;
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error: updateError } = await supabase
-        .from('attendance_records')
-        .update({
-          status: massEditStatus,
-          check_in_time: massEditStatus === 'in' ? new Date().toISOString() : undefined,
-          check_out_time: massEditStatus === 'out' ? new Date().toISOString() : null,
-        })
-        .in('id', selectedIds);
-
-      if (updateError) throw updateError;
+      await query('BEGIN');
 
       for (const id of selectedIds) {
         const oldStatus = attendanceRecords.find(r => r.id === id)?.status;
-        await supabase.from('attendance_edits').insert({
-          attendance_record_id: id,
-          admin_user_id: user.id,
-          old_status: oldStatus,
-          new_status: massEditStatus,
-          edit_reason: massEditReason,
-        });
+        
+        await query(
+          `UPDATE attendance_records SET 
+           status = $1, 
+           check_in_time = $2, 
+           check_out_time = $3 
+           WHERE id = $4`,
+          [
+            massEditStatus,
+            massEditStatus === 'in' ? new Date().toISOString() : undefined,
+            massEditStatus === 'out' ? new Date().toISOString() : null,
+            id
+          ]
+        );
+
+        await query(
+          `INSERT INTO attendance_edits (attendance_record_id, old_status, new_status, edit_reason) 
+           VALUES ($1, $2, $3, $4)`,
+          [id, oldStatus, massEditStatus, massEditReason]
+        );
       }
+
+      await query('COMMIT');
 
       toast({
         title: "Success",
@@ -50,6 +53,7 @@ export function useMassEdit() {
       setSelectedIds([]);
       onRefresh();
     } catch (error: any) {
+      await query('ROLLBACK');
       toast({
         title: "Error",
         description: error.message || "Mass edit failed",

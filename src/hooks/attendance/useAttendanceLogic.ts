@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { query } from "@/integrations/postgres/client";
 
 export function useAttendanceLogic() {
   const isValidCode = useCallback((code: string): boolean => {
@@ -10,21 +10,19 @@ export function useAttendanceLogic() {
   const hasTodaySignIn = useCallback(async (userId: string): Promise<boolean> => {
     const today = new Date().toISOString().split('T')[0];
     
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "in")
-      .gte("created_at", `${today}T00:00:00.000Z`)
-      .lte("created_at", `${today}T23:59:59.999Z`)
-      .limit(1);
+    try {
+      const result = await query(
+        `SELECT id FROM attendance_records 
+         WHERE user_id = $1 AND status = $2 AND DATE(created_at) = $3 
+         LIMIT 1`,
+        [userId, "in", today]
+      );
 
-    if (error) {
+      return (result.rows && result.rows.length > 0);
+    } catch (error) {
       console.error('Error checking today sign-in:', error);
       return false;
     }
-
-    return (data && data.length > 0);
   }, []);
 
   const createAttendanceRecord = useCallback(async (userId: string, status: "in" | "out", notes?: string) => {
@@ -38,14 +36,13 @@ export function useAttendanceLogic() {
       )
     };
 
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .insert([recordData])
-      .select()
-      .single();
+    const result = await query(
+      `INSERT INTO attendance_records (user_id, status, check_in_time, check_out_time, notes) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [recordData.user_id, recordData.status, recordData.check_in_time || null, recordData.check_out_time || null, recordData.notes]
+    );
 
-    if (error) throw error;
-    return data;
+    return result.rows[0];
   }, []);
 
   return {

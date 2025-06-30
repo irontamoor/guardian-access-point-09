@@ -1,21 +1,17 @@
 
 import { useEffect, useState } from "react";
-import { Constants } from "@/integrations/supabase/types";
 
-/**
- * Fetches static enum values exported from Supabase types.
- * Usage: const { values, loading } = useEnumValues('app_role');
- */
+const APP_ROLES = ['admin', 'staff', 'student', 'parent', 'visitor', 'reader'];
+
 export function useEnumValues(enumName: "app_role") {
   const [values, setValues] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    // Only support 'app_role' for now; expand logic if more enums needed.
     if (enumName === "app_role") {
-      // Filter out 'moderator' and 'user'
-      setValues(Constants.public.Enums.app_role.filter(role => role !== "moderator" && role !== "user"));
+      // Filter out 'moderator' and 'user' - they don't exist in our roles
+      setValues(APP_ROLES);
     } else {
       setValues([]);
     }

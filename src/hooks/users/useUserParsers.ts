@@ -1,17 +1,16 @@
 
-import type { Database } from "@/integrations/supabase/types";
+import type { SystemUser } from "@/integrations/postgres/types";
 
-// Helper parsers
-export const parseStudent = (user: Database["public"]["Tables"]["system_users"]["Row"]) => ({
+export const parseStudent = (user: SystemUser) => ({
   id: user.id,
   name: `${user.first_name} ${user.last_name}`,
-  grade: "",  // Placeholder if UI expects it, otherwise you can remove wherever used
+  grade: "",
   status: "absent" as "absent" | "present",
 });
 
-export const parseStaff = (user: Database["public"]["Tables"]["system_users"]["Row"]) => ({
+export const parseStaff = (user: SystemUser) => ({
   id: user.id,
   name: `${user.first_name} ${user.last_name}`,
-  department: "", // Removed employee_id, use empty string or id as needed
+  department: "",
   status: "absent" as "absent" | "present",
 });

@@ -5,121 +5,50 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { query } from "@/integrations/postgres/client";
+import type { SystemUser, AttendanceRecord, Visitor } from "@/integrations/postgres/types";
 
-interface UserInfo {
-  id: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  email?: string | null;
-  phone?: string | null;
-}
-
-interface VisitorInfo {
-  id: string;
-  first_name: string;
-  last_name: string;
-  organization?: string | null;
-  visit_purpose: string;
-  host_name?: string | null;
-  phone_number?: string | null;
-}
-
-interface AttendanceRecord {
-  id: string;
-  user_id: string;
-  status: string;
-  check_in_time?: string | null;
-  check_out_time?: string | null;
-  created_at: string;
-  created_by?: string | null;
-  host_name?: string | null;
-  company?: string | null;
-  notes?: string | null;
-  purpose?: string | null;
-  system_user?: UserInfo;
-  visitor?: VisitorInfo;
+interface AttendanceRecordWithUser extends AttendanceRecord {
+  system_user?: SystemUser;
+  visitor?: Visitor;
 }
 
 export default function AttendanceRecordsTable() {
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [records, setRecords] = useState<AttendanceRecordWithUser[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
-
-  // Debug UI state
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [showDebug, setShowDebug] = useState(false);
-
-  // DEBUG: user session info
-  useEffect(() => {
-    async function debugUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      let sysUser = null;
-      let roleRow = null;
-      if (user) {
-        // Find corresponding system_user
-        const { data: sysUserData } = await supabase
-          .from("system_users")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        sysUser = sysUserData;
-
-        // Find admin role assignment
-        const { data: roleRowData } = await supabase
-          .from("user_role_assignments")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("role", "admin");
-
-        roleRow = roleRowData;
-      }
-      setDebugInfo({
-        supabaseUser: user,
-        supabaseUserError: error,
-        systemUser: sysUser,
-        adminRoleAssignments: roleRow,
-      });
-      console.log("[AttendanceRecordsTable] Supabase User:", user, error);
-      console.log("[AttendanceRecordsTable] system_users row:", sysUser);
-      console.log("[AttendanceRecordsTable] admin role assignments:", roleRow);
-    }
-    debugUser();
-  }, []);
 
   async function fetchRecords() {
     setLoading(true);
     setError(null);
     try {
       // Fetch all attendance records
-      const { data: attendance, error: arError } = await supabase
-        .from("attendance_records")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (arError) throw arError;
+      const attendanceResult = await query(`
+        SELECT * FROM attendance_records 
+        ORDER BY created_at DESC
+      `);
+      const attendance = attendanceResult.rows || [];
 
       // Get unique user IDs for system_users lookup
       const systemUserIds = Array.from(
         new Set(
-          (attendance ?? [])
+          attendance
             .map((rec: any) => rec.user_id)
             .filter((id) => id)
         )
       );
 
       // Fetch system users
-      let systemUsers: UserInfo[] = [];
+      let systemUsers: SystemUser[] = [];
       if (systemUserIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
-          .from("system_users")
-          .select("id, first_name, last_name, role, email, phone")
-          .in("id", systemUserIds);
-        if (usersError) throw usersError;
-        systemUsers = usersData || [];
+        const usersResult = await query(
+          `SELECT id, first_name, last_name, role, email, phone 
+           FROM system_users 
+           WHERE id = ANY($1)`,
+          [systemUserIds]
+        );
+        systemUsers = usersResult.rows || [];
       }
 
       // Get unique visitor IDs (those not found in system_users)
@@ -128,18 +57,19 @@ export default function AttendanceRecordsTable() {
       );
 
       // Fetch visitors
-      let visitors: VisitorInfo[] = [];
+      let visitors: Visitor[] = [];
       if (visitorIds.length > 0) {
-        const { data: visitorsData, error: visitorsError } = await supabase
-          .from("visitors")
-          .select("id, first_name, last_name, organization, visit_purpose, host_name, phone_number")
-          .in("id", visitorIds);
-        if (visitorsError) throw visitorsError;
-        visitors = visitorsData || [];
+        const visitorsResult = await query(
+          `SELECT id, first_name, last_name, organization, visit_purpose, host_name, phone_number 
+           FROM visitors 
+           WHERE id = ANY($1)`,
+          [visitorIds]
+        );
+        visitors = visitorsResult.rows || [];
       }
 
       // Merge attendance records with user/visitor data
-      const recordsWithUserData = (attendance ?? []).map((rec: any) => ({
+      const recordsWithUserData = attendance.map((rec: any) => ({
         ...rec,
         system_user: systemUsers.find((u) => u.id === rec.user_id),
         visitor: visitors.find((v) => v.id === rec.user_id),
@@ -166,7 +96,7 @@ export default function AttendanceRecordsTable() {
   const formatDateTime = (dt?: string | null) =>
     dt ? new Date(dt).toLocaleString() : "-";
 
-  const getPersonName = (record: AttendanceRecord) => {
+  const getPersonName = (record: AttendanceRecordWithUser) => {
     if (record.system_user) {
       return `${record.system_user.first_name} ${record.system_user.last_name}`;
     }
@@ -176,7 +106,7 @@ export default function AttendanceRecordsTable() {
     return record.user_id;
   };
 
-  const getPersonType = (record: AttendanceRecord) => {
+  const getPersonType = (record: AttendanceRecordWithUser) => {
     if (record.system_user) {
       return record.system_user.role;
     }
@@ -186,7 +116,7 @@ export default function AttendanceRecordsTable() {
     return "unknown";
   };
 
-  const getContactInfo = (record: AttendanceRecord) => {
+  const getContactInfo = (record: AttendanceRecordWithUser) => {
     if (record.system_user) {
       return record.system_user.email || "-";
     }
@@ -196,7 +126,7 @@ export default function AttendanceRecordsTable() {
     return "-";
   };
 
-  const getOrganization = (record: AttendanceRecord) => {
+  const getOrganization = (record: AttendanceRecordWithUser) => {
     if (record.visitor) {
       return record.visitor.organization || "-";
     }
@@ -210,37 +140,6 @@ export default function AttendanceRecordsTable() {
         <CardDescription>Showing all attendance records including visitors</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Debug info section */}
-        <div className="mb-3">
-          <button
-            className="text-xs text-gray-500 underline mb-1"
-            onClick={() => setShowDebug((v) => !v)}
-            type="button"
-          >
-            {showDebug ? "Hide Debug Info" : "Show Debug Info"}
-          </button>
-          {showDebug && (
-            <div className="bg-gray-100 border rounded p-3 mb-2 text-xs max-w-full overflow-x-auto">
-              <div>
-                <strong>Supabase User:</strong>
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUser, null, 2)}</pre>
-              </div>
-              <div>
-                <strong>Supabase User Error:</strong>
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUserError, null, 2)}</pre>
-              </div>
-              <div>
-                <strong>System User (system_users row):</strong>
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.systemUser, null, 2)}</pre>
-              </div>
-              <div>
-                <strong>Admin Role Assignments:</strong>
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.adminRoleAssignments, null, 2)}</pre>
-              </div>
-            </div>
-          )}
-        </div>
-
         <div className="flex items-center justify-between mb-2">
           <Button variant="ghost" onClick={fetchRecords} disabled={loading}>
             <RefreshCcw className="h-4 w-4 mr-1" />

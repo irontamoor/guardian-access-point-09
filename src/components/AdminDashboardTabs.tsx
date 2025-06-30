@@ -12,7 +12,7 @@ import { DocumentationContent } from './documentation/DocumentationContent';
 interface AdminDashboardTabsProps {
   onBack: () => void;
   onLogout: () => void;
-  adminData: { username?: string; role: string; first_name?: string };
+  adminData: { username?: string; role: string; first_name?: string; [key: string]: any };
 }
 
 const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsProps) => {
@@ -72,7 +72,7 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
             <Dashboard 
               onBack={onBack}
               onLogout={onLogout}
-              adminData={adminData}
+              adminData={{ username: adminData.username || 'admin', role: adminData.role }}
             />
           </TabsContent>
 
@@ -85,7 +85,7 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
           </TabsContent>
 
           <TabsContent value="settings">
-            <SystemSettings />
+            <SystemSettings adminData={adminData} />
           </TabsContent>
 
           <TabsContent value="docs">

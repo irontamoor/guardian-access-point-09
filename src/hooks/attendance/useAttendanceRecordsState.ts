@@ -1,11 +1,8 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-
-type AttendanceStatus = Database['public']['Enums']['attendance_status'];
-type UserRole = Database['public']['Enums']['user_role'];
+import { query } from '@/integrations/postgres/client';
+import type { AttendanceStatus, UserRole, SystemUser } from '@/integrations/postgres/types';
 
 export interface AttendanceRecord {
   id: string;
@@ -28,16 +25,13 @@ export function useAttendanceRecordsState() {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
-  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const { toast } = useToast();
 
   const fetchSystemUsers = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_users')
-        .select('*');
-      if (error) throw error;
-      setSystemUsers(data || []);
+      const result = await query('SELECT * FROM system_users');
+      setSystemUsers(result.rows || []);
     } catch (error: any) {
       setSystemUsers([]);
       setDebugMessage((prev: string | null) =>
@@ -51,24 +45,23 @@ export function useAttendanceRecordsState() {
     setFetchError(null);
     setDebugMessage(null);
     try {
-      let query = supabase
-        .from('attendance_records')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let sql = 'SELECT * FROM attendance_records';
+      let params: any[] = [];
 
       if (selectedDate !== 'all') {
         const startDate = new Date(selectedDate);
         const endDate = new Date(selectedDate);
         endDate.setDate(endDate.getDate() + 1);
-        query = query
-          .gte('created_at', startDate.toISOString())
-          .lt('created_at', endDate.toISOString());
+        sql += ' WHERE created_at >= $1 AND created_at < $2';
+        params = [startDate.toISOString(), endDate.toISOString()];
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      sql += ' ORDER BY created_at DESC';
 
-      const merged = (data || []).map((record: any) => {
+      const result = await query(sql, params);
+      const data = result.rows || [];
+
+      const merged = data.map((record: any) => {
         const sysUser = systemUsers.find(u => u.id === record.user_id);
         return {
           ...record,

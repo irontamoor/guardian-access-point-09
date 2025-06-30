@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 
 interface DebugInfoProps {
   showDebug: boolean;
@@ -12,31 +12,21 @@ export function AttendanceDebugInfo({ showDebug, onToggleDebug }: DebugInfoProps
 
   useEffect(() => {
     async function debugUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      let sysUser = null;
-      let roleRow = null;
-      if (user) {
-        const { data: sysUserData } = await supabase
-          .from("system_users")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-        sysUser = sysUserData;
-
-        const { data: roleRowData } = await supabase
-          .from("user_role_assignments")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("role", "admin");
-        roleRow = roleRowData;
+      try {
+        // Since we don't have auth, we'll just show database connection status
+        const result = await query('SELECT COUNT(*) as count FROM system_users');
+        setDebugInfo({
+          databaseConnected: true,
+          userCount: result.rows[0]?.count || 0,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error: any) {
+        setDebugInfo({
+          databaseConnected: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
-      setDebugInfo({
-        supabaseUser: user,
-        supabaseUserError: error,
-        systemUser: sysUser,
-        adminRoleAssignments: roleRow,
-      });
     }
     debugUser();
   }, []);
@@ -53,20 +43,8 @@ export function AttendanceDebugInfo({ showDebug, onToggleDebug }: DebugInfoProps
       {showDebug && (
         <div className="bg-gray-100 border rounded p-3 mb-2 text-xs max-w-full overflow-x-auto">
           <div>
-            <strong>Supabase User:</strong>
-            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUser, null, 2)}</pre>
-          </div>
-          <div>
-            <strong>Supabase User Error:</strong>
-            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.supabaseUserError, null, 2)}</pre>
-          </div>
-          <div>
-            <strong>System User (system_users row):</strong>
-            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.systemUser, null, 2)}</pre>
-          </div>
-          <div>
-            <strong>Admin Role Assignments:</strong>
-            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo?.adminRoleAssignments, null, 2)}</pre>
+            <strong>Database Connection:</strong>
+            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugInfo, null, 2)}</pre>
           </div>
         </div>
       )}

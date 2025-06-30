@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 
 interface DashboardVisibility {
   showStudentCheckIn: boolean;
@@ -32,20 +32,13 @@ export function SystemSettingsContent() {
   const fetchVisibilitySettings = async () => {
     try {
       setError(null);
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('setting_key, setting_value')
-        .eq('setting_key', 'dashboard_visibility');
+      const result = await query(
+        `SELECT setting_key, setting_value FROM system_settings WHERE setting_key = $1`,
+        ['dashboard_visibility']
+      );
 
-      if (error) {
-        console.error('Error fetching visibility settings:', error);
-        setError('Failed to load settings. Please check your permissions.');
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const settingValue = data[0].setting_value;
-        // Type guard to ensure we have the correct structure
+      if (result.rows && result.rows.length > 0) {
+        const settingValue = result.rows[0].setting_value;
         if (settingValue && typeof settingValue === 'object' && !Array.isArray(settingValue)) {
           const settings = settingValue as unknown as DashboardVisibility;
           setVisibility(settings);
@@ -64,43 +57,31 @@ export function SystemSettingsContent() {
     try {
       const newVisibility = { ...visibility, [key]: value };
       
-      // First try to update existing record
-      const { data: existingData, error: fetchError } = await supabase
-        .from('system_settings')
-        .select('id')
-        .eq('setting_key', 'dashboard_visibility')
-        .maybeSingle();
+      // First check if record exists
+      const existingResult = await query(
+        `SELECT id FROM system_settings WHERE setting_key = $1`,
+        ['dashboard_visibility']
+      );
 
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      let result;
-      if (existingData) {
+      if (existingResult.rows && existingResult.rows.length > 0) {
         // Update existing record
-        result = await supabase
-          .from('system_settings')
-          .update({
-            setting_value: newVisibility,
-            description: 'Controls visibility of dashboard cards'
-          })
-          .eq('setting_key', 'dashboard_visibility');
+        await query(
+          `UPDATE system_settings SET 
+           setting_value = $1, 
+           description = $2, 
+           updated_at = NOW() 
+           WHERE setting_key = $3`,
+          [JSON.stringify(newVisibility), 'Controls visibility of dashboard cards', 'dashboard_visibility']
+        );
       } else {
         // Insert new record
-        result = await supabase
-          .from('system_settings')
-          .insert({
-            setting_key: 'dashboard_visibility',
-            setting_value: newVisibility,
-            description: 'Controls visibility of dashboard cards'
-          });
+        await query(
+          `INSERT INTO system_settings (setting_key, setting_value, description) 
+           VALUES ($1, $2, $3)`,
+          ['dashboard_visibility', JSON.stringify(newVisibility), 'Controls visibility of dashboard cards']
+        );
       }
 
-      if (result.error) {
-        throw result.error;
-      }
-
-      // Update local state only after successful database update
       setVisibility(newVisibility);
 
       toast({

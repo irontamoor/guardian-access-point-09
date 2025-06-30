@@ -1,17 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { query } from '@/integrations/postgres/client';
 import { SystemSettingsHeader } from './system-settings/SystemSettingsHeader';
 import { SystemSettingsContent } from './system-settings/SystemSettingsContent';
 import SignInOptionsSettings from './SignInOptionsSettings';
-
-interface SystemSetting {
-  id: string;
-  setting_key: string;
-  setting_value: any;
-  description?: string;
-  updated_at: string;
-}
+import type { SystemSetting } from '@/integrations/postgres/types';
 
 const SystemSettings = ({ adminData }: { adminData: { role: string; [key: string]: any } }) => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
@@ -21,12 +15,8 @@ const SystemSettings = ({ adminData }: { adminData: { role: string; [key: string
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('*')
-        .order('setting_key');
-      if (error) throw error;
-      setSettings(data || []);
+      const result = await query('SELECT * FROM system_settings ORDER BY setting_key');
+      setSettings(result.rows || []);
     } catch (error: any) {
       toast({
         title: "Error",
