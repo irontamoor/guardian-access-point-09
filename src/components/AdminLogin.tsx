@@ -31,13 +31,28 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // First try to find user by admin_id
+      let { data, error } = await supabase
         .from('system_users')
         .select('*')
         .eq('admin_id', adminId)
-        .eq('role', 'admin')
+        .in('role', ['admin', 'reader'])
         .eq('status', 'active')
         .single();
+
+      // If not found by admin_id, try user_code
+      if (error || !data) {
+        const { data: userData, error: userError } = await supabase
+          .from('system_users')
+          .select('*')
+          .eq('user_code', adminId)
+          .in('role', ['admin', 'reader'])
+          .eq('status', 'active')
+          .single();
+        
+        data = userData;
+        error = userError;
+      }
 
       if (error || !data) {
         toast({
@@ -68,9 +83,9 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
       setTimeout(() => {
         onLogin({
           id: data.id,
-          admin_id: data.admin_id,
+          admin_id: data.admin_id || data.user_code,
           email: data.email,
-          role: 'admin',
+          role: data.role,
           first_name: data.first_name,
         });
         setIsLoading(false);
