@@ -27,7 +27,7 @@ export default function AttendanceRecordsTable() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching attendance records...');
+      console.log('AttendanceRecordsTable: Fetching attendance records...');
       
       // Fetch all attendance records
       const { data: attendance, error: attendanceError } = await supabase
@@ -36,7 +36,8 @@ export default function AttendanceRecordsTable() {
         .order('created_at', { ascending: false });
 
       if (attendanceError) throw attendanceError;
-      console.log('Attendance records found:', attendance?.length || 0);
+      console.log('AttendanceRecordsTable: Raw attendance records found:', attendance?.length || 0);
+      console.log('AttendanceRecordsTable: Attendance data:', attendance);
 
       if (!attendance || attendance.length === 0) {
         setRecords([]);
@@ -51,7 +52,7 @@ export default function AttendanceRecordsTable() {
             .filter((id) => id) || []
         )
       );
-      console.log('Unique user IDs:', userIds);
+      console.log('AttendanceRecordsTable: Unique user IDs:', userIds);
 
       // Fetch ALL system users and visitors, then filter
       const [systemUsersResponse, visitorsResponse] = await Promise.all([
@@ -60,32 +61,33 @@ export default function AttendanceRecordsTable() {
       ]);
 
       if (systemUsersResponse.error) {
-        console.error('Error fetching system users:', systemUsersResponse.error);
+        console.error('AttendanceRecordsTable: Error fetching system users:', systemUsersResponse.error);
       }
       
       if (visitorsResponse.error) {
-        console.error('Error fetching visitors:', visitorsResponse.error);
+        console.error('AttendanceRecordsTable: Error fetching visitors:', visitorsResponse.error);
       }
 
       const allSystemUsers = systemUsersResponse.data || [];
       const allVisitors = visitorsResponse.data || [];
 
-      console.log('All system users found:', allSystemUsers.length);
-      console.log('All visitors found:', allVisitors.length);
+      console.log('AttendanceRecordsTable: All system users found:', allSystemUsers.length);
+      console.log('AttendanceRecordsTable: All visitors found:', allVisitors.length);
+      console.log('AttendanceRecordsTable: All visitors data:', allVisitors);
 
-      // Filter users that match our attendance records
-      const systemUsers = allSystemUsers.filter(user => userIds.includes(user.id));
-      const visitors = allVisitors.filter(visitor => userIds.includes(visitor.id));
+      // Create lookup maps
+      const systemUsersMap = new Map(allSystemUsers.map(user => [user.id, user]));
+      const visitorsMap = new Map(allVisitors.map(visitor => [visitor.id, visitor]));
 
-      console.log('Matching system users:', systemUsers.length);
-      console.log('Matching visitors:', visitors.length);
+      console.log('AttendanceRecordsTable: System users map keys:', Array.from(systemUsersMap.keys()));
+      console.log('AttendanceRecordsTable: Visitors map keys:', Array.from(visitorsMap.keys()));
 
       // Merge attendance records with user/visitor data
       const recordsWithUserData = attendance?.map((rec: any) => {
-        const systemUser = systemUsers.find((u) => u.id === rec.user_id);
-        const visitor = visitors.find((v) => v.id === rec.user_id);
+        const systemUser = systemUsersMap.get(rec.user_id);
+        const visitor = visitorsMap.get(rec.user_id);
         
-        console.log(`Record ${rec.id}: user_id=${rec.user_id}, found systemUser=${!!systemUser}, found visitor=${!!visitor}`);
+        console.log(`AttendanceRecordsTable: Record ${rec.id}: user_id=${rec.user_id}, found systemUser=${!!systemUser}, found visitor=${!!visitor}`);
         
         return {
           ...rec,
@@ -94,10 +96,11 @@ export default function AttendanceRecordsTable() {
         };
       }) || [];
 
-      console.log('Records with user data:', recordsWithUserData.length);
+      console.log('AttendanceRecordsTable: Records with user data:', recordsWithUserData.length);
+      console.log('AttendanceRecordsTable: Final records:', recordsWithUserData);
       setRecords(recordsWithUserData);
     } catch (e: any) {
-      console.error('Error fetching attendance records:', e);
+      console.error('AttendanceRecordsTable: Error fetching attendance records:', e);
       setError(e.message || "Failed to fetch attendance records.");
       toast({
         title: "Error",
@@ -124,7 +127,7 @@ export default function AttendanceRecordsTable() {
     if (record.visitor) {
       return `${record.visitor.first_name} ${record.visitor.last_name}`;
     }
-    return record.user_id;
+    return `Unknown User (${record.user_id})`;
   };
 
   const getPersonType = (record: AttendanceRecordWithUser) => {

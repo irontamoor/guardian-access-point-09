@@ -76,7 +76,8 @@ export function useAttendanceRecordsState() {
         throw attendanceError;
       }
 
-      console.log('Attendance records found:', attendanceData?.length || 0);
+      console.log('Raw attendance records found:', attendanceData?.length || 0);
+      console.log('Attendance records data:', attendanceData);
 
       if (!attendanceData || attendanceData.length === 0) {
         setAttendanceRecords([]);
@@ -91,47 +92,38 @@ export function useAttendanceRecordsState() {
       const userIds = [...new Set(attendanceData.map(record => record.user_id).filter(Boolean))];
       console.log('Unique user IDs from attendance records:', userIds);
 
-      // Fetch ALL system users first
-      const { data: allSystemUsers, error: allSystemUsersError } = await supabase
-        .from('system_users')
-        .select('id, first_name, last_name, user_code, admin_id, role');
+      // Fetch ALL system users and ALL visitors in parallel
+      const [systemUsersResponse, visitorsResponse] = await Promise.all([
+        supabase.from('system_users').select('id, first_name, last_name, user_code, admin_id, role'),
+        supabase.from('visitors').select('id, first_name, last_name, organization, visit_purpose')
+      ]);
 
-      if (allSystemUsersError) {
-        console.error('Error fetching all system users:', allSystemUsersError);
+      if (systemUsersResponse.error) {
+        console.error('Error fetching system users:', systemUsersResponse.error);
+      }
+      
+      if (visitorsResponse.error) {
+        console.error('Error fetching visitors:', visitorsResponse.error);
       }
 
-      const systemUsers = allSystemUsers || [];
-      console.log('All system users found:', systemUsers.length);
+      const allSystemUsers = systemUsersResponse.data || [];
+      const allVisitors = visitorsResponse.data || [];
 
-      // Filter system users that match our attendance records
-      const matchingSystemUsers = systemUsers.filter(user => userIds.includes(user.id));
-      console.log('Matching system users found:', matchingSystemUsers.length);
+      console.log('All system users found:', allSystemUsers.length);
+      console.log('All visitors found:', allVisitors.length);
+      console.log('All visitors data:', allVisitors);
 
-      // Get visitor IDs (those not found in system_users)
-      const systemUserIds = matchingSystemUsers.map(u => u.id);
-      const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
-      console.log('Visitor IDs to fetch:', visitorIds);
+      // Create lookup maps for better performance
+      const systemUsersMap = new Map(allSystemUsers.map(user => [user.id, user]));
+      const visitorsMap = new Map(allVisitors.map(visitor => [visitor.id, visitor]));
 
-      // Fetch ALL visitors first, then filter
-      const { data: allVisitors, error: allVisitorsError } = await supabase
-        .from('visitors')
-        .select('id, first_name, last_name, organization, visit_purpose');
-
-      if (allVisitorsError) {
-        console.error('Error fetching all visitors:', allVisitorsError);
-      }
-
-      const visitors = allVisitors || [];
-      console.log('All visitors found:', visitors.length);
-
-      // Filter visitors that match our attendance records
-      const matchingVisitors = visitors.filter(visitor => visitorIds.includes(visitor.id));
-      console.log('Matching visitors found:', matchingVisitors.length);
+      console.log('System users map keys:', Array.from(systemUsersMap.keys()));
+      console.log('Visitors map keys:', Array.from(visitorsMap.keys()));
 
       // Combine the data
       const enrichedRecords = attendanceData.map(record => {
-        const systemUser = matchingSystemUsers.find(user => user.id === record.user_id);
-        const visitor = matchingVisitors.find(v => v.id === record.user_id);
+        const systemUser = systemUsersMap.get(record.user_id);
+        const visitor = visitorsMap.get(record.user_id);
         
         console.log(`Record ${record.id}: user_id=${record.user_id}, systemUser=${!!systemUser}, visitor=${!!visitor}`);
         
@@ -143,6 +135,8 @@ export function useAttendanceRecordsState() {
       });
 
       console.log('Final enriched attendance records:', enrichedRecords.length);
+      console.log('Enriched records data:', enrichedRecords);
+      
       setAttendanceRecords(enrichedRecords);
       setDebugMessage(`Successfully loaded ${enrichedRecords.length} attendance records`);
 
