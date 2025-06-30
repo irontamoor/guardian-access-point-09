@@ -66,14 +66,11 @@ export class VMSApi {
     if (error) throw error;
   }
 
-  // Attendance API
+  // Attendance API - now includes visitor data in attendance_records
   static async getAttendanceRecords(date?: string) {
     let query = supabase
       .from('attendance_records')
-      .select(`
-        *,
-        system_users!inner(first_name, last_name, role)
-      `);
+      .select('*');
 
     if (date) {
       const startDate = new Date(date);
@@ -99,7 +96,15 @@ export class VMSApi {
         status: attendanceData.status,
         check_in_time: attendanceData.check_in_time,
         check_out_time: attendanceData.check_out_time,
-        notes: attendanceData.notes
+        notes: attendanceData.notes,
+        first_name: attendanceData.first_name,
+        last_name: attendanceData.last_name,
+        organization: attendanceData.organization,
+        visit_purpose: attendanceData.visit_purpose,
+        phone_number: attendanceData.phone_number,
+        host_name: attendanceData.host_name,
+        purpose: attendanceData.purpose,
+        company: attendanceData.company
       })
       .select()
       .single();
@@ -115,7 +120,12 @@ export class VMSApi {
         status: attendanceData.status,
         check_in_time: attendanceData.check_in_time,
         check_out_time: attendanceData.check_out_time,
-        notes: attendanceData.notes
+        notes: attendanceData.notes,
+        first_name: attendanceData.first_name,
+        last_name: attendanceData.last_name,
+        organization: attendanceData.organization,
+        visit_purpose: attendanceData.visit_purpose,
+        phone_number: attendanceData.phone_number
       })
       .eq('id', id)
       .select()
@@ -125,11 +135,13 @@ export class VMSApi {
     return data;
   }
 
-  // Visitors API
+  // Legacy visitors API - now redirects to attendance records
   static async getVisitors() {
+    // Return attendance records that have visitor data
     const { data, error } = await supabase
-      .from('visitors')
+      .from('attendance_records')
       .select('*')
+      .not('organization', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -137,46 +149,18 @@ export class VMSApi {
   }
 
   static async createVisitor(visitorData: any) {
-    const { data, error } = await supabase
-      .from('visitors')
-      .insert({
-        first_name: visitorData.first_name,
-        last_name: visitorData.last_name,
-        organization: visitorData.organization,
-        visit_purpose: visitorData.visit_purpose,
-        host_name: visitorData.host_name,
-        phone_number: visitorData.phone_number,
-        notes: visitorData.notes
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // System Settings API
-  static async getSettings() {
-    const { data, error } = await supabase
-      .from('system_settings')
-      .select('*');
-
-    if (error) throw error;
-    return data || [];
-  }
-
-  static async updateSetting(key: string, value: any) {
-    const { data, error } = await supabase
-      .from('system_settings')
-      .upsert({
-        setting_key: key,
-        setting_value: value,
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    // Create an attendance record for the visitor
+    return this.createAttendanceRecord({
+      user_id: visitorData.id || crypto.randomUUID(),
+      status: 'in',
+      check_in_time: new Date().toISOString(),
+      first_name: visitorData.first_name,
+      last_name: visitorData.last_name,
+      organization: visitorData.organization,
+      visit_purpose: visitorData.visit_purpose,
+      host_name: visitorData.host_name,
+      phone_number: visitorData.phone_number,
+      notes: visitorData.notes
+    });
   }
 }

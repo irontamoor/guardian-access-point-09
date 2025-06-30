@@ -7,12 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 type AppliesTo = "both" | "student" | "staff";
 type Category = "sign_in" | "pickup_type" | "visit_type";
 
-interface Option {
+interface SignInOption {
   id: string;
   label: string;
-  applies_to: AppliesTo;
+  applies_to: string;
+  category: string;
   is_active: boolean;
-  category: Category;
 }
 
 interface OptionCategoryManagerProps {
@@ -20,7 +20,7 @@ interface OptionCategoryManagerProps {
   placeholder?: string;
   category: Category;
   appliesTo?: AppliesTo;
-  options: Option[];
+  options: SignInOption[];
   loading: boolean;
   addOption: (label: string, appliesTo: AppliesTo, category: Category) => Promise<any>;
   deactivateOption: (id: string) => Promise<any>;
