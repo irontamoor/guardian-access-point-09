@@ -52,6 +52,18 @@ export function useAttendanceRecordsState() {
     try {
       console.log('Fetching attendance records for date:', selectedDate);
 
+      // First, let's check if there are ANY attendance records at all
+      const { data: totalRecords, error: countError } = await supabase
+        .from('attendance_records')
+        .select('id', { count: 'exact' });
+
+      if (countError) {
+        console.error('Error counting attendance records:', countError);
+        throw countError;
+      }
+
+      console.log('Total attendance records in database:', totalRecords?.length || 0);
+
       let query = supabase
         .from('attendance_records')
         .select('*')
@@ -62,53 +74,70 @@ export function useAttendanceRecordsState() {
         const startOfDay = `${selectedDate}T00:00:00.000Z`;
         const endOfDay = `${selectedDate}T23:59:59.999Z`;
         query = query.gte('created_at', startOfDay).lte('created_at', endOfDay);
+        console.log('Applying date filter:', startOfDay, 'to', endOfDay);
       }
 
       const { data: attendanceData, error: attendanceError } = await query;
 
       if (attendanceError) {
+        console.error('Error fetching attendance data:', attendanceError);
         throw attendanceError;
       }
 
-      console.log('Raw attendance data:', attendanceData?.length || 0, 'records');
+      console.log('Filtered attendance data:', attendanceData?.length || 0, 'records');
 
       if (!attendanceData || attendanceData.length === 0) {
         setAttendanceRecords([]);
-        setDebugMessage('No attendance records found');
+        setDebugMessage(selectedDate === 'all' ? 
+          'No attendance records found in the database' : 
+          `No attendance records found for ${selectedDate}`);
+        console.log('No attendance records found');
         return;
       }
 
-      // Get unique user IDs
-      const userIds = [...new Set(attendanceData.map(record => record.user_id))];
-      console.log('Unique user IDs:', userIds.length);
+      // Get unique user IDs from attendance records
+      const userIds = [...new Set(attendanceData.map(record => record.user_id).filter(Boolean))];
+      console.log('Unique user IDs from attendance records:', userIds);
 
-      // Fetch system users
-      const { data: systemUsers, error: usersError } = await supabase
-        .from('system_users')
-        .select('id, first_name, last_name, user_code, role')
-        .in('id', userIds);
+      // Fetch system users for these IDs
+      let systemUsers: any[] = [];
+      if (userIds.length > 0) {
+        const { data: systemUsersData, error: usersError } = await supabase
+          .from('system_users')
+          .select('id, first_name, last_name, user_code, role')
+          .in('id', userIds);
 
-      if (usersError) {
-        console.error('Error fetching system users:', usersError);
+        if (usersError) {
+          console.error('Error fetching system users:', usersError);
+        } else {
+          systemUsers = systemUsersData || [];
+          console.log('System users found for attendance records:', systemUsers.length);
+        }
       }
 
-      // Fetch visitors
-      const { data: visitors, error: visitorsError } = await supabase
-        .from('visitors')
-        .select('id, first_name, last_name, organization, visit_purpose')
-        .in('id', userIds);
+      // Fetch visitors for any user IDs not found in system_users
+      const systemUserIds = systemUsers.map(u => u.id);
+      const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
+      
+      let visitors: any[] = [];
+      if (visitorIds.length > 0) {
+        const { data: visitorsData, error: visitorsError } = await supabase
+          .from('visitors')
+          .select('id, first_name, last_name, organization, visit_purpose')
+          .in('id', visitorIds);
 
-      if (visitorsError) {
-        console.error('Error fetching visitors:', visitorsError);
+        if (visitorsError) {
+          console.error('Error fetching visitors:', visitorsError);
+        } else {
+          visitors = visitorsData || [];
+          console.log('Visitors found for attendance records:', visitors.length);
+        }
       }
-
-      console.log('System users found:', systemUsers?.length || 0);
-      console.log('Visitors found:', visitors?.length || 0);
 
       // Combine the data
       const enrichedRecords = attendanceData.map(record => {
-        const systemUser = systemUsers?.find(user => user.id === record.user_id);
-        const visitor = visitors?.find(v => v.id === record.user_id);
+        const systemUser = systemUsers.find(user => user.id === record.user_id);
+        const visitor = visitors.find(v => v.id === record.user_id);
         
         return {
           ...record,
@@ -117,12 +146,14 @@ export function useAttendanceRecordsState() {
         };
       });
 
+      console.log('Final enriched records:', enrichedRecords.length);
       setAttendanceRecords(enrichedRecords);
       setDebugMessage(`Successfully loaded ${enrichedRecords.length} attendance records`);
 
     } catch (error: any) {
-      console.error('Error fetching attendance records:', error);
+      console.error('Error in fetchAttendanceRecords:', error);
       setFetchError(error.message);
+      setAttendanceRecords([]);
       toast({
         title: "Error",
         description: `Failed to fetch attendance records: ${error.message}`,
