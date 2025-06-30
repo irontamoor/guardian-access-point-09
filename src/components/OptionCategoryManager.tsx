@@ -22,7 +22,7 @@ interface OptionCategoryManagerProps {
   appliesTo?: AppliesTo;
   options: SignInOption[];
   loading: boolean;
-  addOption: (label: string, appliesTo: AppliesTo, category: Category) => Promise<any>;
+  addOption: (label: string, appliesTo: string, category: string) => Promise<any>;
   deactivateOption: (id: string) => Promise<any>;
   defaultAppliesTo?: AppliesTo;
   showAppliesTo?: boolean; // show appliesTo dropdown
@@ -52,6 +52,15 @@ export function OptionCategoryManager({
     } else {
       setLabel("");
       toast({ title: "Option Added", variant: "default" });
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    const error = await deactivateOption(id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Option Removed", variant: "default" });
     }
   };
 
@@ -100,7 +109,7 @@ export function OptionCategoryManager({
                 size="sm"
                 variant="outline"
                 className="text-red-500 border-red-200 hover:bg-red-100"
-                onClick={() => deactivateOption(opt.id)}
+                onClick={() => handleRemove(opt.id)}
                 disabled={loading}
               >
                 Remove

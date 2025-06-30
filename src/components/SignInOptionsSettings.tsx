@@ -3,6 +3,7 @@ import { useSignInOptionsJson } from "@/hooks/useSignInOptionsJson";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OptionCategoryManager } from "./OptionCategoryManager";
+import { useToast } from "@/hooks/use-toast";
 
 // Add new: Accept adminData as a prop for access control
 type SignInOptionsSettingsProps = {
@@ -10,41 +11,39 @@ type SignInOptionsSettingsProps = {
 };
 
 export default function SignInOptionsSettings({ adminData }: SignInOptionsSettingsProps) {
+  const { toast } = useToast();
+
   // Student sign-in reasons/comments
   const {
     options: studentSignInOptions,
     loading: studentLoading,
+    addOption: addStudentOption,
+    removeOption: removeStudentOption,
   } = useSignInOptionsJson("student", "sign_in");
 
   // Staff sign-in reasons/comments
   const {
     options: staffSignInOptions,
     loading: staffLoading,
+    addOption: addStaffOption,
+    removeOption: removeStaffOption,
   } = useSignInOptionsJson("staff", "sign_in");
 
   // Pickup types for parent pickup
   const {
     options: pickupTypeOptions,
     loading: pickupLoading,
+    addOption: addPickupOption,
+    removeOption: removePickupOption,
   } = useSignInOptionsJson("both", "pickup_type");
 
   // Visit types for visitors
   const {
     options: visitTypeOptions,
     loading: visitLoading,
+    addOption: addVisitOption,
+    removeOption: removeVisitOption,
   } = useSignInOptionsJson("both", "visit_type");
-
-  // Placeholder functions for add/deactivate - these would need to be implemented
-  // to modify the JSON files (not implemented in this example)
-  const addOption = async (label: string, appliesTo: string, category: string) => {
-    console.log('Add option not implemented for JSON-based system:', { label, appliesTo, category });
-    return { message: 'Add option not implemented for JSON-based system' };
-  };
-
-  const deactivateOption = async (id: string) => {
-    console.log('Deactivate option not implemented for JSON-based system:', id);
-    return { message: 'Deactivate option not implemented for JSON-based system' };
-  };
 
   // Only show to admins
   if (adminData.role !== "admin") {
@@ -67,7 +66,7 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
       <CardHeader>
         <CardTitle>Admin Option Management</CardTitle>
         <p className="text-sm text-gray-600">
-          Note: Options are now managed via JSON files. Add/remove functionality is not available in this interface.
+          Manage options for different categories. Changes are saved automatically to local storage.
         </p>
       </CardHeader>
       <CardContent>
@@ -86,8 +85,8 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               appliesTo="student"
               options={studentSignInOptions}
               loading={studentLoading}
-              addOption={addOption}
-              deactivateOption={deactivateOption}
+              addOption={addStudentOption}
+              deactivateOption={removeStudentOption}
               defaultAppliesTo="student"
               showAppliesTo={false}
             />
@@ -100,8 +99,8 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               appliesTo="staff"
               options={staffSignInOptions}
               loading={staffLoading}
-              addOption={addOption}
-              deactivateOption={deactivateOption}
+              addOption={addStaffOption}
+              deactivateOption={removeStaffOption}
               defaultAppliesTo="staff"
               showAppliesTo={false}
             />
@@ -114,8 +113,8 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               appliesTo="both"
               options={pickupTypeOptions}
               loading={pickupLoading}
-              addOption={addOption}
-              deactivateOption={deactivateOption}
+              addOption={addPickupOption}
+              deactivateOption={removePickupOption}
               defaultAppliesTo="both"
               showAppliesTo={true}
             />
@@ -128,8 +127,8 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               appliesTo="both"
               options={visitTypeOptions}
               loading={visitLoading}
-              addOption={addOption}
-              deactivateOption={deactivateOption}
+              addOption={addVisitOption}
+              deactivateOption={removeVisitOption}
               defaultAppliesTo="both"
               showAppliesTo={true}
             />
