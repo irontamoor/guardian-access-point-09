@@ -41,5 +41,117 @@
     "applies_to": "both",
     "category": "visit_type",
     "is_active": true
+  },
+  {
+    "id": "student_late",
+    "label": "Late",
+    "applies_to": "student",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "student_excused",
+    "label": "Excused",
+    "applies_to": "student",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "student_early_leave",
+    "label": "Early Leave",
+    "applies_to": "student",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "student_medical",
+    "label": "Medical Appointment",
+    "applies_to": "student",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "student_sick",
+    "label": "Sick",
+    "applies_to": "student",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "staff_meeting",
+    "label": "Meeting",
+    "applies_to": "staff",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "staff_offsite",
+    "label": "Offsite",
+    "applies_to": "staff",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "staff_sick_leave",
+    "label": "Sick Leave",
+    "applies_to": "staff",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "staff_in_person",
+    "label": "In-Person",
+    "applies_to": "staff",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "staff_training",
+    "label": "Training",
+    "applies_to": "staff",
+    "category": "sign_in",
+    "is_active": true
+  },
+  {
+    "id": "pickup_early",
+    "label": "Early Pickup",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
+  },
+  {
+    "id": "pickup_medical",
+    "label": "Medical Pickup",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
+  },
+  {
+    "id": "pickup_bus",
+    "label": "Bus",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
+  },
+  {
+    "id": "pickup_car",
+    "label": "Car",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
+  },
+  {
+    "id": "pickup_walk",
+    "label": "Walk",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
+  },
+  {
+    "id": "pickup_emergency",
+    "label": "Emergency",
+    "applies_to": "both",
+    "category": "pickup_type",
+    "is_active": true
   }
 ]

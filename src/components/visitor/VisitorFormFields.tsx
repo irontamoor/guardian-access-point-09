@@ -63,7 +63,7 @@ export function VisitorFormFields({
           disabled={loading || visitTypesLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select purpose of visit" />
+            <SelectValue placeholder={visitTypesLoading ? "Loading visit types..." : "Select purpose of visit"} />
           </SelectTrigger>
           <SelectContent>
             {visitTypes.map((type) => (
@@ -73,6 +73,9 @@ export function VisitorFormFields({
             ))}
           </SelectContent>
         </Select>
+        {visitTypes.length === 0 && !visitTypesLoading && (
+          <div className="text-xs text-gray-500">No visit types configured</div>
+        )}
       </div>
 
       <div className="space-y-2">

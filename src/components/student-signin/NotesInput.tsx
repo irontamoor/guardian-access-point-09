@@ -10,6 +10,14 @@ interface NotesInputProps {
 }
 
 export function NotesInput({ value, onChange, disabled, quickReasons }: NotesInputProps) {
+  const handleQuickReason = (reasonLabel: string) => {
+    if (value.trim()) {
+      onChange(value + ', ' + reasonLabel);
+    } else {
+      onChange(reasonLabel);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor="notes">Reason / Comment</Label>
@@ -21,19 +29,24 @@ export function NotesInput({ value, onChange, disabled, quickReasons }: NotesInp
         className="resize-none"
         disabled={disabled}
       />
-      <div className="flex flex-wrap gap-2 mt-1">
-        {quickReasons.map((reason) => (
-          <button
-            key={reason.id}
-            type="button"
-            className="text-xs px-2 py-1 bg-gray-100 rounded border hover:bg-blue-100 text-gray-700"
-            onClick={() => onChange(value ? value + ', ' + reason.label : reason.label)}
-            disabled={disabled}
-          >
-            {reason.label}
-          </button>
-        ))}
-      </div>
+      {quickReasons && quickReasons.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-xs text-gray-600">Quick reasons:</div>
+          <div className="flex flex-wrap gap-2">
+            {quickReasons.map((reason) => (
+              <button
+                key={reason.id}
+                type="button"
+                className="text-xs px-2 py-1 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 text-blue-700 transition-colors"
+                onClick={() => handleQuickReason(reason.label)}
+                disabled={disabled}
+              >
+                {reason.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

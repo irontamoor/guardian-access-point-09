@@ -9,14 +9,14 @@ interface PickupTypeSelectProps {
 }
 
 export function PickupTypeSelect({ value, onChange }: PickupTypeSelectProps) {
-  const { options: pickupTypes } = useSignInOptions("both", "pickup_type");
+  const { options: pickupTypes, loading } = useSignInOptions("both", "pickup_type");
 
   return (
     <div className="space-y-2">
       <Label htmlFor="pickupType">Pickup/Drop-off Type</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={loading}>
         <SelectTrigger>
-          <SelectValue placeholder="Select type (optional)" />
+          <SelectValue placeholder={loading ? "Loading options..." : "Select type (optional)"} />
         </SelectTrigger>
         <SelectContent>
           {pickupTypes.map((type) => (
@@ -26,6 +26,9 @@ export function PickupTypeSelect({ value, onChange }: PickupTypeSelectProps) {
           ))}
         </SelectContent>
       </Select>
+      {pickupTypes.length === 0 && !loading && (
+        <div className="text-xs text-gray-500">No pickup types configured</div>
+      )}
     </div>
   );
 }

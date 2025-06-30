@@ -25,7 +25,7 @@ interface OptionCategoryManagerProps {
   addOption: (label: string, appliesTo: string, category: string) => Promise<any>;
   deactivateOption: (id: string) => Promise<any>;
   defaultAppliesTo?: AppliesTo;
-  showAppliesTo?: boolean; // show appliesTo dropdown
+  showAppliesTo?: boolean;
 }
 
 export function OptionCategoryManager({
@@ -75,7 +75,7 @@ export function OptionCategoryManager({
         />
         {showAppliesTo && (
           <select
-            className="border rounded px-2 py-1"
+            className="border rounded px-2 py-1 bg-white"
             value={applies}
             onChange={e => setApplies(e.target.value as AppliesTo)}
             data-testid="appliesTo-select"
@@ -95,28 +95,34 @@ export function OptionCategoryManager({
         </Button>
       </div>
       <div>
-        <div className="font-semibold mb-1">{title}:</div>
-        <ul className="divide-y">
-          {(options || []).map(opt => (
-            <li key={opt.id} className="flex items-center justify-between py-2">
-              <span>
-                {opt.label}
-                {showAppliesTo && (
-                  <span className="text-xs text-gray-400 ml-2">({opt.applies_to})</span>
-                )}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-red-500 border-red-200 hover:bg-red-100"
-                onClick={() => handleRemove(opt.id)}
-                disabled={loading}
-              >
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <div className="font-semibold mb-2">{title}:</div>
+        {loading ? (
+          <div className="text-gray-500">Loading options...</div>
+        ) : options.length === 0 ? (
+          <div className="text-gray-500 italic">No options available. Add some above.</div>
+        ) : (
+          <ul className="divide-y border rounded">
+            {options.map(opt => (
+              <li key={opt.id} className="flex items-center justify-between py-2 px-3">
+                <span>
+                  {opt.label}
+                  {showAppliesTo && (
+                    <span className="text-xs text-gray-400 ml-2">({opt.applies_to})</span>
+                  )}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-500 border-red-200 hover:bg-red-100"
+                  onClick={() => handleRemove(opt.id)}
+                  disabled={loading}
+                >
+                  Remove
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
