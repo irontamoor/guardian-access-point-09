@@ -17,21 +17,11 @@ function App() {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) {
-        setCurrentView('attendance-management');
-      } else {
-        setCurrentView('home');
-      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) {
-        setCurrentView('attendance-management');
-      } else {
-        setCurrentView('home');
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -100,56 +90,43 @@ function App() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {!session ? (
+          {currentView === 'home' && (
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                Please sign in to access the Visitor Management System
+                Welcome to the Visitor Management System!
               </h1>
               <p className="text-gray-600">
-                Authentication is required to use this application.
+                Choose an option from the menu above.
               </p>
             </div>
-          ) : (
-            <div>
-              {currentView === 'home' && (
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                    Welcome to the Visitor Management System!
-                  </h1>
-                  <p className="text-gray-600">
-                    Choose an option from the menu above.
-                  </p>
-                </div>
-              )}
+          )}
 
-              {currentView === 'staff-signin' && (
-                <StaffSignIn onBack={() => setCurrentView('home')} />
-              )}
+          {currentView === 'staff-signin' && (
+            <StaffSignIn onBack={() => setCurrentView('home')} />
+          )}
 
-              {currentView === 'student-signin' && (
-                <StudentSignIn onBack={() => setCurrentView('home')} />
-              )}
+          {currentView === 'student-signin' && (
+            <StudentSignIn onBack={() => setCurrentView('home')} />
+          )}
 
-              {currentView === 'visitor-signin' && (
-                <VisitorSignIn onBack={() => setCurrentView('home')} />
-              )}
+          {currentView === 'visitor-signin' && (
+            <VisitorSignIn onBack={() => setCurrentView('home')} />
+          )}
 
-              {currentView === 'attendance-records' && (
-                <AttendanceRecordsTable />
-              )}
+          {currentView === 'attendance-records' && (
+            <AttendanceRecordsTable />
+          )}
 
-              {currentView === 'attendance-management' && (
-                <AttendanceManagement />
-              )}
+          {currentView === 'attendance-management' && (
+            <AttendanceManagement />
+          )}
 
-              {currentView === 'parent-pickup' && (
-                <ParentPickup onBack={() => setCurrentView('home')} />
-              )}
-              
-              {currentView === 'reader-dashboard' && (
-                <ReaderDashboard />
-              )}
-            </div>
+          {currentView === 'parent-pickup' && (
+            <ParentPickup onBack={() => setCurrentView('home')} />
+          )}
+          
+          {currentView === 'reader-dashboard' && (
+            <ReaderDashboard />
           )}
         </div>
       </main>
