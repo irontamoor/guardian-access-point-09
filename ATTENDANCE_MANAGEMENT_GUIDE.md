@@ -5,6 +5,8 @@
 
 The Attendance Management system allows administrators to view, search, edit, and manage all attendance records in the school visitor management system. This includes students, staff, and visitors.
 
+**Live Demo:** https://lovable.dev/projects/ff962135-529c-4786-89d0-86ee28962a9c
+
 ## Features
 
 ### 1. Viewing Attendance Records
@@ -32,8 +34,19 @@ Use the search bar to find records by:
 - **Date Range**: Filter records between specific dates
 
 #### Using Search Filters
+The search component now properly handles empty values and provides clear filter options:
+
 ```typescript
-// Example of how search works internally
+// Search filters interface
+interface SearchFilters {
+  query?: string;
+  status?: 'in' | 'out';
+  role?: 'admin' | 'staff' | 'student' | 'visitor';
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// Example usage
 const filteredRecords = records.filter(record => {
   // Name search
   if (query) {
@@ -88,11 +101,6 @@ interface EditableFields {
 4. Provide reason for mass edit
 5. Confirm changes
 
-#### Mass Edit Use Cases
-- Correcting bulk check-in errors
-- End-of-day checkout for all staff
-- Emergency attendance updates
-
 ### 5. Date Filtering
 
 #### Available Date Options
@@ -102,153 +110,134 @@ interface EditableFields {
 - **All**: All available records
 - **Custom Date**: Specific date selection
 
-#### Implementation Example
+### 6. Email Notifications
+
+The system now includes comprehensive email notifications:
+
+#### Student Check-in Notifications
 ```typescript
-const fetchAttendanceByDate = async (selectedDate: string) => {
-  if (selectedDate === 'all') {
-    // Fetch all records
-    return await VMSApi.getAttendanceRecords();
-  } else {
-    // Fetch records for specific date
-    return await VMSApi.getAttendanceRecords(selectedDate);
-  }
-};
+await emailService.sendStudentCheckInNotification(
+  "John Doe",
+  "parent@email.com",
+  "08:30 AM"
+);
+```
+
+#### Staff Attendance Alerts
+```typescript
+await emailService.sendStaffAttendanceAlert(
+  "Jane Smith",
+  "admin@school.com",
+  "in",
+  "07:45 AM"
+);
+```
+
+#### Visitor Notifications
+```typescript
+await emailService.sendVisitorNotification(
+  "Bob Johnson",
+  "Dr. Williams",
+  "host@school.com",
+  "10:15 AM"
+);
+```
+
+#### Daily Reports
+```typescript
+await emailService.sendDailyReport("admin@school.com", {
+  studentsPresent: 245,
+  staffPresent: 18,
+  visitors: 5
+});
 ```
 
 ## API Integration
-
-### Fetching Attendance Records
-
-```typescript
-import { VMSApi } from '@/api/routes';
-
-// Get all attendance records
-const allRecords = await VMSApi.getAttendanceRecords();
-
-// Get records for specific date
-const todayRecords = await VMSApi.getAttendanceRecords('2024-01-15');
-
-// Records include user information
-const recordWithUser = {
-  id: "record-uuid",
-  user_id: "user-uuid",
-  status: "in",
-  check_in_time: "2024-01-15T08:30:00Z",
-  check_out_time: null,
-  notes: "Regular check-in",
-  system_users: {
-    first_name: "John",
-    last_name: "Doe",
-    role: "student",
-    user_code: "STU001"
-  }
-};
-```
-
-### Updating Records
-
-```typescript
-// Single record update
-await VMSApi.updateAttendanceRecord(recordId, {
-  status: "out",
-  check_out_time: new Date().toISOString(),
-  notes: "Updated by admin"
-});
-
-// The system automatically tracks edit history
-```
 
 ### Using Attendance Hooks
 
 ```typescript
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
+import { useAttendanceSearch } from '@/hooks/useAttendanceSearch';
 
-function MyAttendanceComponent() {
+function AttendanceComponent() {
   const {
-    attendanceRecords,      // Current records
-    isLoading,             // Loading state
-    fetchError,            // Error state
-    selectedIds,           // Selected record IDs
-    handleEditAttendance,  // Edit function
-    handleToggleSelect,    // Selection function
-    fetchAttendanceRecords // Refresh function
+    attendanceRecords,
+    isLoading,
+    fetchAttendanceRecords,
+    handleEditAttendance,
+    selectedIds,
+    handleToggleSelect,
+    handleSelectAll,
   } = useAttendanceManagement();
-  
-  // Use these in your component
+
+  const {
+    filteredRecords,
+    handleSearch,
+    handleClearSearch,
+    hasActiveFilters
+  } = useAttendanceSearch(attendanceRecords);
+
+  return (
+    <div>
+      <AttendanceSearch 
+        onSearch={handleSearch}
+        onClear={handleClearSearch}
+      />
+      {/* Display filteredRecords */}
+    </div>
+  );
 }
 ```
 
-## Best Practices
+### Direct Database Operations
 
-### 1. Data Accuracy
-- Always provide meaningful edit reasons
-- Double-check timestamps when editing
-- Verify user information before making changes
+```typescript
+// Fetch attendance with user information
+const { data: attendance, error } = await supabase
+  .from('attendance_records')
+  .select(`
+    *,
+    system_users(first_name, last_name, role, user_code)
+  `)
+  .order('created_at', { ascending: false });
 
-### 2. Audit Trail
-- All edits are logged with reasons
-- Original data is preserved
-- Edit history is maintained
-
-### 3. Performance
-- Use date filters to limit large datasets
-- Search filters help narrow results
-- Pagination handles large record sets
-
-### 4. User Experience
-- Clear loading states during operations
-- Confirmation dialogs for mass operations
-- Error handling with user-friendly messages
-
-## Common Operations
-
-### Daily Attendance Review
-1. Select "Today" from date filter
-2. Review all check-ins/check-outs
-3. Look for missing check-outs
-4. Use search to find specific individuals
-
-### End-of-Day Checkout
-1. Filter by status "In"
-2. Select all remaining staff/students
-3. Use mass edit to set status to "Out"
-4. Add reason like "End of day checkout"
-
-### Attendance Corrections
-1. Search for the specific person
-2. Click edit on their record
-3. Adjust times or status as needed
-4. Provide detailed correction reason
-
-### Weekly Attendance Report
-1. Set date range for the week
-2. Export or review all records
-3. Check for patterns or issues
-4. Generate summary reports
+// Update attendance record
+const { data: updated, error } = await supabase
+  .from('attendance_records')
+  .update({
+    status: "out",
+    check_out_time: new Date().toISOString(),
+    notes: "Updated by admin"
+  })
+  .eq('id', recordId)
+  .select()
+  .single();
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Records Not Loading**
-   - Check network connection
-   - Verify date filters aren't too restrictive
-   - Refresh the page
+1. **Attendance Tab Goes Blank**
+   - This was caused by Select components with empty string values
+   - Fixed by using "all" as default value instead of empty string
+   - Ensure all SelectItem components have non-empty values
 
 2. **Search Not Working**
    - Clear all filters and try again
    - Check spelling in search terms
    - Use partial names or IDs
 
-3. **Edit Failures**
+3. **Records Not Loading**
+   - Check network connection
+   - Verify date filters aren't too restrictive
+   - Check browser console for errors
+
+4. **Edit Failures**
    - Ensure edit reason is provided
    - Check for validation errors
    - Verify permissions
-
-4. **Mass Edit Issues**
-   - Confirm records are selected
-   - Check if edit reason is provided
-   - Verify operation permissions
 
 ### Debug Information
 
@@ -258,46 +247,38 @@ Enable debug mode to see:
 - Search query details
 - API response status
 
-```typescript
-// Debug info is available in development
-const debugInfo = {
-  totalRecords: attendanceRecords.length,
-  filteredRecords: filteredRecords.length,
-  selectedRecords: selectedIds.size,
-  currentFilters: searchFilters,
-  isLoading: isLoading
-};
+## Self-Hosting Setup
+
+For self-hosting with PostgreSQL, see the `SELF_HOSTING_GUIDE.md` file for complete setup instructions including:
+- PostgreSQL installation and configuration
+- Environment variables setup
+- Email service configuration (SMTP/SendGrid)
+- Database schema setup
+- Security considerations
+
+## Email Service Configuration
+
+### SMTP Configuration
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM=noreply@yourschool.com
+SMTP_SECURE=false
 ```
 
-## Integration with Email Notifications
-
-The system can send email notifications for attendance events:
-
-```typescript
-import { emailService } from '@/utils/emailService';
-
-// Notify parents of student check-in
-await emailService.sendStudentCheckInNotification(
-  studentName,
-  parentEmail,
-  checkInTime
-);
-
-// Alert admins of staff attendance
-await emailService.sendStaffAttendanceAlert(
-  staffName,
-  adminEmail,
-  status,
-  time
-);
+### SendGrid Configuration
+```bash
+SENDGRID_API_KEY=your_sendgrid_api_key
 ```
 
-## Security Considerations
+## Best Practices
 
-- Only authorized administrators can edit attendance
-- All changes are logged for audit purposes
-- Edit reasons are required for accountability
-- Original timestamps are preserved
-- User permissions are checked before operations
+1. **Data Accuracy**: Always provide meaningful edit reasons
+2. **Audit Trail**: All edits are logged with reasons
+3. **Performance**: Use date filters to limit large datasets
+4. **User Experience**: Clear loading states and error handling
+5. **Security**: Verify user permissions before operations
 
 This comprehensive attendance management system provides full control over attendance tracking while maintaining data integrity and providing excellent user experience.

@@ -20,16 +20,16 @@ export interface SearchFilters {
 
 export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [status, setStatus] = useState<string>('');
-  const [role, setRole] = useState<string>('');
+  const [status, setStatus] = useState<string>('all');
+  const [role, setRole] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   const handleSearch = () => {
     const filters: SearchFilters = {
       query: searchQuery.trim() || undefined,
-      status: status as 'in' | 'out' || undefined,
-      role: role as 'admin' | 'staff' | 'student' | 'visitor' || undefined,
+      status: status === 'all' ? undefined : status as 'in' | 'out',
+      role: role === 'all' ? undefined : role as 'admin' | 'staff' | 'student' | 'visitor',
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     };
@@ -38,14 +38,14 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
 
   const handleClear = () => {
     setSearchQuery('');
-    setStatus('');
-    setRole('');
+    setStatus('all');
+    setRole('all');
     setDateFrom('');
     setDateTo('');
     onClear();
   };
 
-  const hasFilters = searchQuery || status || role || dateFrom || dateTo;
+  const hasFilters = searchQuery || status !== 'all' || role !== 'all' || dateFrom || dateTo;
 
   return (
     <div className="bg-white p-4 rounded-lg border space-y-4">
@@ -79,7 +79,7 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="in">In</SelectItem>
               <SelectItem value="out">Out</SelectItem>
             </SelectContent>
@@ -92,7 +92,7 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
               <SelectValue placeholder="All Roles" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
               <SelectItem value="student">Student</SelectItem>
               <SelectItem value="staff">Staff</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
