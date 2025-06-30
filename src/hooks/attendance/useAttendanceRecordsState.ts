@@ -11,6 +11,9 @@ export interface AttendanceRecord {
   check_out_time?: string;
   created_at: string;
   notes?: string;
+  company?: string;
+  host_name?: string;
+  purpose?: string;
   system_users?: {
     id: string;
     first_name: string;
@@ -52,18 +55,7 @@ export function useAttendanceRecordsState() {
     try {
       console.log('Fetching attendance records for date:', selectedDate);
 
-      // First, let's check if there are ANY attendance records at all
-      const { data: totalRecords, error: countError } = await supabase
-        .from('attendance_records')
-        .select('id', { count: 'exact' });
-
-      if (countError) {
-        console.error('Error counting attendance records:', countError);
-        throw countError;
-      }
-
-      console.log('Total attendance records in database:', totalRecords?.length || 0);
-
+      // Build the query for attendance records
       let query = supabase
         .from('attendance_records')
         .select('*')
@@ -84,7 +76,7 @@ export function useAttendanceRecordsState() {
         throw attendanceError;
       }
 
-      console.log('Filtered attendance data:', attendanceData?.length || 0, 'records');
+      console.log('Attendance records found:', attendanceData?.length || 0);
 
       if (!attendanceData || attendanceData.length === 0) {
         setAttendanceRecords([]);
@@ -104,18 +96,16 @@ export function useAttendanceRecordsState() {
       if (userIds.length > 0) {
         const { data: systemUsersData, error: usersError } = await supabase
           .from('system_users')
-          .select('id, first_name, last_name, user_code, role')
+          .select('id, first_name, last_name, user_code, admin_id, role')
           .in('id', userIds);
 
-        if (usersError) {
-          console.error('Error fetching system users:', usersError);
-        } else {
-          systemUsers = systemUsersData || [];
-          console.log('System users found for attendance records:', systemUsers.length);
+        if (!usersError && systemUsersData) {
+          systemUsers = systemUsersData;
+          console.log('System users found:', systemUsers.length);
         }
       }
 
-      // Fetch visitors for any user IDs not found in system_users
+      // Get visitor IDs (those not found in system_users)
       const systemUserIds = systemUsers.map(u => u.id);
       const visitorIds = userIds.filter(id => !systemUserIds.includes(id));
       
@@ -126,11 +116,9 @@ export function useAttendanceRecordsState() {
           .select('id, first_name, last_name, organization, visit_purpose')
           .in('id', visitorIds);
 
-        if (visitorsError) {
-          console.error('Error fetching visitors:', visitorsError);
-        } else {
-          visitors = visitorsData || [];
-          console.log('Visitors found for attendance records:', visitors.length);
+        if (!visitorsError && visitorsData) {
+          visitors = visitorsData;
+          console.log('Visitors found:', visitors.length);
         }
       }
 
@@ -146,7 +134,7 @@ export function useAttendanceRecordsState() {
         };
       });
 
-      console.log('Final enriched records:', enrichedRecords.length);
+      console.log('Final enriched attendance records:', enrichedRecords.length);
       setAttendanceRecords(enrichedRecords);
       setDebugMessage(`Successfully loaded ${enrichedRecords.length} attendance records`);
 

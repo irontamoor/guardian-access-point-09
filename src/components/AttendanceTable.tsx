@@ -37,17 +37,17 @@ export const AttendanceTable: React.FC<TableProps> = ({
     if (record.visitors) {
       return `${record.visitors.first_name} ${record.visitors.last_name}`;
     }
-    return `User ID: ${record.user_id}`;
+    return `Unknown User (${record.user_id})`;
   };
 
   const getUserId = (record: any) => {
     if (record.system_users) {
-      return record.system_users.user_code || record.system_users.id;
+      return record.system_users.user_code || record.system_users.admin_id || record.system_users.id.substring(0, 8);
     }
     if (record.visitors) {
-      return record.visitors.id;
+      return `V-${record.visitors.id.substring(0, 8)}`;
     }
-    return record.user_id || '-';
+    return record.user_id?.substring(0, 8) || 'N/A';
   };
 
   const getRole = (record: any) => {
@@ -63,6 +63,19 @@ export const AttendanceTable: React.FC<TableProps> = ({
   const getOrganization = (record: any) => {
     if (record.visitors?.organization) {
       return record.visitors.organization;
+    }
+    if (record.company) {
+      return record.company;
+    }
+    return '-';
+  };
+
+  const getPurpose = (record: any) => {
+    if (record.visitors?.visit_purpose) {
+      return record.visitors.visit_purpose;
+    }
+    if (record.purpose) {
+      return record.purpose;
     }
     return '-';
   };
@@ -96,6 +109,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
               <TableHead>ID/Code</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Organization</TableHead>
+              <TableHead>Purpose</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
@@ -109,6 +123,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
               const userId = getUserId(record);
               const role = getRole(record);
               const organization = getOrganization(record);
+              const purpose = getPurpose(record);
 
               return (
                 <TableRow key={record.id}>
@@ -131,6 +146,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
                       role === 'staff' ? 'bg-green-100 text-green-800' :
                       role === 'student' ? 'bg-blue-100 text-blue-800' :
                       role === 'visitor' ? 'bg-purple-100 text-purple-800' :
+                      role === 'reader' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {role}
@@ -138,6 +154,9 @@ export const AttendanceTable: React.FC<TableProps> = ({
                   </TableCell>
                   <TableCell>
                     {organization}
+                  </TableCell>
+                  <TableCell>
+                    {purpose}
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${

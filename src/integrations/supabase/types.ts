@@ -87,15 +87,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["attendance_status"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_records_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "system_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sign_in_options: {
         Row: {
