@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, User, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminLoginProps {
   onLogin: (adminData: any) => void;
@@ -31,12 +31,15 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     try {
-      const result = await query(
-        'SELECT * FROM system_users WHERE admin_id = $1 AND role = $2 AND status = $3',
-        [adminId, 'admin', 'active']
-      );
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('admin_id', adminId)
+        .eq('role', 'admin')
+        .eq('status', 'active')
+        .single();
 
-      if (result.rows.length === 0) {
+      if (error || !data) {
         toast({
           title: "Login Failed",
           description: "Invalid Admin ID or password",
@@ -46,9 +49,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         return;
       }
 
-      const adminUser = result.rows[0];
-
-      if (adminUser.password !== password) {
+      if (data.password !== password) {
         toast({
           title: "Login Failed",
           description: "Invalid Admin ID or password",
@@ -60,17 +61,17 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
 
       toast({
         title: "Login Successful",
-        description: `Welcome, ${adminUser.first_name}!`,
+        description: `Welcome, ${data.first_name}!`,
         variant: "default"
       });
 
       setTimeout(() => {
         onLogin({
-          id: adminUser.id,
-          admin_id: adminUser.admin_id,
-          email: adminUser.email,
+          id: data.id,
+          admin_id: data.admin_id,
+          email: data.email,
           role: 'admin',
-          first_name: adminUser.first_name,
+          first_name: data.first_name,
         });
         setIsLoading(false);
       }, 500);

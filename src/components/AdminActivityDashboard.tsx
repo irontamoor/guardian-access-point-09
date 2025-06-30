@@ -3,8 +3,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { UserCheck, Hourglass, Users, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { query } from "@/integrations/postgres/client";
-import type { SystemUser, AttendanceRecord } from "@/integrations/postgres/types";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type SystemUser = Database['public']['Tables']['system_users']['Row'];
+type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'];
 
 interface UserStatus {
   id: string;
@@ -27,18 +30,23 @@ const AdminActivityDashboard = () => {
     setLoading(true);
     try {
       // Get all users
-      const usersResult = await query("SELECT * FROM system_users WHERE status = 'active'");
-      const users: SystemUser[] = usersResult.rows || [];
+      const { data: users, error: usersError } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('status', 'active');
+
+      if (usersError) throw usersError;
 
       // Get recent attendance records
-      const attendanceResult = await query(`
-        SELECT * FROM attendance_records 
-        ORDER BY created_at DESC
-      `);
-      const attendance: AttendanceRecord[] = attendanceResult.rows || [];
+      const { data: attendance, error: attendanceError } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      console.log("Fetched users:", users.map(u => ({id: u.id, role: u.role, status: u.status, name: `${u.first_name} ${u.last_name}`})));
-      console.log("Fetched attendance records:", attendance.map(a => ({
+      if (attendanceError) throw attendanceError;
+
+      console.log("Fetched users:", users?.map(u => ({id: u.id, role: u.role, status: u.status, name: `${u.first_name} ${u.last_name}`})));
+      console.log("Fetched attendance records:", attendance?.map(a => ({
         id: a.id,
         user_id: a.user_id,
         status: a.status,
@@ -48,7 +56,7 @@ const AdminActivityDashboard = () => {
 
       // Map latest attendance record per user
       const attendanceMap: Record<string, AttendanceRecord> = {};
-      attendance.forEach((row) => {
+      attendance?.forEach((row) => {
         if (!attendanceMap[row.user_id]) {
           attendanceMap[row.user_id] = row;
         }
@@ -56,7 +64,7 @@ const AdminActivityDashboard = () => {
 
       // Pickup queue: students with status "in" and NOT checked out
       const pickupList: UserStatus[] = users
-        .filter((u) => u.role === "student")
+        ?.filter((u) => u.role === "student")
         .map((stu) => {
           const att = attendanceMap[stu.id];
           const inStatus = att && att.status === "in" && !att.check_out_time;
@@ -69,13 +77,13 @@ const AdminActivityDashboard = () => {
             departmentOrGrade: stu.id,
           };
         })
-        .filter((s) => s.inStatus);
+        .filter((s) => s.inStatus) || [];
 
       setPickupQueue(pickupList);
 
       // Staff in: staff members who are "in" and NOT checked out
       const staffInList: UserStatus[] = users
-        .filter((u) => u.role === "staff")
+        ?.filter((u) => u.role === "staff")
         .map((staff) => {
           const att = attendanceMap[staff.id];
           const inStatus = att && att.status === "in" && !att.check_out_time;
@@ -87,13 +95,13 @@ const AdminActivityDashboard = () => {
             departmentOrGrade: staff.id,
           };
         })
-        .filter((s) => s.inStatus);
+        .filter((s) => s.inStatus) || [];
 
       setStaffIn(staffInList);
 
       // Visitors in: role: 'visitor', status: "in" and no check_out_time
       const visitorInList: UserStatus[] = users
-        .filter((u) => u.role === "visitor")
+        ?.filter((u) => u.role === "visitor")
         .map((visitor) => {
           const att = attendanceMap[visitor.id];
           const inStatus = att && att.status === "in" && !att.check_out_time;
@@ -107,7 +115,7 @@ const AdminActivityDashboard = () => {
             purpose: att?.purpose ?? "",
           };
         })
-        .filter((v) => v.inStatus);
+        .filter((v) => v.inStatus) || [];
 
       setVisitorIn(visitorInList);
     } catch (error) {
@@ -134,6 +142,7 @@ const AdminActivityDashboard = () => {
           Refresh
         </Button>
       </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>

@@ -1,12 +1,16 @@
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { query } from "@/integrations/postgres/client";
-import type { SystemUser, AttendanceRecord, Visitor } from "@/integrations/postgres/types";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type SystemUser = Database['public']['Tables']['system_users']['Row'];
+type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'];
+type Visitor = Database['public']['Tables']['visitors']['Row'];
 
 interface AttendanceRecordWithUser extends AttendanceRecord {
   system_user?: SystemUser;
@@ -24,31 +28,32 @@ export default function AttendanceRecordsTable() {
     setError(null);
     try {
       // Fetch all attendance records
-      const attendanceResult = await query(`
-        SELECT * FROM attendance_records 
-        ORDER BY created_at DESC
-      `);
-      const attendance = attendanceResult.rows || [];
+      const { data: attendance, error: attendanceError } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (attendanceError) throw attendanceError;
 
       // Get unique user IDs for system_users lookup
       const systemUserIds = Array.from(
         new Set(
           attendance
-            .map((rec: any) => rec.user_id)
-            .filter((id) => id)
+            ?.map((rec: any) => rec.user_id)
+            .filter((id) => id) || []
         )
       );
 
       // Fetch system users
       let systemUsers: SystemUser[] = [];
       if (systemUserIds.length > 0) {
-        const usersResult = await query(
-          `SELECT id, first_name, last_name, role, email, phone 
-           FROM system_users 
-           WHERE id = ANY($1)`,
-          [systemUserIds]
-        );
-        systemUsers = usersResult.rows || [];
+        const { data: usersData, error: usersError } = await supabase
+          .from('system_users')
+          .select('id, first_name, last_name, role, email, phone')
+          .in('id', systemUserIds);
+
+        if (usersError) throw usersError;
+        systemUsers = usersData || [];
       }
 
       // Get unique visitor IDs (those not found in system_users)
@@ -59,21 +64,21 @@ export default function AttendanceRecordsTable() {
       // Fetch visitors
       let visitors: Visitor[] = [];
       if (visitorIds.length > 0) {
-        const visitorsResult = await query(
-          `SELECT id, first_name, last_name, organization, visit_purpose, host_name, phone_number 
-           FROM visitors 
-           WHERE id = ANY($1)`,
-          [visitorIds]
-        );
-        visitors = visitorsResult.rows || [];
+        const { data: visitorsData, error: visitorsError } = await supabase
+          .from('visitors')
+          .select('id, first_name, last_name, organization, visit_purpose, host_name, phone_number')
+          .in('id', visitorIds);
+
+        if (visitorsError) throw visitorsError;
+        visitors = visitorsData || [];
       }
 
       // Merge attendance records with user/visitor data
-      const recordsWithUserData = attendance.map((rec: any) => ({
+      const recordsWithUserData = attendance?.map((rec: any) => ({
         ...rec,
         system_user: systemUsers.find((u) => u.id === rec.user_id),
         visitor: visitors.find((v) => v.id === rec.user_id),
-      }));
+      })) || [];
 
       setRecords(recordsWithUserData);
     } catch (e: any) {

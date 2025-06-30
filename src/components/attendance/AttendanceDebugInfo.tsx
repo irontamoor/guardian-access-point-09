@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DebugInfoProps {
   showDebug: boolean;
@@ -13,11 +13,15 @@ export function AttendanceDebugInfo({ showDebug, onToggleDebug }: DebugInfoProps
   useEffect(() => {
     async function debugUser() {
       try {
-        // Since we don't have auth, we'll just show database connection status
-        const result = await query('SELECT COUNT(*) as count FROM system_users');
+        const { count, error } = await supabase
+          .from('system_users')
+          .select('*', { count: 'exact', head: true });
+
+        if (error) throw error;
+
         setDebugInfo({
           databaseConnected: true,
-          userCount: result.rows[0]?.count || 0,
+          userCount: count || 0,
           timestamp: new Date().toISOString()
         });
       } catch (error: any) {

@@ -1,5 +1,7 @@
 
-import type { SystemUser } from "@/integrations/postgres/types";
+import type { Database } from "@/integrations/supabase/types";
+
+type SystemUser = Database['public']['Tables']['system_users']['Row'];
 
 export const parseStudent = (user: SystemUser) => ({
   id: user.id,

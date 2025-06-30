@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardVisibility {
   showStudentCheckIn: boolean;
@@ -32,17 +32,17 @@ export function SystemSettingsContent() {
   const fetchVisibilitySettings = async () => {
     try {
       setError(null);
-      const result = await query(
-        `SELECT setting_key, setting_value FROM system_settings WHERE setting_key = $1`,
-        ['dashboard_visibility']
-      );
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .eq('setting_key', 'dashboard_visibility')
+        .single();
 
-      if (result.rows && result.rows.length > 0) {
-        const settingValue = result.rows[0].setting_value;
-        if (settingValue && typeof settingValue === 'object' && !Array.isArray(settingValue)) {
-          const settings = settingValue as unknown as DashboardVisibility;
-          setVisibility(settings);
-        }
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data && data.setting_value && typeof data.setting_value === 'object' && !Array.isArray(data.setting_value)) {
+        const settings = data.setting_value as unknown as DashboardVisibility;
+        setVisibility(settings);
       }
     } catch (error: any) {
       console.error('Error fetching visibility settings:', error);
@@ -57,30 +57,16 @@ export function SystemSettingsContent() {
     try {
       const newVisibility = { ...visibility, [key]: value };
       
-      // First check if record exists
-      const existingResult = await query(
-        `SELECT id FROM system_settings WHERE setting_key = $1`,
-        ['dashboard_visibility']
-      );
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          setting_key: 'dashboard_visibility',
+          setting_value: newVisibility,
+          description: 'Controls visibility of dashboard cards',
+          updated_at: new Date().toISOString()
+        });
 
-      if (existingResult.rows && existingResult.rows.length > 0) {
-        // Update existing record
-        await query(
-          `UPDATE system_settings SET 
-           setting_value = $1, 
-           description = $2, 
-           updated_at = NOW() 
-           WHERE setting_key = $3`,
-          [JSON.stringify(newVisibility), 'Controls visibility of dashboard cards', 'dashboard_visibility']
-        );
-      } else {
-        // Insert new record
-        await query(
-          `INSERT INTO system_settings (setting_key, setting_value, description) 
-           VALUES ($1, $2, $3)`,
-          ['dashboard_visibility', JSON.stringify(newVisibility), 'Controls visibility of dashboard cards']
-        );
-      }
+      if (error) throw error;
 
       setVisibility(newVisibility);
 

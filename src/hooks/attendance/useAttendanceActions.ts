@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { query } from '@/integrations/postgres/client';
+import { supabase } from '@/integrations/supabase/client';
 import type { AttendanceRecord } from './useAttendanceRecordsState';
 
 export function useAttendanceActions() {
@@ -15,11 +15,17 @@ export function useAttendanceActions() {
     if (!editingRecord) return;
 
     try {
-      await query(
-        `INSERT INTO attendance_edits (attendance_record_id, old_status, new_status, edit_reason) 
-         VALUES ($1, $2, $3, $4)`,
-        [editingRecord.id, editingRecord.status, editingRecord.status, editReason]
-      );
+      const { error } = await supabase
+        .from('attendance_edits')
+        .insert({
+          attendance_record_id: editingRecord.id,
+          admin_user_id: 'admin', // TODO: Get actual admin user ID
+          old_status: editingRecord.status,
+          new_status: editingRecord.status,
+          edit_reason: editReason
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -57,11 +63,15 @@ export function useAttendanceActions() {
       const selectedRecords = records.filter(r => selectedIds.has(r.id));
       
       for (const record of selectedRecords) {
-        await query(
-          `INSERT INTO attendance_edits (attendance_record_id, old_status, new_status, edit_reason) 
-           VALUES ($1, $2, $3, $4)`,
-          [record.id, record.status, massEditStatus, massEditReason]
-        );
+        await supabase
+          .from('attendance_edits')
+          .insert({
+            attendance_record_id: record.id,
+            admin_user_id: 'admin', // TODO: Get actual admin user ID
+            old_status: record.status,
+            new_status: massEditStatus,
+            edit_reason: massEditReason
+          });
       }
 
       toast({
