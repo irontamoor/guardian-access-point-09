@@ -38,6 +38,7 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
+      // First, create the visitor record
       const { data: visitor, error: visitorError } = await supabase
         .from('visitors')
         .insert({
@@ -54,6 +55,9 @@ export function VisitorForm() {
 
       if (visitorError) throw visitorError;
 
+      // Then create the attendance record using the visitor's ID
+      // Note: We use the visitor's ID directly as user_id since the attendance system 
+      // is designed to track both system users and visitors
       const { error: attendanceError } = await supabase
         .from('attendance_records')
         .insert({
@@ -66,13 +70,22 @@ export function VisitorForm() {
           notes: visitorData.notes
         });
 
-      if (attendanceError) throw attendanceError;
-
-      toast({
-        title: "Visitor Registered!",
-        description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in. Badge will be printed.`,
-        variant: "default"
-      });
+      if (attendanceError) {
+        console.error('Attendance record error:', attendanceError);
+        // If attendance record fails, we still want to show success for visitor registration
+        // but log the error for debugging
+        toast({
+          title: "Visitor Registered!",
+          description: `${visitorData.firstName} ${visitorData.lastName} has been registered. Note: Check-in record may need manual entry.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Visitor Registered!",
+          description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in. Badge will be printed.`,
+          variant: "default"
+        });
+      }
 
       setVisitorData({
         firstName: '',
