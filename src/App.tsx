@@ -63,18 +63,6 @@ function App() {
               >
                 Parent Pickup
               </button>
-              <button
-                onClick={() => setCurrentView('attendance-management')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Attendance
-              </button>
-              <button
-                onClick={() => setCurrentView('reader-dashboard')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Reader Dashboard
-              </button>
               {session && (
                 <button
                   onClick={() => supabase.auth.signOut()}
