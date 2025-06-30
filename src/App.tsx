@@ -1,9 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
-import Auth from './components/Auth';
-import Account from './components/Account';
+import { supabase } from '@/integrations/supabase/client';
 import StaffSignIn from './components/StaffSignIn';
 import StudentSignIn from './components/StudentSignIn';
 import VisitorSignIn from './components/VisitorSignIn';
@@ -14,17 +11,31 @@ import ReaderDashboard from './components/ReaderDashboard';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
-  const session = useSession();
-  const supabase = useSupabaseClient();
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // Check if the user is already signed in and redirect to the appropriate page
-    if (session) {
-      setCurrentView('attendance-management');
-    } else {
-      setCurrentView('home');
-    }
-  }, [session]);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        setCurrentView('attendance-management');
+      } else {
+        setCurrentView('home');
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setCurrentView('attendance-management');
+      } else {
+        setCurrentView('home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,17 +80,19 @@ function App() {
                 Attendance
               </button>
               <button
-                onClick={() => setCurrentView('account')}
+                onClick={() => setCurrentView('reader-dashboard')}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >
-                Account
+                Reader Dashboard
               </button>
-              <button
-                onClick={() => supabase.auth.signOut()}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Sign Out
-              </button>
+              {session && (
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -88,7 +101,14 @@ function App() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {!session ? (
-            <Auth />
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                Please sign in to access the Visitor Management System
+              </h1>
+              <p className="text-gray-600">
+                Authentication is required to use this application.
+              </p>
+            </div>
           ) : (
             <div>
               {currentView === 'home' && (
@@ -120,10 +140,6 @@ function App() {
 
               {currentView === 'attendance-management' && (
                 <AttendanceManagement />
-              )}
-
-              {currentView === 'account' && (
-                <Account session={session} />
               )}
 
               {currentView === 'parent-pickup' && (
