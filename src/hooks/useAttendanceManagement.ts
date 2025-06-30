@@ -15,7 +15,6 @@ export function useAttendanceManagement() {
     setIsLoading: setRecordsLoading,
     fetchError,
     debugMessage,
-    fetchSystemUsers,
     fetchAttendanceRecords,
   } = useAttendanceRecordsState();
 
@@ -56,10 +55,6 @@ export function useAttendanceManagement() {
   const handleSelectAllWrapper = useCallback((checked: boolean) => {
     handleSelectAll(checked, attendanceRecords);
   }, [handleSelectAll, attendanceRecords]);
-
-  useEffect(() => {
-    fetchSystemUsers();
-  }, [fetchSystemUsers]);
 
   useEffect(() => {
     refreshAttendance();
