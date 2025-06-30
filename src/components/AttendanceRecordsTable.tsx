@@ -44,12 +44,12 @@ export default function AttendanceRecordsTable() {
         )
       );
 
-      // Fetch system users
+      // Fetch system users with all required fields
       let systemUsers: SystemUser[] = [];
       if (systemUserIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
           .from('system_users')
-          .select('id, first_name, last_name, role, email, phone')
+          .select('*')
           .in('id', systemUserIds);
 
         if (usersError) throw usersError;
@@ -61,12 +61,12 @@ export default function AttendanceRecordsTable() {
         (id) => !systemUsers.find((user) => user.id === id)
       );
 
-      // Fetch visitors
+      // Fetch visitors with all required fields
       let visitors: Visitor[] = [];
       if (visitorIds.length > 0) {
         const { data: visitorsData, error: visitorsError } = await supabase
           .from('visitors')
-          .select('id, first_name, last_name, organization, visit_purpose, host_name, phone_number')
+          .select('*')
           .in('id', visitorIds);
 
         if (visitorsError) throw visitorsError;

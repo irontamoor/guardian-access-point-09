@@ -1,5 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 export class VMSApi {
   // Users API
@@ -7,7 +10,8 @@ export class VMSApi {
     let query = supabase.from('system_users').select('*');
     
     if (role) {
-      query = query.eq('role', role);
+      // Type cast the role parameter to the enum type
+      query = query.eq('role', role as UserRole);
     }
     
     const { data, error } = await query.order('created_at', { ascending: false });
