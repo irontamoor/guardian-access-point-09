@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import StaffSignIn from './components/StaffSignIn';
@@ -117,24 +118,6 @@ function App() {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">Parent Pickup</h3>
                     <p className="text-gray-600 text-base leading-relaxed">Student pickup and drop-off tracking</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Access Section */}
-              <div className="flex justify-center mt-16">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-xl max-w-md">
-                  <div className="text-center space-y-4">
-                    <div 
-                      onClick={() => setCurrentView('admin-login')}
-                      className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl cursor-pointer hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                    >
-                      <span className="text-lg">👤</span>
-                      <span className="font-semibold">Admin Dashboard</span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Access user management, attendance editing, and system settings
-                    </p>
                   </div>
                 </div>
               </div>
