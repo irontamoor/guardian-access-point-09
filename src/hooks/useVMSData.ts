@@ -8,47 +8,109 @@ export function useVMSData() {
   const [students, setStudents] = useState([]);
   const [staff, setStaff] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load data on mount
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const loadData = async () => {
+    console.log('useVMSData: Starting to load data...');
     setLoading(true);
     setError(null);
+    
     try {
-      // Load students
+      // Load students with current status
+      console.log('useVMSData: Loading students...');
       const { data: studentsData, error: studentsError } = await supabase
         .from('system_users')
         .select('*')
         .eq('role', 'student')
         .eq('status', 'active');
 
-      if (studentsError) throw studentsError;
-      setStudents(studentsData || []);
+      if (studentsError) {
+        console.error('Error loading students:', studentsError);
+        throw studentsError;
+      }
 
-      // Load staff
+      console.log('useVMSData: Students loaded:', studentsData?.length || 0);
+
+      // Load staff with current status
+      console.log('useVMSData: Loading staff...');
       const { data: staffData, error: staffError } = await supabase
         .from('system_users')
         .select('*')
         .eq('role', 'staff')
         .eq('status', 'active');
 
-      if (staffError) throw staffError;
-      setStaff(staffData || []);
+      if (staffError) {
+        console.error('Error loading staff:', staffError);
+        throw staffError;
+      }
+
+      console.log('useVMSData: Staff loaded:', staffData?.length || 0);
+
+      // Get today's attendance to determine who's present
+      const today = new Date().toISOString().split('T')[0];
+      console.log('useVMSData: Loading today\'s attendance for:', today);
+      
+      const { data: todayAttendance, error: attendanceError } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .order('created_at', { ascending: false });
+
+      if (attendanceError) {
+        console.error('Error loading attendance:', attendanceError);
+        throw attendanceError;
+      }
+
+      console.log('useVMSData: Today\'s attendance records:', todayAttendance?.length || 0);
+
+      // Create a map of latest status for each user
+      const userStatusMap = new Map();
+      if (todayAttendance) {
+        todayAttendance.forEach(record => {
+          if (!userStatusMap.has(record.user_id)) {
+            userStatusMap.set(record.user_id, {
+              status: record.status === 'in' ? 'present' : 'absent',
+              check_in_time: record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : null
+            });
+          }
+        });
+      }
+
+      // Enrich students with status
+      const enrichedStudents = (studentsData || []).map(student => ({
+        ...student,
+        name: `${student.first_name} ${student.last_name}`,
+        grade: student.user_code || 'N/A',
+        status: userStatusMap.get(student.id)?.status || 'absent',
+        check_in_time: userStatusMap.get(student.id)?.check_in_time || null
+      }));
+
+      // Enrich staff with status
+      const enrichedStaff = (staffData || []).map(staff => ({
+        ...staff,
+        name: `${staff.first_name} ${staff.last_name}`,
+        status: userStatusMap.get(staff.id)?.status || 'absent',
+        check_in_time: userStatusMap.get(staff.id)?.check_in_time || null
+      }));
+
+      setStudents(enrichedStudents);
+      setStaff(enrichedStaff);
 
       // Load recent activity from merged attendance_records
-      const { data: attendanceData, error: attendanceError } = await supabase
+      console.log('useVMSData: Loading recent activity...');
+      const { data: attendanceData, error: recentError } = await supabase
         .from('attendance_records')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (attendanceError) throw attendanceError;
+      if (recentError) {
+        console.error('Error loading recent activity:', recentError);
+        throw recentError;
+      }
 
       if (attendanceData && attendanceData.length > 0) {
         // Get system user data for records that reference system users (missing names)
@@ -70,30 +132,49 @@ export function useVMSData() {
           }
         }
 
-        // Enrich activity data
+        // Enrich activity data and convert to the expected format
         const enrichedActivity = attendanceData.map(record => {
           const systemUser = systemUsersMap.get(record.user_id);
-          
+          const name = record.first_name && record.last_name 
+            ? `${record.first_name} ${record.last_name}`
+            : systemUser 
+              ? `${systemUser.first_name} ${systemUser.last_name}`
+              : 'Unknown User';
+
           return {
-            ...record,
-            system_users: systemUser || null,
-            // Use merged data first, fall back to system user
-            first_name: record.first_name || systemUser?.first_name,
-            last_name: record.last_name || systemUser?.last_name
+            id: record.id,
+            name,
+            action: record.status === 'in' ? 'signed in' : 'signed out',
+            time: new Date(record.created_at).toLocaleTimeString(),
+            type: systemUser?.role || 'visitor',
+            status: 'success' as const
           };
         });
 
         setRecentActivity(enrichedActivity);
+        console.log('useVMSData: Recent activity loaded:', enrichedActivity.length);
       } else {
         setRecentActivity([]);
       }
+
+      console.log('useVMSData: Data loading completed successfully');
     } catch (err: any) {
+      console.error('useVMSData: Error loading data:', err);
       setError(err.message);
-      console.error('Error loading VMS data:', err);
+      toast({
+        title: "Error Loading Data",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const updateStudentStatus = async (userId: string, status: "present" | "absent") => {
     setIsLoading(true);
