@@ -140,8 +140,9 @@ export const AttendanceTable: React.FC<TableProps> = ({
   };
 
   const canEdit = (record: any) => {
+    // Readers can only complete pickup records, not edit regular attendance
     if (userRole === 'reader') {
-      return isPickupRecord(record);
+      return false; // Readers cannot use the regular edit function
     }
     return ['admin', 'staff'].includes(userRole);
   };
