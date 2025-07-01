@@ -16,6 +16,7 @@ interface AdminDashboardTabsProps {
 
 const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsProps) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const isReader = adminData.role === 'reader';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,23 +45,27 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className={`grid w-full ${isReader ? 'grid-cols-2' : 'grid-cols-4'} mb-6`}>
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span>Users</span>
             </TabsTrigger>
             <TabsTrigger value="attendance" className="flex items-center space-x-2">
               <UserCheck className="h-4 w-4" />
               <span>Attendance</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
-            </TabsTrigger>
+            {!isReader && (
+              <>
+                <TabsTrigger value="users" className="flex items-center space-x-2">
+                  <Users className="h-4 w-4" />
+                  <span>Users</span>
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -71,17 +76,21 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
             />
           </TabsContent>
 
-          <TabsContent value="users">
-            <UserManagement />
-          </TabsContent>
-
           <TabsContent value="attendance">
             <AttendanceManagement />
           </TabsContent>
 
-          <TabsContent value="settings">
-            <SystemSettings adminData={adminData} />
-          </TabsContent>
+          {!isReader && (
+            <>
+              <TabsContent value="users">
+                <UserManagement />
+              </TabsContent>
+
+              <TabsContent value="settings">
+                <SystemSettings adminData={adminData} />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>
