@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import StaffSignIn from './components/StaffSignIn';
@@ -7,10 +8,13 @@ import AttendanceRecordsTable from './components/AttendanceRecordsTable';
 import AttendanceManagement from './components/AttendanceManagement';
 import ParentPickup from './components/ParentPickup';
 import ReaderDashboard from './components/ReaderDashboard';
+import AdminLogin from './components/AdminLogin';
+import AdminDashboardTabs from './components/AdminDashboardTabs';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
   const [session, setSession] = useState(null);
+  const [adminUser, setAdminUser] = useState(null);
 
   useEffect(() => {
     // Get initial session
@@ -23,8 +27,28 @@ function App() {
       setSession(session);
     });
 
+    // Check URL for admin route
+    const path = window.location.pathname;
+    if (path === '/admin') {
+      setCurrentView('admin-login');
+    }
+
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleAdminLogin = (adminData) => {
+    setAdminUser(adminData);
+    setCurrentView('admin-dashboard');
+    // Update URL without page reload
+    window.history.pushState({}, '', '/admin');
+  };
+
+  const handleAdminLogout = () => {
+    setAdminUser(null);
+    setCurrentView('home');
+    // Return to home URL
+    window.history.pushState({}, '', '/');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -98,12 +122,21 @@ function App() {
                 </div>
               </div>
 
-              {/* Bottom Message */}
+              {/* Admin Access Section */}
               <div className="flex justify-center mt-16">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-xl max-w-3xl">
-                  <p className="text-gray-700 text-xl text-center font-medium">
-                    Select an option above to get started with your visitor management tasks
-                  </p>
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-xl max-w-md">
+                  <div className="text-center space-y-4">
+                    <div 
+                      onClick={() => setCurrentView('admin-login')}
+                      className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl cursor-pointer hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <span className="text-lg">👤</span>
+                      <span className="font-semibold">Admin Dashboard</span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Access user management, attendance editing, and system settings
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -121,16 +154,31 @@ function App() {
             <VisitorSignIn onBack={() => setCurrentView('home')} />
           )}
 
+          {currentView === 'parent-pickup' && (
+            <ParentPickup onBack={() => setCurrentView('home')} />
+          )}
+
+          {currentView === 'admin-login' && (
+            <AdminLogin onLogin={handleAdminLogin} />
+          )}
+
+          {currentView === 'admin-dashboard' && adminUser && (
+            <AdminDashboardTabs
+              onBack={() => {
+                setCurrentView('home');
+                window.history.pushState({}, '', '/');
+              }}
+              onLogout={handleAdminLogout}
+              adminData={adminUser}
+            />
+          )}
+
           {currentView === 'attendance-records' && (
             <AttendanceRecordsTable />
           )}
 
           {currentView === 'attendance-management' && (
             <AttendanceManagement />
-          )}
-
-          {currentView === 'parent-pickup' && (
-            <ParentPickup onBack={() => setCurrentView('home')} />
           )}
           
           {currentView === 'reader-dashboard' && (
