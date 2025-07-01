@@ -78,7 +78,7 @@ export const AttendanceEditModal: React.FC<Props> = ({
               <SelectContent>
                 <SelectItem value="in">In</SelectItem>
                 <SelectItem value="out">Out</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="completed">Completed Out</SelectItem>
               </SelectContent>
             </Select>
           </div>
