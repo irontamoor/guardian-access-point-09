@@ -40,6 +40,15 @@ export const AttendanceTable: React.FC<TableProps> = ({
   const allSelected = attendanceRecords.length > 0 && attendanceRecords.every((r) => selectedIds.includes(r.id));
 
   const getName = (record: any) => {
+    // Special handling for Parent Pickup/Dropoff records
+    if (isPickupRecord(record)) {
+      const studentName = record.first_name && record.last_name 
+        ? `${record.first_name} ${record.last_name}` 
+        : 'Unknown Student';
+      const parentName = record.host_name || 'Unknown Parent';
+      return `${studentName} (Parent: ${parentName})`;
+    }
+
     // Use merged data first (from new structure)
     if (record.first_name && record.last_name) {
       return `${record.first_name} ${record.last_name}`;
@@ -63,6 +72,11 @@ export const AttendanceTable: React.FC<TableProps> = ({
   };
 
   const getRole = (record: any) => {
+    // Special handling for Parent Pickup/Dropoff records
+    if (isPickupRecord(record)) {
+      return 'pickup/dropoff';
+    }
+    
     if (record.system_users) {
       return record.system_users.role;
     }
@@ -208,6 +222,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
                       role === 'staff' ? 'bg-green-100 text-green-800' :
                       role === 'student' ? 'bg-blue-100 text-blue-800' :
                       role === 'visitor' ? 'bg-purple-100 text-purple-800' :
+                      role === 'pickup/dropoff' ? 'bg-orange-100 text-orange-800' :
                       role === 'reader' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
