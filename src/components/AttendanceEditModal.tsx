@@ -15,6 +15,7 @@ interface Props {
   setEditingRecord: (rec: any | null) => void;
   setEditReason: (r: string) => void;
   handleEditAttendance: () => void;
+  userRole?: string;
 }
 
 export const AttendanceEditModal: React.FC<Props> = ({
@@ -23,7 +24,8 @@ export const AttendanceEditModal: React.FC<Props> = ({
   isLoading,
   setEditingRecord,
   setEditReason,
-  handleEditAttendance
+  handleEditAttendance,
+  userRole = 'admin'
 }) => {
   if (!editingRecord) return null;
 
@@ -76,6 +78,7 @@ export const AttendanceEditModal: React.FC<Props> = ({
               <SelectContent>
                 <SelectItem value="in">In</SelectItem>
                 <SelectItem value="out">Out</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
