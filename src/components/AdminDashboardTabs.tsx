@@ -2,12 +2,11 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, BarChart3, Users, Settings, UserCheck, BookOpen } from 'lucide-react';
+import { ArrowLeft, LogOut, BarChart3, Users, Settings, UserCheck } from 'lucide-react';
 import Dashboard from './Dashboard';
 import UserManagement from './UserManagement';
 import AttendanceManagement from './AttendanceManagement';
 import SystemSettings from './SystemSettings';
-import { DocumentationContent } from './documentation/DocumentationContent';
 
 interface AdminDashboardTabsProps {
   onBack: () => void;
@@ -45,7 +44,7 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
@@ -61,10 +60,6 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
             <TabsTrigger value="settings" className="flex items-center space-x-2">
               <Settings className="h-4 w-4" />
               <span>Settings</span>
-            </TabsTrigger>
-            <TabsTrigger value="docs" className="flex items-center space-x-2">
-              <BookOpen className="h-4 w-4" />
-              <span>Documentation</span>
             </TabsTrigger>
           </TabsList>
 
@@ -86,10 +81,6 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
 
           <TabsContent value="settings">
             <SystemSettings adminData={adminData} />
-          </TabsContent>
-
-          <TabsContent value="docs">
-            <DocumentationContent />
           </TabsContent>
         </Tabs>
       </div>
