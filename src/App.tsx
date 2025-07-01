@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import StaffSignIn from './components/StaffSignIn';
@@ -28,79 +27,81 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-7xl">
           {currentView === 'home' && (
-            <div className="space-y-8">
-              {/* Main Header */}
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-2xl text-white">🏫</span>
+            <div className="space-y-12">
+              {/* Main Title Section */}
+              <div className="text-center space-y-6">
+                <div className="flex items-center justify-center space-x-4 mb-8">
+                  <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-700 rounded-3xl flex items-center justify-center shadow-2xl">
+                    <span className="text-3xl text-white">🏫</span>
                   </div>
                   <div className="text-left">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
+                    <h1 className="text-5xl font-bold text-gray-800 mb-2">
                       Visitor Management System
                     </h1>
-                    <p className="text-lg text-slate-600 mt-1">
+                    <p className="text-xl text-gray-600">
                       Safe, secure, and efficient visitor tracking
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Action Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-                <div 
-                  onClick={() => setCurrentView('staff-signin')}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                    <span className="text-2xl text-white">👥</span>
+              {/* Action Cards Grid */}
+              <div className="flex justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-6xl">
+                  <div 
+                    onClick={() => setCurrentView('staff-signin')}
+                    className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                      <span className="text-2xl text-white">👥</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Staff Sign In</h3>
+                    <p className="text-gray-600 text-base leading-relaxed">Quick check-in/out for staff members</p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Staff Sign In</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">Quick check-in/out for staff members</p>
-                </div>
 
-                <div 
-                  onClick={() => setCurrentView('student-signin')}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                    <span className="text-2xl text-white">🎓</span>
+                  <div 
+                    onClick={() => setCurrentView('student-signin')}
+                    className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                      <span className="text-2xl text-white">🎓</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Student Sign In</h3>
+                    <p className="text-gray-600 text-base leading-relaxed">Student attendance tracking</p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Student Sign In</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">Student attendance tracking</p>
-                </div>
 
-                <div 
-                  onClick={() => setCurrentView('visitor-signin')}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                    <span className="text-2xl text-white">🆔</span>
+                  <div 
+                    onClick={() => setCurrentView('visitor-signin')}
+                    className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                      <span className="text-2xl text-white">🆔</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Visitor Registration</h3>
+                    <p className="text-gray-600 text-base leading-relaxed">Register visitors and print badges</p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Visitor Registration</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">Register visitors and print badges</p>
-                </div>
 
-                <div 
-                  onClick={() => setCurrentView('parent-pickup')}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                    <span className="text-2xl text-white">🚗</span>
+                  <div 
+                    onClick={() => setCurrentView('parent-pickup')}
+                    className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                      <span className="text-2xl text-white">🚗</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Parent Pickup</h3>
+                    <p className="text-gray-600 text-base leading-relaxed">Student pickup and drop-off tracking</p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Parent Pickup</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">Student pickup and drop-off tracking</p>
                 </div>
               </div>
 
               {/* Bottom Message */}
-              <div className="text-center mt-12">
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg max-w-2xl mx-auto">
-                  <p className="text-slate-700 text-lg">
+              <div className="flex justify-center mt-16">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-xl max-w-3xl">
+                  <p className="text-gray-700 text-xl text-center font-medium">
                     Select an option above to get started with your visitor management tasks
                   </p>
                 </div>
