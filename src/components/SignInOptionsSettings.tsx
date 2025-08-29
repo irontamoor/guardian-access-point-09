@@ -78,14 +78,42 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="pickup_type" className="w-full">
+        <Tabs defaultValue="relationship" className="w-full">
           <TabsList>
-            <TabsTrigger value="pickup_type">Pickup/Drop-off Types</TabsTrigger>
             <TabsTrigger value="relationship">Relationship to Student</TabsTrigger>
+            <TabsTrigger value="pickup_type">Pickup/Drop-off Types</TabsTrigger>
             <TabsTrigger value="student_sign_in">Student Sign-In Options</TabsTrigger>
             <TabsTrigger value="staff_sign_in">Staff Sign-In Options</TabsTrigger>
             <TabsTrigger value="visit_type">Visitor Visit Types</TabsTrigger>
           </TabsList>
+          <TabsContent value="relationship">
+            <OptionCategoryManager
+              title="Relationship to Student"
+              placeholder="e.g. Parent, Guardian, Emergency Contact"
+              category="relationship"
+              appliesTo="both"
+              options={relationshipOptions}
+              loading={relationshipLoading}
+              addOption={addRelationshipOption}
+              deactivateOption={removeRelationshipOption}
+              defaultAppliesTo="both"
+              showAppliesTo={false}
+            />
+          </TabsContent>
+          <TabsContent value="pickup_type">
+            <OptionCategoryManager
+              title="Pickup/Drop-off Types"
+              placeholder="e.g. Early, Medical, Bus"
+              category="pickup_type"
+              appliesTo="both"
+              options={pickupTypeOptions}
+              loading={pickupLoading}
+              addOption={addPickupOption}
+              deactivateOption={removePickupOption}
+              defaultAppliesTo="both"
+              showAppliesTo={true}
+            />
+          </TabsContent>
           <TabsContent value="student_sign_in">
             <OptionCategoryManager
               title="Student Sign-In/Out Comments"
@@ -111,34 +139,6 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               addOption={addStaffOption}
               deactivateOption={removeStaffOption}
               defaultAppliesTo="staff"
-              showAppliesTo={false}
-            />
-          </TabsContent>
-          <TabsContent value="pickup_type">
-            <OptionCategoryManager
-              title="Pickup/Drop-off Types"
-              placeholder="e.g. Early, Medical, Bus"
-              category="pickup_type"
-              appliesTo="both"
-              options={pickupTypeOptions}
-              loading={pickupLoading}
-              addOption={addPickupOption}
-              deactivateOption={removePickupOption}
-              defaultAppliesTo="both"
-              showAppliesTo={true}
-            />
-          </TabsContent>
-          <TabsContent value="relationship">
-            <OptionCategoryManager
-              title="Relationship to Student"
-              placeholder="e.g. Parent, Guardian, Emergency Contact"
-              category="relationship"
-              appliesTo="both"
-              options={relationshipOptions}
-              loading={relationshipLoading}
-              addOption={addRelationshipOption}
-              deactivateOption={removeRelationshipOption}
-              defaultAppliesTo="both"
               showAppliesTo={false}
             />
           </TabsContent>
