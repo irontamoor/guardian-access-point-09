@@ -20,10 +20,14 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
 
   // Load options from localStorage or fallback to JSON file
   const loadOptions = useCallback(() => {
+    console.log(`[useSignInOptionsJson] Loading options for appliesTo: ${appliesTo}, category: ${category}`);
     setLoading(true);
     try {
       const savedOptions = localStorage.getItem('signInOptions');
+      console.log('[useSignInOptionsJson] Raw localStorage data:', savedOptions);
+      
       const optionsData = savedOptions ? JSON.parse(savedOptions) : signInOptionsData;
+      console.log('[useSignInOptionsJson] Parsed options data:', optionsData);
       
       setAllOptions(optionsData);
       
@@ -32,6 +36,7 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
         (option.applies_to === appliesTo || option.applies_to === 'both') &&
         option.category === category
       );
+      console.log(`[useSignInOptionsJson] Filtered options for ${category}:`, filteredOptions);
       setOptions(filteredOptions);
     } catch (error) {
       console.error('Error loading sign-in options:', error);
@@ -44,6 +49,7 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
   // Save options to localStorage
   const saveOptions = useCallback((newOptions: SignInOption[]) => {
     try {
+      console.log('[useSignInOptionsJson] Saving options to localStorage:', newOptions);
       localStorage.setItem('signInOptions', JSON.stringify(newOptions));
       setAllOptions(newOptions);
       
@@ -52,9 +58,11 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
         (option.applies_to === appliesTo || option.applies_to === 'both') &&
         option.category === category
       );
+      console.log(`[useSignInOptionsJson] Filtered options after save for ${category}:`, filteredOptions);
       setOptions(filteredOptions);
       
       // Dispatch custom event to notify other hook instances
+      console.log('[useSignInOptionsJson] Dispatching storage change event');
       window.dispatchEvent(new CustomEvent(STORAGE_CHANGE_EVENT));
     } catch (error) {
       console.error('Error saving options:', error);
@@ -101,12 +109,17 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
   // Listen for storage changes from other components
   useEffect(() => {
     const handleStorageChange = () => {
+      console.log(`[useSignInOptionsJson] Storage change event received for ${category}`);
       loadOptions();
     };
 
+    console.log(`[useSignInOptionsJson] Setting up storage change listener for ${category}`);
     window.addEventListener(STORAGE_CHANGE_EVENT, handleStorageChange);
-    return () => window.removeEventListener(STORAGE_CHANGE_EVENT, handleStorageChange);
-  }, [loadOptions]);
+    return () => {
+      console.log(`[useSignInOptionsJson] Cleaning up storage change listener for ${category}`);
+      window.removeEventListener(STORAGE_CHANGE_EVENT, handleStorageChange);
+    };
+  }, [loadOptions, category]);
 
   return { 
     options, 
