@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import signInOptionsData from '@/config/signInOptions.json';
 
+// Custom event to trigger refresh across all hook instances
+const STORAGE_CHANGE_EVENT = 'signInOptionsUpdated';
+
 interface SignInOption {
   id: string;
   label: string;
@@ -50,6 +53,9 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
         option.category === category
       );
       setOptions(filteredOptions);
+      
+      // Dispatch custom event to notify other hook instances
+      window.dispatchEvent(new CustomEvent(STORAGE_CHANGE_EVENT));
     } catch (error) {
       console.error('Error saving options:', error);
       throw new Error('Failed to save options');
@@ -90,6 +96,16 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
 
   useEffect(() => {
     loadOptions();
+  }, [loadOptions]);
+
+  // Listen for storage changes from other components
+  useEffect(() => {
+    const handleStorageChange = () => {
+      loadOptions();
+    };
+
+    window.addEventListener(STORAGE_CHANGE_EVENT, handleStorageChange);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT, handleStorageChange);
   }, [loadOptions]);
 
   return { 
