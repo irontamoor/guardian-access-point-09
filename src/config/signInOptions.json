@@ -153,47 +153,5 @@
     "applies_to": "both",
     "category": "pickup_type",
     "is_active": true
-  },
-  {
-    "id": "rel_parent",
-    "label": "Parent",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
-    "id": "rel_father",
-    "label": "Father",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
-    "id": "rel_mother",
-    "label": "Mother",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
-    "id": "rel_guardian",
-    "label": "Guardian",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
-    "id": "rel_grandparent",
-    "label": "Grandparent",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
-    "id": "rel_emergency_contact",
-    "label": "Emergency Contact",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
   }
 ]
