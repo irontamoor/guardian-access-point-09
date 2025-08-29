@@ -26,8 +26,17 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
       const savedOptions = localStorage.getItem('signInOptions');
       console.log('[useSignInOptionsJson] Raw localStorage data:', savedOptions);
       
-      const optionsData = savedOptions ? JSON.parse(savedOptions) : signInOptionsData;
-      console.log('[useSignInOptionsJson] Parsed options data:', optionsData);
+      let optionsData;
+      if (savedOptions) {
+        optionsData = JSON.parse(savedOptions);
+        console.log('[useSignInOptionsJson] Using localStorage data:', optionsData);
+      } else {
+        optionsData = signInOptionsData;
+        console.log('[useSignInOptionsJson] Using default JSON data:', optionsData);
+        // Initialize localStorage with default data on first load
+        localStorage.setItem('signInOptions', JSON.stringify(optionsData));
+        console.log('[useSignInOptionsJson] Initialized localStorage with default data');
+      }
       
       setAllOptions(optionsData);
       

@@ -153,5 +153,40 @@
     "applies_to": "both",
     "category": "pickup_type",
     "is_active": true
+  },
+  {
+    "id": "parent",
+    "label": "Parent",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
+  },
+  {
+    "id": "guardian",
+    "label": "Guardian",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
+  },
+  {
+    "id": "grandparent",
+    "label": "Grandparent",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
+  },
+  {
+    "id": "sibling",
+    "label": "Sibling",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
+  },
+  {
+    "id": "authorized_pickup",
+    "label": "Authorized Pickup Person",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
   }
 ]
