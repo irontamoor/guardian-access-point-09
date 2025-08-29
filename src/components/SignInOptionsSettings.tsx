@@ -45,6 +45,14 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
     removeOption: removeVisitOption,
   } = useSignInOptionsJson("both", "visit_type");
 
+  // Relationship to student options
+  const {
+    options: relationshipOptions,
+    loading: relationshipLoading,
+    addOption: addRelationshipOption,
+    removeOption: removeRelationshipOption,
+  } = useSignInOptionsJson("both", "relationship");
+
   // Only show to admins
   if (adminData.role !== "admin") {
     return (
@@ -70,11 +78,12 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="student_sign_in" className="w-full">
+        <Tabs defaultValue="pickup_type" className="w-full">
           <TabsList>
+            <TabsTrigger value="pickup_type">Pickup/Drop-off Types</TabsTrigger>
+            <TabsTrigger value="relationship">Relationship to Student</TabsTrigger>
             <TabsTrigger value="student_sign_in">Student Sign-In Options</TabsTrigger>
             <TabsTrigger value="staff_sign_in">Staff Sign-In Options</TabsTrigger>
-            <TabsTrigger value="pickup_type">Pickup/Drop-off Types</TabsTrigger>
             <TabsTrigger value="visit_type">Visitor Visit Types</TabsTrigger>
           </TabsList>
           <TabsContent value="student_sign_in">
@@ -117,6 +126,20 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
               deactivateOption={removePickupOption}
               defaultAppliesTo="both"
               showAppliesTo={true}
+            />
+          </TabsContent>
+          <TabsContent value="relationship">
+            <OptionCategoryManager
+              title="Relationship to Student"
+              placeholder="e.g. Parent, Guardian, Emergency Contact"
+              category="relationship"
+              appliesTo="both"
+              options={relationshipOptions}
+              loading={relationshipLoading}
+              addOption={addRelationshipOption}
+              deactivateOption={removeRelationshipOption}
+              defaultAppliesTo="both"
+              showAppliesTo={false}
             />
           </TabsContent>
           <TabsContent value="visit_type">

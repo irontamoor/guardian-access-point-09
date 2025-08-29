@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 type AppliesTo = "both" | "student" | "staff";
-type Category = "sign_in" | "pickup_type" | "visit_type";
+type Category = "sign_in" | "pickup_type" | "visit_type" | "relationship";
 
 interface SignInOption {
   id: string;
