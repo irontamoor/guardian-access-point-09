@@ -6,6 +6,7 @@ import { Car, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PickupInfoFields } from './PickupInfoFields';
+import { RelationshipSelect } from './RelationshipSelect';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
 
@@ -17,6 +18,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
   const [pickupData, setPickupData] = useState({
     studentName: '',
     parentName: '',
+    relationship: '',
     pickupType: '',
     notes: ''
   });
@@ -52,7 +54,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
           status,
           check_in_time: action === 'dropoff' ? now : null,
           check_out_time: action === 'pickup' ? now : null,
-          notes: `${action === 'pickup' ? 'Picked up' : 'Dropped off'} by ${pickupData.parentName}${pickupData.pickupType ? ` - ${pickupData.pickupType}` : ''}${pickupData.notes ? ` - ${pickupData.notes}` : ''}`,
+          notes: `${action === 'pickup' ? 'Picked up' : 'Dropped off'} by ${pickupData.parentName}${pickupData.relationship ? ` (${pickupData.relationship})` : ''}${pickupData.pickupType ? ` - ${pickupData.pickupType}` : ''}${pickupData.notes ? ` - ${pickupData.notes}` : ''}`,
           organization: 'Parent Pickup/Dropoff',
           visit_purpose: `Student ${action}`,
           phone_number: null,
@@ -76,6 +78,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
       setPickupData({
         studentName: '',
         parentName: '',
+        relationship: '',
         pickupType: '',
         notes: ''
       });
@@ -102,6 +105,11 @@ export function PickupForm({ onBack }: PickupFormProps) {
         parentName={pickupData.parentName}
         onStudentNameChange={(value) => handleInputChange('studentName', value)}
         onParentNameChange={(value) => handleInputChange('parentName', value)}
+      />
+      
+      <RelationshipSelect
+        value={pickupData.relationship}
+        onChange={(value) => handleInputChange('relationship', value)}
       />
       
       <PickupTypeSelect
