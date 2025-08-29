@@ -30,7 +30,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
   };
 
   const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
-    if (!pickupData.studentName || !pickupData.parentName) {
+    if (!pickupData.studentName || !pickupData.parentName || !pickupData.relationship) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",

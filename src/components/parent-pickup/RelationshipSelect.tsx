@@ -12,10 +12,10 @@ export function RelationshipSelect({ value, onChange }: RelationshipSelectProps)
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="relationship">Relationship to Student</Label>
+      <Label htmlFor="relationship">Relationship to Student *</Label>
       <Select value={value} onValueChange={onChange} disabled={loading}>
         <SelectTrigger>
-          <SelectValue placeholder={loading ? "Loading options..." : "Select relationship (optional)"} />
+          <SelectValue placeholder={loading ? "Loading options..." : "Select relationship"} />
         </SelectTrigger>
         <SelectContent>
           {relationshipOptions.map((type) => (
