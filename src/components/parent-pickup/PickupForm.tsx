@@ -2,13 +2,15 @@
 import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Car, UserCheck } from 'lucide-react';
+import { UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { supabase } from '@/integrations/supabase/client';
-import { PickupInfoFields } from './PickupInfoFields';
-import { RelationshipSelect } from './RelationshipSelect';
+import { PickupInfoFieldsEnhanced } from './PickupInfoFieldsEnhanced';
+import { RelationshipSelectEnhanced } from './RelationshipSelectEnhanced';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
+import { SuccessBanner } from '@/components/ui/success-banner';
 
 interface PickupFormProps {
   onBack: () => void;
@@ -24,33 +26,36 @@ export function PickupForm({ onBack }: PickupFormProps) {
     notes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const { toast } = useToast();
+
+  const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
+    studentId: { required: true, minLength: 2 },
+    parentGuardianName: { required: true, minLength: 1 },
+    relationship: { required: true },
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setPickupData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFieldBlur = (field: string) => {
+    setFieldTouched(field);
+  };
+
   const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
-    // Enhanced validation with specific field checks
-    const missingFields = [];
-    if (!pickupData.studentId.trim()) missingFields.push('Student ID');
-    if (!pickupData.parentGuardianName.trim()) missingFields.push('Parent/Guardian Name');
-    if (!pickupData.relationship.trim()) missingFields.push('Relationship');
+    const isValid = validate({
+      studentId: pickupData.studentId,
+      parentGuardianName: pickupData.parentGuardianName,
+      relationship: pickupData.relationship,
+    });
 
-    if (missingFields.length > 0) {
+    if (!isValid) {
       toast({
-        title: "Required Fields Missing",
-        description: `Please fill in: ${missingFields.join(', ')}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate student ID format (basic check)
-    if (pickupData.studentId.length < 2) {
-      toast({
-        title: "Invalid Student ID",
-        description: "Student ID must be at least 2 characters long",
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
         variant: "destructive"
       });
       return;
@@ -75,9 +80,15 @@ export function PickupForm({ onBack }: PickupFormProps) {
         throw error;
       }
 
+      const actionText = action === 'pickup' ? 'picked up' : 'dropped off';
+      const successMsg = `${pickupData.parentGuardianName} has ${actionText} ${pickupData.studentId}${pickupData.studentName ? ` (${pickupData.studentName})` : ''}`;
+      
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       toast({
         title: `${action === 'pickup' ? 'Pickup' : 'Drop-off'} Recorded Successfully!`,
-        description: `${pickupData.studentId} has been ${action === 'pickup' ? 'picked up' : 'dropped off'} by ${pickupData.parentGuardianName}`,
+        description: successMsg,
         variant: "default"
       });
 
@@ -90,6 +101,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
         pickupType: '',
         notes: ''
       });
+      
+      clearErrors();
 
     } catch (error: any) {
       console.error(`Error recording ${action}:`, error);
@@ -107,47 +120,66 @@ export function PickupForm({ onBack }: PickupFormProps) {
   const handleDropoff = () => savePickupRecord('dropoff');
 
   return (
-    <CardContent className="space-y-4">
-      <PickupInfoFields
-        studentName={pickupData.studentId}
-        parentName={pickupData.parentGuardianName}
-        onStudentNameChange={(value) => handleInputChange('studentId', value)}
-        onParentNameChange={(value) => handleInputChange('parentGuardianName', value)}
+    <>
+      <SuccessBanner
+        show={showSuccess}
+        message="Pickup/Drop-off Complete!"
+        details={successMessage}
+        onDismiss={() => setShowSuccess(false)}
       />
-      
-      <RelationshipSelect
-        value={pickupData.relationship}
-        onChange={(value) => handleInputChange('relationship', value)}
-      />
-      
-      <PickupTypeSelect
-        value={pickupData.pickupType}
-        onChange={(value) => handleInputChange('pickupType', value)}
-      />
+      <CardContent className="space-y-4">
+        <PickupInfoFieldsEnhanced
+          studentId={pickupData.studentId}
+          onStudentIdChange={(value) => handleInputChange('studentId', value)}
+          studentName={pickupData.studentName}
+          onStudentNameChange={(value) => handleInputChange('studentName', value)}
+          parentGuardianName={pickupData.parentGuardianName}  
+          onParentGuardianNameChange={(value) => handleInputChange('parentGuardianName', value)}
+          loading={isLoading}
+          errors={{
+            studentId: getFieldError('studentId'),
+            parentGuardianName: getFieldError('parentGuardianName'),
+          }}
+          onBlur={handleFieldBlur}
+        />
+        
+        <RelationshipSelectEnhanced
+          value={pickupData.relationship}
+          onChange={(value) => handleInputChange('relationship', value)}
+          loading={isLoading}
+          error={getFieldError('relationship').hasError ? getFieldError('relationship').message : undefined}
+          onBlur={() => handleFieldBlur('relationship')}
+        />
+        
+        <PickupTypeSelect
+          value={pickupData.pickupType}
+          onChange={(value) => handleInputChange('pickupType', value)}
+        />
 
-      <PickupNotesInput
-        value={pickupData.notes}
-        onChange={(value) => handleInputChange('notes', value)}
-      />
+        <PickupNotesInput
+          value={pickupData.notes}
+          onChange={(value) => handleInputChange('notes', value)}
+        />
 
-      <div className="flex space-x-3 pt-4">
-        <Button 
-          onClick={handlePickup}
-          disabled={isLoading}
-          className="flex-1 bg-red-600 hover:bg-red-700"
-        >
-          <UserCheck className="h-4 w-4 mr-2" />
-          Record Pickup
-        </Button>
-        <Button 
-          onClick={handleDropoff}
-          disabled={isLoading}
-          className="flex-1 bg-green-600 hover:bg-green-700"
-        >
-          <Car className="h-4 w-4 mr-2" />
-          Record Drop-off
-        </Button>
-      </div>
-    </CardContent>
+        <div className="flex space-x-3 pt-4">
+          <Button 
+            onClick={handlePickup}
+            disabled={isLoading}
+            className="flex-1 bg-red-600 hover:bg-red-700"
+          >
+            <UserCheck className="h-4 w-4 mr-2" />
+            {isLoading ? 'Recording...' : 'Record Pickup'}
+          </Button>
+          <Button 
+            onClick={handleDropoff}
+            disabled={isLoading}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            <UserX className="h-4 w-4 mr-2" />
+            {isLoading ? 'Recording...' : 'Record Drop-off'}
+          </Button>
+        </div>
+      </CardContent>
+    </>
   );
 }

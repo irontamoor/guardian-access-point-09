@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { EmployeeCodeInput } from './EmployeeCodeInput';
 import { StaffNotesInput } from './StaffNotesInput';
 import { StaffSignInButtons } from './StaffSignInButtons';
+import { SuccessBanner } from '@/components/ui/success-banner';
 
 interface StaffSignInFormProps {
   onSuccess?: () => void;
@@ -15,24 +17,45 @@ interface StaffSignInFormProps {
 export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   const [employeeCode, setEmployeeCode] = useState('');
   const [notes, setNotes] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const {
     loading, setLoading,
     isValidCode, fetchStaffUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStaffAttendance();
   const { options: quickReasons } = useSignInOptions("staff", "sign_in");
 
+  const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
+    employeeCode: { 
+      required: true, 
+      minLength: 2,
+      custom: (value) => {
+        if (value && !isValidCode(value)) {
+          return 'Please enter a valid employee ID format';
+        }
+        return null;
+      }
+    },
+  });
+
+  const handleFieldBlur = (field: string) => {
+    setFieldTouched(field);
+  };
+
   const handleSignIn = async () => {
+    const isValid = validate({ employeeCode });
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (!isValidCode(employeeCode)) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter a valid employee ID",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const staff = await fetchStaffUser(employeeCode);
       if (!staff) {
         toast({
@@ -55,13 +78,19 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
 
       if (error) throw error;
 
+      const successMsg = `${staff.first_name} ${staff.last_name} signed in successfully`;
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       toast({
         title: "Success!",
-        description: `Employee ${employeeCode} signed in successfully`,
+        description: successMsg,
         variant: "default"
       });
+      
       setEmployeeCode('');
       setNotes('');
+      clearErrors();
       onSuccess?.();
     } catch (err: any) {
       toast({
@@ -75,17 +104,18 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   };
 
   const handleSignOut = async () => {
+    const isValid = validate({ employeeCode });
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (!isValidCode(employeeCode)) {
-        toast({
-          title: "Validation Error", 
-          description: "Please enter a valid employee ID",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const staff = await fetchStaffUser(employeeCode);
       if (!staff) {
         toast({
@@ -109,6 +139,13 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
 
       if (error) throw error;
 
+      const successMsg = signedInToday 
+        ? `${staff.first_name} ${staff.last_name} signed out successfully`
+        : `${staff.first_name} ${staff.last_name} signed out (note: no sign-in record found for today)`;
+      
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       if (!signedInToday) {
         toast({
           title: "You forgot to sign in",
@@ -118,12 +155,14 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       } else {
         toast({
           title: "Have a great day!",
-          description: `Employee ${employeeCode} signed out successfully`,
+          description: successMsg,
           variant: "default"
         });
       }
+      
       setEmployeeCode('');
       setNotes('');
+      clearErrors();
       onSuccess?.();
     } catch (err: any) {
       toast({
@@ -137,23 +176,33 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   };
 
   return (
-    <CardContent className="space-y-4">
-      <EmployeeCodeInput 
-        value={employeeCode}
-        onChange={setEmployeeCode}
-        disabled={loading}
+    <>
+      <SuccessBanner
+        show={showSuccess}
+        message="Staff Sign-In Complete!"
+        details={successMessage}
+        onDismiss={() => setShowSuccess(false)}
       />
-      <StaffNotesInput
-        value={notes}
-        onChange={setNotes}
-        disabled={loading}
-        quickReasons={quickReasons}
-      />
-      <StaffSignInButtons
-        onSignIn={handleSignIn}
-        onSignOut={handleSignOut}
-        loading={loading}
-      />
-    </CardContent>
+      <CardContent className="space-y-4">
+        <EmployeeCodeInput 
+          value={employeeCode}
+          onChange={setEmployeeCode}
+          disabled={loading}
+          error={getFieldError('employeeCode').hasError ? getFieldError('employeeCode').message : undefined}
+          onBlur={() => handleFieldBlur('employeeCode')}
+        />
+        <StaffNotesInput
+          value={notes}
+          onChange={setNotes}
+          disabled={loading}
+          quickReasons={quickReasons}
+        />
+        <StaffSignInButtons
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          loading={loading}
+        />
+      </CardContent>
+    </>
   );
 }

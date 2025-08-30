@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptionsJson } from '@/hooks/useSignInOptionsJson';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { VisitorFormFields } from './VisitorFormFields';
 import { VisitorFormActions } from './VisitorFormActions';
+import { SuccessBanner } from '@/components/ui/success-banner';
 
 export function VisitorForm() {
   const [visitorData, setVisitorData] = useState({
@@ -18,24 +20,37 @@ export function VisitorForm() {
     notes: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const { toast } = useToast();
   const { options: visitTypes, loading: visitTypesLoading } = useSignInOptionsJson("both", "visit_type");
+
+  const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
+    firstName: { required: true, minLength: 1 },
+    lastName: { required: true, minLength: 1 },
+    visitPurpose: { required: true },
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setVisitorData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRegisterVisitor = async () => {
-    // Enhanced validation
-    const missingFields = [];
-    if (!visitorData.firstName.trim()) missingFields.push('First Name');
-    if (!visitorData.lastName.trim()) missingFields.push('Last Name');
-    if (!visitorData.visitPurpose.trim()) missingFields.push('Visit Purpose');
+  const handleFieldBlur = (field: string) => {
+    setFieldTouched(field);
+  };
 
-    if (missingFields.length > 0) {
+  const handleRegisterVisitor = async () => {
+    const isValid = validate({
+      firstName: visitorData.firstName,
+      lastName: visitorData.lastName,
+      visitPurpose: visitorData.visitPurpose,
+    });
+
+    if (!isValid) {
       toast({
-        title: "Required Fields Missing",
-        description: `Please fill in: ${missingFields.join(', ')}`,
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
         variant: "destructive"
       });
       return;
@@ -61,9 +76,13 @@ export function VisitorForm() {
         throw attendanceError;
       }
 
+      const successMsg = `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in`;
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       toast({
         title: "Visitor Registered Successfully!",
-        description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in.`,
+        description: successMsg,
         variant: "default"
       });
 
@@ -76,6 +95,8 @@ export function VisitorForm() {
         phoneNumber: '',
         notes: ''
       });
+      
+      clearErrors();
     } catch (error: any) {
       console.error('Error registering visitor:', error);
       toast({
@@ -89,26 +110,40 @@ export function VisitorForm() {
   };
 
   return (
-    <Card className="border-l-4 border-l-purple-500">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <UserPlus className="h-5 w-5 text-purple-600" />
-          <span>Visitor Registration</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <VisitorFormFields
-          visitorData={visitorData}
-          onInputChange={handleInputChange}
-          visitTypes={visitTypes}
-          loading={loading}
-          visitTypesLoading={visitTypesLoading}
-        />
-        <VisitorFormActions
-          onRegister={handleRegisterVisitor}
-          loading={loading}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <SuccessBanner
+        show={showSuccess}
+        message="Visitor Registration Complete!"
+        details={successMessage}
+        onDismiss={() => setShowSuccess(false)}
+      />
+      <Card className="border-l-4 border-l-purple-500">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <UserPlus className="h-5 w-5 text-purple-600" />
+            <span>Visitor Registration</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <VisitorFormFields
+            visitorData={visitorData}
+            onInputChange={handleInputChange}
+            visitTypes={visitTypes}
+            loading={loading}
+            visitTypesLoading={visitTypesLoading}
+            errors={{
+              firstName: getFieldError('firstName'),
+              lastName: getFieldError('lastName'),
+              visitPurpose: getFieldError('visitPurpose'),
+            }}
+            onBlur={handleFieldBlur}
+          />
+          <VisitorFormActions
+            onRegister={handleRegisterVisitor}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
+    </>
   );
 }

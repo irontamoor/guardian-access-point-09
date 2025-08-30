@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { StudentCodeInput } from './StudentCodeInput';
 import { NotesInput } from './NotesInput';
 import { SignInButtons } from './SignInButtons';
+import { SuccessBanner } from '@/components/ui/success-banner';
 
 interface StudentSignInFormProps {
   onSuccess?: () => void;
@@ -15,24 +17,49 @@ interface StudentSignInFormProps {
 export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   const [studentCode, setStudentCode] = useState('');
   const [notes, setNotes] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const {
     loading, setLoading,
     isValidCode, fetchStudentUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStudentAttendance();
   const { options: quickReasons } = useSignInOptions("student", "sign_in");
 
+  const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
+    studentCode: { 
+      required: true, 
+      minLength: 2,
+      custom: (value) => {
+        if (value && !isValidCode(value)) {
+          return 'Please enter a valid student ID format';
+        }
+        return null;
+      }
+    },
+  });
+
+  const handleFieldBlur = (field: string) => {
+    setFieldTouched(field);
+    if (field === 'studentCode') {
+      const isValid = validate({ studentCode });
+      // Don't show validation errors during blur, just mark as touched
+    }
+  };
+
   const handleSignIn = async () => {
+    const isValid = validate({ studentCode });
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (!isValidCode(studentCode)) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter a valid student ID",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const student = await fetchStudentUser(studentCode);
       if (!student) {
         toast({
@@ -55,13 +82,19 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
 
       if (error) throw error;
 
+      const successMsg = `${student.first_name} ${student.last_name} signed in successfully`;
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+      
       toast({
         title: "Success!",
-        description: `Student ${studentCode} signed in successfully`,
+        description: successMsg,
         variant: "default"
       });
+      
       setStudentCode('');
       setNotes('');
+      clearErrors();
       onSuccess?.();
     } catch (err: any) {
       toast({
@@ -75,17 +108,18 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   };
 
   const handleSignOut = async () => {
+    const isValid = validate({ studentCode });
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (!isValidCode(studentCode)) {
-        toast({
-          title: "Error",
-          description: "Please enter a student ID",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const student = await fetchStudentUser(studentCode);
       if (!student) {
         toast({
@@ -109,6 +143,13 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
 
       if (error) throw error;
 
+      const successMsg = signedInToday 
+        ? `${student.first_name} ${student.last_name} signed out successfully`
+        : `${student.first_name} ${student.last_name} signed out (note: no sign-in record found for today)`;
+      
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       if (!signedInToday) {
         toast({
           title: "You forgot to sign in",
@@ -118,12 +159,14 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       } else {
         toast({
           title: "Success!",
-          description: `Student ${studentCode} signed out successfully`,
+          description: successMsg,
           variant: "default"
         });
       }
+      
       setStudentCode('');
       setNotes('');
+      clearErrors();
       onSuccess?.();
     } catch (err: any) {
       toast({
@@ -137,23 +180,33 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   };
 
   return (
-    <CardContent className="space-y-4">
-      <StudentCodeInput 
-        value={studentCode}
-        onChange={setStudentCode}
-        disabled={loading}
+    <>
+      <SuccessBanner
+        show={showSuccess}
+        message="Student Sign-In Complete!"
+        details={successMessage}
+        onDismiss={() => setShowSuccess(false)}
       />
-      <NotesInput
-        value={notes}
-        onChange={setNotes}
-        disabled={loading}
-        quickReasons={quickReasons}
-      />
-      <SignInButtons
-        onSignIn={handleSignIn}
-        onSignOut={handleSignOut}
-        loading={loading}
-      />
-    </CardContent>
+      <CardContent className="space-y-4">
+        <StudentCodeInput 
+          value={studentCode}
+          onChange={setStudentCode}
+          disabled={loading}
+          error={getFieldError('studentCode').hasError ? getFieldError('studentCode').message : undefined}
+          onBlur={() => handleFieldBlur('studentCode')}
+        />
+        <NotesInput
+          value={notes}
+          onChange={setNotes}
+          disabled={loading}
+          quickReasons={quickReasons}
+        />
+        <SignInButtons
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          loading={loading}
+        />
+      </CardContent>
+    </>
   );
 }
