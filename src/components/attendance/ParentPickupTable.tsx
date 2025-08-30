@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useParentPickupData, ParentPickupRecord } from '@/hooks/attendance/useParentPickupData';
@@ -189,9 +190,37 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={record.approved ? 'default' : 'secondary'} className={record.approved ? 'bg-green-600' : 'bg-orange-500'}>
-                      {record.approved ? 'Approved' : 'Pending'}
-                    </Badge>
+                    {userRole !== 'reader' ? (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={record.approved}
+                          onCheckedChange={async (checked) => {
+                            try {
+                              await updateRecord(record.id, { approved: checked });
+                              toast({
+                                title: checked ? "Record Approved" : "Approval Removed",
+                                description: checked 
+                                  ? "The pickup record has been approved." 
+                                  : "The approval has been removed from this record.",
+                              });
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to update approval status. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        />
+                        <span className="text-sm">
+                          {record.approved ? "Approved" : "Pending"}
+                        </span>
+                      </div>
+                    ) : (
+                      <Badge variant={record.approved ? 'default' : 'secondary'} className={record.approved ? 'bg-green-600' : 'bg-orange-500'}>
+                        {record.approved ? 'Approved' : 'Pending'}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>{formatTime(record.action_time)}</TableCell>
                   <TableCell>{record.notes || '-'}</TableCell>
