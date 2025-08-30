@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import signInOptionsData from '@/config/signInOptions.json';
+import { VMSApi } from '@/api/routes';
 
 interface SignInOption {
   id: string;
@@ -11,76 +12,118 @@ interface SignInOption {
 
 export function useSignInOptionsJson(appliesTo: string = 'both', category: string = 'visit_type') {
   const [options, setOptions] = useState<SignInOption[]>([]);
-  const [sessionOptions, setSessionOptions] = useState<SignInOption[]>([]);
+  const [allOptions, setAllOptions] = useState<SignInOption[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load options directly from JSON file
+  // Load options from JSON file or localStorage fallback
   useEffect(() => {
-    setLoading(true);
-    try {
-      console.log(`[useSignInOptionsJson] Loading options directly from JSON for category: "${category}", appliesTo: "${appliesTo}"`);
-      
-      // Start with JSON file data
-      const allOptions = [...signInOptionsData, ...sessionOptions];
-      
-      // Filter based on criteria
-      const filteredOptions = allOptions.filter((option: SignInOption) => 
-        option.is_active && 
-        (option.applies_to === appliesTo || option.applies_to === 'both') &&
-        option.category === category
-      );
-      
-      console.log(`[useSignInOptionsJson] Filtered options:`, {
-        totalJsonOptions: signInOptionsData.length,
-        totalSessionOptions: sessionOptions.length,
-        categoryMatch: allOptions.filter((option: SignInOption) => option.category === category).length,
-        finalFiltered: filteredOptions.length,
-        filteredOptions: filteredOptions.map(opt => ({ id: opt.id, label: opt.label, applies_to: opt.applies_to }))
-      });
-      
-      setOptions(filteredOptions);
-    } catch (error) {
-      console.error('Error loading sign-in options from JSON:', error);
-      setOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [appliesTo, category, sessionOptions]);
+    const loadOptions = async () => {
+      setLoading(true);
+      try {
+        console.log(`[useSignInOptionsJson] Loading options for category: "${category}", appliesTo: "${appliesTo}"`);
+        
+        // Try to get updated options from localStorage first (for persistence)
+        let currentOptions = signInOptionsData;
+        const storedOptions = localStorage.getItem('signInOptions');
+        if (storedOptions) {
+          try {
+            currentOptions = JSON.parse(storedOptions);
+            console.log('[useSignInOptionsJson] Using updated options from localStorage');
+          } catch (e) {
+            console.warn('[useSignInOptionsJson] Failed to parse stored options, using defaults');
+          }
+        }
+        
+        setAllOptions(currentOptions);
+        
+        // Filter based on criteria
+        const filteredOptions = currentOptions.filter((option: SignInOption) => 
+          option.is_active && 
+          (option.applies_to === appliesTo || option.applies_to === 'both') &&
+          option.category === category
+        );
+        
+        console.log(`[useSignInOptionsJson] Filtered options:`, {
+          totalOptions: currentOptions.length,
+          categoryMatch: currentOptions.filter((option: SignInOption) => option.category === category).length,
+          finalFiltered: filteredOptions.length,
+          filteredOptions: filteredOptions.map(opt => ({ id: opt.id, label: opt.label, applies_to: opt.applies_to }))
+        });
+        
+        setOptions(filteredOptions);
+      } catch (error) {
+        console.error('Error loading sign-in options:', error);
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Add new option (session-only, not persisted)
+    loadOptions();
+  }, [appliesTo, category]);
+
+  // Add new option (persisted to file via API)
   const addOption = async (label: string, applies: string, cat: string) => {
     try {
       const newOption: SignInOption = {
-        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         label: label.trim(),
         applies_to: applies,
         category: cat,
         is_active: true
       };
 
-      console.log('[useSignInOptionsJson] Adding session-only option:', newOption);
-      setSessionOptions(prev => [...prev, newOption]);
+      console.log('[useSignInOptionsJson] Adding new option:', newOption);
+      
+      // Update the options array
+      const updatedOptions = [...allOptions, newOption];
+      
+      // Save to file via API
+      await VMSApi.updateSignInOptions(updatedOptions);
+      
+      // Update local state
+      setAllOptions(updatedOptions);
+      
       return null; // Success
     } catch (error: any) {
-      console.error('Error adding session option:', error);
+      console.error('Error adding option:', error);
       return { message: error.message || 'Failed to add option' };
     }
   };
 
-  // Remove/deactivate option (session-only for custom options, ignored for JSON options)
+  // Remove option (persisted to file via API)
   const removeOption = async (id: string) => {
     try {
-      // Only allow removal of session options (custom ones)
-      if (id.startsWith('session_')) {
-        console.log('[useSignInOptionsJson] Removing session option:', id);
-        setSessionOptions(prev => prev.filter(option => option.id !== id));
+      console.log('[useSignInOptionsJson] Removing option:', id);
+      
+      // Check if it's a built-in option (from original JSON)
+      const isBuiltIn = signInOptionsData.some(option => option.id === id);
+      
+      if (isBuiltIn) {
+        // For built-in options, mark as inactive instead of removing
+        const updatedOptions = allOptions.map(option => 
+          option.id === id ? { ...option, is_active: false } : option
+        );
+        
+        // Save to file via API
+        await VMSApi.updateSignInOptions(updatedOptions);
+        
+        // Update local state
+        setAllOptions(updatedOptions);
       } else {
-        console.log('[useSignInOptionsJson] Cannot remove JSON file option:', id);
-        return { message: 'Cannot remove built-in options. Changes are session-only.' };
+        // For custom options, remove completely
+        const updatedOptions = allOptions.filter(option => option.id !== id);
+        
+        // Save to file via API
+        await VMSApi.updateSignInOptions(updatedOptions);
+        
+        // Update local state
+        setAllOptions(updatedOptions);
       }
+      
       return null; // Success
     } catch (error: any) {
-      console.error('Error removing session option:', error);
+      console.error('Error removing option:', error);
       return { message: error.message || 'Failed to remove option' };
     }
   };

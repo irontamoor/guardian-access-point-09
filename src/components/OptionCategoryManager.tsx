@@ -69,9 +69,9 @@ export function OptionCategoryManager({
     <div className="space-y-4">
       <Alert>
         <AlertDescription>
-          <strong>Note:</strong> Options are read from JSON configuration files. 
-          Any additions here are session-only and will be lost when you refresh the page.
-          To make permanent changes, edit the configuration files directly.
+          <strong>Note:</strong> Changes made here will persist and update the configuration files.
+          Built-in options can be deactivated but not completely removed.
+          Custom options can be completely removed.
         </AlertDescription>
       </Alert>
       
@@ -79,7 +79,7 @@ export function OptionCategoryManager({
         <Input
           value={label}
           onChange={e => setLabel(e.target.value)}
-          placeholder={placeholder || `Add new option (${category}) - session only`}
+          placeholder={placeholder || `Add new option (${category})`}
           data-testid="option-input"
         />
         {showAppliesTo && (
@@ -100,7 +100,7 @@ export function OptionCategoryManager({
           disabled={loading || !label.trim()}
           data-testid="add-btn"
         >
-          Add (Session)
+          Add
         </Button>
       </div>
       <div>
@@ -118,19 +118,22 @@ export function OptionCategoryManager({
                   {showAppliesTo && (
                     <span className="text-xs text-gray-400 ml-2">({opt.applies_to})</span>
                   )}
-                  {opt.id.startsWith('session_') && (
-                    <span className="text-xs text-blue-500 ml-2">(Session Only)</span>
+                  {opt.id.startsWith('custom_') && (
+                    <span className="text-xs text-blue-500 ml-2">(Custom)</span>
+                  )}
+                  {!opt.is_active && (
+                    <span className="text-xs text-red-500 ml-2">(Inactive)</span>
                   )}
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className={opt.id.startsWith('session_') ? "text-red-500 border-red-200 hover:bg-red-100" : "text-gray-400 border-gray-200 cursor-not-allowed"}
+                  className="text-red-500 border-red-200 hover:bg-red-100"
                   onClick={() => handleRemove(opt.id)}
-                  disabled={loading || !opt.id.startsWith('session_')}
-                  title={opt.id.startsWith('session_') ? "Remove session option" : "Built-in options cannot be removed"}
+                  disabled={loading}
+                  title={opt.id.startsWith('custom_') ? "Remove custom option" : "Deactivate built-in option"}
                 >
-                  {opt.id.startsWith('session_') ? "Remove" : "Built-in"}
+                  {opt.id.startsWith('custom_') ? "Remove" : "Deactivate"}
                 </Button>
               </li>
             ))}
