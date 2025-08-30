@@ -1,6 +1,8 @@
 
 import { useState, useCallback } from 'react';
-import type { AttendanceRecord } from './useAttendanceRecordsState';
+
+// Generic record type for selection
+type SelectableRecord = { id: string };
 
 export function useAttendanceSelection() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -17,7 +19,7 @@ export function useAttendanceSelection() {
     });
   }, []);
 
-  const handleSelectAll = useCallback((checked: boolean, records: AttendanceRecord[]) => {
+  const handleSelectAll = useCallback((checked: boolean, records: SelectableRecord[]) => {
     if (checked) {
       setSelectedIds(new Set(records.map(r => r.id)));
     } else {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSystemUsers } from './useSystemUsers';
-import { useAttendanceRecords } from './useAttendanceRecords';
+import { useNewAttendanceMapping } from './useNewAttendanceMapping';
 
 export type Student = {
   id: string;
@@ -26,7 +26,7 @@ export const usePeopleData = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { getUsersByRole, parseStudent, parseStaff } = useSystemUsers();
-  const { getAttendanceMap } = useAttendanceRecords();
+  const { getAttendanceMap } = useNewAttendanceMapping();
 
   const loadPeople = async () => {
     setLoading(true);
