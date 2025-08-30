@@ -26,10 +26,16 @@ export function VisitorForm() {
   };
 
   const handleRegisterVisitor = async () => {
-    if (!visitorData.firstName || !visitorData.lastName || !visitorData.visitPurpose) {
+    // Enhanced validation
+    const missingFields = [];
+    if (!visitorData.firstName.trim()) missingFields.push('First Name');
+    if (!visitorData.lastName.trim()) missingFields.push('Last Name');
+    if (!visitorData.visitPurpose.trim()) missingFields.push('Visit Purpose');
+
+    if (missingFields.length > 0) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: "Required Fields Missing",
+        description: `Please fill in: ${missingFields.join(', ')}`,
         variant: "destructive"
       });
       return;
@@ -56,7 +62,7 @@ export function VisitorForm() {
       }
 
       toast({
-        title: "Visitor Registered!",
+        title: "Visitor Registered Successfully!",
         description: `${visitorData.firstName} ${visitorData.lastName} has been registered and checked in.`,
         variant: "default"
       });

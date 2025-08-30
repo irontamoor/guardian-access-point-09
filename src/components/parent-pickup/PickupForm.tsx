@@ -31,10 +31,26 @@ export function PickupForm({ onBack }: PickupFormProps) {
   };
 
   const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
-    if (!pickupData.studentId || !pickupData.parentGuardianName || !pickupData.relationship) {
+    // Enhanced validation with specific field checks
+    const missingFields = [];
+    if (!pickupData.studentId.trim()) missingFields.push('Student ID');
+    if (!pickupData.parentGuardianName.trim()) missingFields.push('Parent/Guardian Name');
+    if (!pickupData.relationship.trim()) missingFields.push('Relationship');
+
+    if (missingFields.length > 0) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: "Required Fields Missing",
+        description: `Please fill in: ${missingFields.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate student ID format (basic check)
+    if (pickupData.studentId.length < 2) {
+      toast({
+        title: "Invalid Student ID",
+        description: "Student ID must be at least 2 characters long",
         variant: "destructive"
       });
       return;
@@ -60,7 +76,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
       }
 
       toast({
-        title: `${action === 'pickup' ? 'Pickup' : 'Drop-off'} Recorded!`,
+        title: `${action === 'pickup' ? 'Pickup' : 'Drop-off'} Recorded Successfully!`,
         description: `${pickupData.studentId} has been ${action === 'pickup' ? 'picked up' : 'dropped off'} by ${pickupData.parentGuardianName}`,
         variant: "default"
       });
@@ -78,8 +94,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
     } catch (error: any) {
       console.error(`Error recording ${action}:`, error);
       toast({
-        title: "Error",
-        description: `Failed to record ${action}. Please try again.`,
+        title: "Error Recording Action",
+        description: `Failed to record ${action}. ${error.message || 'Please try again or contact support.'}`,
         variant: "destructive"
       });
     } finally {

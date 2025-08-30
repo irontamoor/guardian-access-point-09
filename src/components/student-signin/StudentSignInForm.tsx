@@ -26,8 +26,8 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
     try {
       if (!isValidCode(studentCode)) {
         toast({
-          title: "Error",
-          description: "Please enter a student ID",
+          title: "Validation Error",
+          description: "Please enter a valid student ID",
           variant: "destructive"
         });
         return;

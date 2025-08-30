@@ -26,8 +26,8 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
     try {
       if (!isValidCode(employeeCode)) {
         toast({
-          title: "Error",
-          description: "Please enter an employee ID",
+          title: "Validation Error",
+          description: "Please enter a valid employee ID",
           variant: "destructive"
         });
         return;
@@ -56,7 +56,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       if (error) throw error;
 
       toast({
-        title: "Welcome!",
+        title: "Success!",
         description: `Employee ${employeeCode} signed in successfully`,
         variant: "default"
       });
@@ -79,8 +79,8 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
     try {
       if (!isValidCode(employeeCode)) {
         toast({
-          title: "Error",
-          description: "Please enter an employee ID",
+          title: "Validation Error", 
+          description: "Please enter a valid employee ID",
           variant: "destructive"
         });
         return;

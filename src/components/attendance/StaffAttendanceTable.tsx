@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useStaffAttendanceData, StaffAttendanceRecord } from '@/hooks/attendance/useStaffAttendanceData';
 import { AttendanceFilters } from './AttendanceFilters';
 import { AttendanceSearch } from '../AttendanceSearch';
+import { StaffAttendanceEditModal } from './StaffAttendanceEditModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface StaffAttendanceTableProps {
@@ -18,7 +19,13 @@ export function StaffAttendanceTable({ userRole }: StaffAttendanceTableProps) {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filteredRecords, setFilteredRecords] = useState<StaffAttendanceRecord[]>(records);
+  const [editingRecord, setEditingRecord] = useState<StaffAttendanceRecord | null>(null);
   const { toast } = useToast();
+
+  // Sync filtered records when records change
+  useEffect(() => {
+    setFilteredRecords(records);
+  }, [records]);
 
   const formatTime = (timestamp?: string) => {
     if (!timestamp) return '-';
@@ -88,6 +95,11 @@ export function StaffAttendanceTable({ userRole }: StaffAttendanceTableProps) {
 
   const refreshData = () => {
     fetchRecords(selectedDate);
+  };
+
+  const handleEdit = async (id: string, updates: Partial<StaffAttendanceRecord>) => {
+    await updateRecord(id, updates);
+    refreshData();
   };
 
   if (error) {
@@ -180,7 +192,7 @@ export function StaffAttendanceTable({ userRole }: StaffAttendanceTableProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {/* TODO: Edit functionality */}}
+                          onClick={() => setEditingRecord(record)}
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -200,6 +212,12 @@ export function StaffAttendanceTable({ userRole }: StaffAttendanceTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <StaffAttendanceEditModal
+        record={editingRecord}
+        onClose={() => setEditingRecord(null)}
+        onSave={handleEdit}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useParentPickupData, ParentPickupRecord } from '@/hooks/attendance/useParentPickupData';
 import { AttendanceFilters } from './AttendanceFilters';
 import { AttendanceSearch } from '../AttendanceSearch';
+import { ParentPickupEditModal } from './ParentPickupEditModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface ParentPickupTableProps {
@@ -18,7 +19,13 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filteredRecords, setFilteredRecords] = useState<ParentPickupRecord[]>(records);
+  const [editingRecord, setEditingRecord] = useState<ParentPickupRecord | null>(null);
   const { toast } = useToast();
+
+  // Sync filtered records when records change
+  useEffect(() => {
+    setFilteredRecords(records);
+  }, [records]);
 
   const formatTime = (timestamp?: string) => {
     if (!timestamp) return '-';
@@ -87,6 +94,12 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
 
   const refreshData = () => {
     fetchRecords(selectedDate);
+  };
+
+  const handleEdit = async (id: string, updates: Partial<ParentPickupRecord>) => {
+    await updateRecord(id, updates);
+    // Refresh data after successful update
+    refreshData();
   };
 
   if (error) {
@@ -183,7 +196,7 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {/* TODO: Edit functionality */}}
+                          onClick={() => setEditingRecord(record)}
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -203,6 +216,12 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <ParentPickupEditModal
+        record={editingRecord}
+        onClose={() => setEditingRecord(null)}
+        onSave={handleEdit}
+      />
     </div>
   );
 }
