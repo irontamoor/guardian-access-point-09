@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import StaffSignIn from './components/StaffSignIn';
 import StudentSignIn from './components/StudentSignIn';
 import VisitorSignIn from './components/VisitorSignIn';
-import AttendanceRecordsTable from './components/AttendanceRecordsTable';
 import AttendanceManagement from './components/AttendanceManagement';
 import ParentPickup from './components/ParentPickup';
 import ReaderDashboard from './components/ReaderDashboard';
@@ -153,10 +152,6 @@ function App() {
               onLogout={handleAdminLogout}
               adminData={adminUser}
             />
-          )}
-
-          {currentView === 'attendance-records' && (
-            <AttendanceRecordsTable />
           )}
 
           {currentView === 'attendance-management' && (

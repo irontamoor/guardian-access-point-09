@@ -1,8 +1,5 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import type { AttendanceRecord } from './useAttendanceRecordsState';
 
 export function useMassEdit() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -11,55 +8,20 @@ export function useMassEdit() {
   const handleMassEditSubmit = useCallback(async (
     massEditStatus: "in" | "out",
     massEditReason: string,
-    attendanceRecords: AttendanceRecord[],
+    attendanceRecords: any[],
     onRefresh: () => void
   ) => {
-    if (selectedIds.length === 0 || !massEditReason.trim()) return;
+    // This function is deprecated since we moved to dedicated tables
+    // Mass edit would need to be implemented separately for each table type
+    console.warn('useMassEdit is deprecated. Use dedicated table operations instead.');
     
-    try {
-      for (const id of selectedIds) {
-        const oldStatus = attendanceRecords.find(r => r.id === id)?.status;
-        
-        // Update attendance record
-        const { error: updateError } = await supabase
-          .from('attendance_records')
-          .update({
-            status: massEditStatus,
-            check_in_time: massEditStatus === 'in' ? new Date().toISOString() : undefined,
-            check_out_time: massEditStatus === 'out' ? new Date().toISOString() : null
-          })
-          .eq('id', id);
-
-        if (updateError) throw updateError;
-
-        // Log the edit
-        const { error: logError } = await supabase
-          .from('attendance_edits')
-          .insert({
-            attendance_record_id: id,
-            admin_user_id: 'admin', // TODO: Get actual admin user ID
-            old_status: oldStatus,
-            new_status: massEditStatus,
-            edit_reason: massEditReason
-          });
-
-        if (logError) throw logError;
-      }
-
-      toast({
-        title: "Success",
-        description: `Updated status for ${selectedIds.length} attendance record(s).`,
-      });
-
-      setSelectedIds([]);
-      onRefresh();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Mass edit failed",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Info",
+      description: "Mass edit is not available in the new tabbed system yet",
+      variant: "default"
+    });
+    
+    onRefresh();
   }, [selectedIds, toast]);
 
   const handleToggleSelect = useCallback((id: string, checked: boolean) => {
@@ -68,7 +30,7 @@ export function useMassEdit() {
     );
   }, []);
 
-  const handleSelectAll = useCallback((checked: boolean, attendanceRecords: AttendanceRecord[]) => {
+  const handleSelectAll = useCallback((checked: boolean, attendanceRecords: any[]) => {
     setSelectedIds(checked ? attendanceRecords.map(r => r.id) : []);
   }, []);
 

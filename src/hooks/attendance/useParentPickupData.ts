@@ -39,7 +39,10 @@ export function useParentPickupData() {
       const { data, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
-      setRecords(data || []);
+      setRecords((data || []).map(record => ({
+        ...record,
+        action_type: record.action_type as 'pickup' | 'dropoff'
+      })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch parent pickup records');
       console.error('Error fetching parent pickup records:', err);
