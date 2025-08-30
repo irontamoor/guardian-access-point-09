@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           action_time: string
           action_type: string
+          approved: boolean
           created_at: string
           id: string
           notes: string | null
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           action_time?: string
           action_type: string
+          approved?: boolean
           created_at?: string
           id?: string
           notes?: string | null
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           action_time?: string
           action_type?: string
+          approved?: boolean
           created_at?: string
           id?: string
           notes?: string | null

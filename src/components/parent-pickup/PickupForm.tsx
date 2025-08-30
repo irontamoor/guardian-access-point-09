@@ -10,6 +10,7 @@ import { PickupInfoFieldsEnhanced } from './PickupInfoFieldsEnhanced';
 import { RelationshipSelectEnhanced } from './RelationshipSelectEnhanced';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
+import { ApprovalToggle } from './ApprovalToggle';
 import { SuccessBanner } from '@/components/ui/success-banner';
 
 interface PickupFormProps {
@@ -23,7 +24,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
     parentGuardianName: '',
     relationship: '',
     pickupType: '',
-    notes: ''
+    notes: '',
+    approved: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -37,7 +39,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
     relationship: { required: true },
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setPickupData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -73,6 +75,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
           pickup_type: pickupData.pickupType,
           action_type: action,
           notes: pickupData.notes || null,
+          approved: pickupData.approved
         });
 
       if (error) {
@@ -99,7 +102,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
         parentGuardianName: '',
         relationship: '',
         pickupType: '',
-        notes: ''
+        notes: '',
+        approved: false
       });
       
       clearErrors();
@@ -159,6 +163,12 @@ export function PickupForm({ onBack }: PickupFormProps) {
         <PickupNotesInput
           value={pickupData.notes}
           onChange={(value) => handleInputChange('notes', value)}
+        />
+
+        <ApprovalToggle
+          approved={pickupData.approved}
+          onApprovalChange={(approved) => handleInputChange('approved', approved)}
+          disabled={isLoading}
         />
 
         <div className="flex space-x-3 pt-4">

@@ -146,6 +146,7 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
               <TableHead>Relationship</TableHead>
               <TableHead>Pickup Type</TableHead>
               <TableHead>Action Type</TableHead>
+              <TableHead>Approved</TableHead>
               <TableHead>Action Time</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Date</TableHead>
@@ -155,14 +156,14 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 9 : 11} className="text-center py-8">
+                <TableCell colSpan={userRole === 'reader' ? 10 : 12} className="text-center py-8">
                   <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
                   Loading parent pickup records...
                 </TableCell>
               </TableRow>
             ) : filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 9 : 11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === 'reader' ? 10 : 12} className="text-center py-8 text-muted-foreground">
                   No parent pickup records found
                 </TableCell>
               </TableRow>
@@ -185,6 +186,11 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                   <TableCell>
                     <Badge variant={record.action_type === 'pickup' ? 'default' : 'secondary'}>
                       {record.action_type === 'pickup' ? 'Pickup' : 'Drop-off'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={record.approved ? 'default' : 'secondary'} className={record.approved ? 'bg-green-600' : 'bg-orange-500'}>
+                      {record.approved ? 'Approved' : 'Pending'}
                     </Badge>
                   </TableCell>
                   <TableCell>{formatTime(record.action_time)}</TableCell>
