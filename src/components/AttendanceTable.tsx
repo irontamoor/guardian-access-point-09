@@ -225,6 +225,18 @@ export const AttendanceTable: React.FC<TableProps> = ({
                 const pickupType = getPickupType(record);
                 const purpose = getPurpose(record);
 
+                // Debug logging to verify data
+                console.log('Pickup Record Debug:', {
+                  recordId: record.id,
+                  studentName, 
+                  parentName,
+                  relationship,
+                  pickupType,
+                  user_id: record.user_id,
+                  first_name: record.first_name,
+                  last_name: record.last_name
+                });
+
                 return (
                   <TableRow key={record.id}>
                     {userRole !== 'reader' && (
