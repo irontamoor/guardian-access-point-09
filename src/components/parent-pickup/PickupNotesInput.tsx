@@ -16,7 +16,8 @@ export function PickupNotesInput({ value, onChange }: PickupNotesInputProps) {
         placeholder="Any special instructions or notes"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="resize-none"
+        className="resize-none min-h-24"
+        rows={4}
       />
     </div>
   );

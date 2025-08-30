@@ -42,7 +42,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
   const getName = (record: any) => {
     // Special handling for Parent Pickup/Dropoff records
     if (isPickupRecord(record)) {
-      return record.first_name || 'Unknown Parent';
+      return record.first_name || 'Unknown Student'; // Student ID/Name for "Student ID / Name" column
     }
 
     // Use merged data first (from new structure)
@@ -54,6 +54,14 @@ export const AttendanceTable: React.FC<TableProps> = ({
       return `${record.system_users.first_name} ${record.system_users.last_name}`;
     }
     return `Unknown User (${record.user_id})`;
+  };
+
+  const getParentName = (record: any) => {
+    // For pickup records, parent name is stored in last_name
+    if (isPickupRecord(record)) {
+      return record.last_name || 'Unknown Parent';
+    }
+    return 'N/A';
   };
 
   const getUserId = (record: any) => {
@@ -101,9 +109,9 @@ export const AttendanceTable: React.FC<TableProps> = ({
   };
 
   const getRelationship = (record: any) => {
-    // For pickup records, relationship is stored in last_name
+    // For pickup records, relationship is stored in phone_number
     if (isPickupRecord(record)) {
-      return record.last_name || '-';
+      return record.phone_number || '-';
     }
     return '-';
   };
@@ -219,23 +227,11 @@ export const AttendanceTable: React.FC<TableProps> = ({
               
               if (isPickup) {
                 // Special rendering for pickup/dropoff records
-                const studentName = getUserId(record); // This returns student name (stored in user_id)
-                const parentName = getName(record); // This returns parent name (stored in first_name)
+                const studentIdName = getName(record); // Student ID/Name for first column
+                const parentName = getParentName(record); // Parent name for second column
                 const relationship = getRelationship(record);
                 const pickupType = getPickupType(record);
                 const purpose = getPurpose(record);
-
-                // Debug logging to verify data
-                console.log('Pickup Record Debug:', {
-                  recordId: record.id,
-                  studentName, 
-                  parentName,
-                  relationship,
-                  pickupType,
-                  user_id: record.user_id,
-                  first_name: record.first_name,
-                  last_name: record.last_name
-                });
 
                 return (
                   <TableRow key={record.id}>
@@ -249,7 +245,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
                       </TableCell>
                     )}
                     <TableCell className="font-medium">
-                      {studentName}
+                      {studentIdName}
                     </TableCell>
                     <TableCell>
                       {parentName}
@@ -268,12 +264,12 @@ export const AttendanceTable: React.FC<TableProps> = ({
                       </span>
                     </TableCell>
                     <TableCell>
-                      {record.notes ? (
-                        <div className="flex items-center space-x-1">
-                          <MessageSquare className="h-3 w-3" />
-                          <span className="truncate max-w-20" title={record.notes}>
+                      {record.notes && record.notes.trim() ? (
+                        <div className="flex items-center space-x-1 min-w-32">
+                          <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                          <div className="text-sm max-w-40 break-words" title={record.notes}>
                             {record.notes}
-                          </span>
+                          </div>
                         </div>
                       ) : (
                         '-'

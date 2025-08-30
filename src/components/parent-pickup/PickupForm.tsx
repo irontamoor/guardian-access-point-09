@@ -48,20 +48,20 @@ export function PickupForm({ onBack }: PickupFormProps) {
       const { error } = await supabase
         .from('attendance_records')
         .insert({
-          user_id: pickupData.studentName, // Store student ID as user_id
-          first_name: pickupData.parentName, // Store parent name as first_name
-          last_name: pickupData.relationship, // Store relationship as last_name
+          user_id: pickupData.studentName, // Store student ID (what user enters as "Student ID")
+          first_name: pickupData.studentName, // Store student ID for display in "Student ID / Name" column
+          last_name: pickupData.parentName, // Store parent name for display in "Person Picking/Dropping" column
           status,
           check_in_time: action === 'dropoff' ? now : null,
           check_out_time: action === 'pickup' ? now : null,
-          notes: pickupData.notes || '',
+          notes: pickupData.notes.trim() || null, // Only store user-entered notes, trim whitespace
           organization: 'Parent Pickup/Dropoff',
           visit_purpose: action === 'pickup' ? 'Pickup' : 'Drop-off',
-          phone_number: pickupData.pickupType || null,
-          host_name: pickupData.parentName,
+          phone_number: pickupData.relationship, // Store relationship in phone_number field
+          host_name: pickupData.parentName, // Store parent name
           purpose: `Student ${action}`,
           created_by: null,
-          company: pickupData.pickupType // Store pickup type in company field
+          company: pickupData.pickupType || null // Store pickup type in company field
         });
 
       if (error) {
