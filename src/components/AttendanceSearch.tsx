@@ -89,10 +89,10 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
         <div>
           <Select value={role} onValueChange={setRole}>
             <SelectTrigger>
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder="Forms" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="all">Forms</SelectItem>
               <SelectItem value="student">Student</SelectItem>
               <SelectItem value="staff">Staff</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>

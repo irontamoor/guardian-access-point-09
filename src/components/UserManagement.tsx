@@ -280,7 +280,7 @@ const UserManagement = () => {
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="all">Forms</SelectItem>
                 {allRoles
                   .filter(role => role !== "moderator" && role !== "user")
                   .map((role) => (
