@@ -22,13 +22,17 @@ const AttendanceManagement = ({ userRole = 'admin' }: AttendanceManagementProps)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="student" className="w-full">
+          <Tabs defaultValue="pickup" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="pickup">Parent Pickup/Drop-off</TabsTrigger>
               <TabsTrigger value="student">Student Attendance</TabsTrigger>
               <TabsTrigger value="staff">Staff Attendance</TabsTrigger>
               <TabsTrigger value="visitor">Visitor Records</TabsTrigger>
-              <TabsTrigger value="pickup">Parent Pickup/Drop-off</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="pickup" className="space-y-4">
+              <ParentPickupTable userRole={userRole} />
+            </TabsContent>
             
             <TabsContent value="student" className="space-y-4">
               <StudentAttendanceTable userRole={userRole} />
@@ -40,10 +44,6 @@ const AttendanceManagement = ({ userRole = 'admin' }: AttendanceManagementProps)
             
             <TabsContent value="visitor" className="space-y-4">
               <VisitorRecordsTable userRole={userRole} />
-            </TabsContent>
-            
-            <TabsContent value="pickup" className="space-y-4">
-              <ParentPickupTable userRole={userRole} />
             </TabsContent>
           </Tabs>
         </CardContent>
