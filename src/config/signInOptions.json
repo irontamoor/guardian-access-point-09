@@ -169,13 +169,6 @@
     "is_active": true
   },
   {
-    "id": "guardian",
-    "label": "Guardian",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
-  },
-  {
     "id": "grandparent",
     "label": "Grandparent",
     "applies_to": "both",
