@@ -219,8 +219,8 @@ export const AttendanceTable: React.FC<TableProps> = ({
               
               if (isPickup) {
                 // Special rendering for pickup/dropoff records
-                const studentId = getUserId(record);
-                const personName = getName(record);
+                const studentName = getUserId(record); // This returns student name (stored in user_id)
+                const parentName = getName(record); // This returns parent name (stored in first_name)
                 const relationship = getRelationship(record);
                 const pickupType = getPickupType(record);
                 const purpose = getPurpose(record);
@@ -237,10 +237,10 @@ export const AttendanceTable: React.FC<TableProps> = ({
                       </TableCell>
                     )}
                     <TableCell className="font-medium">
-                      {studentId}
+                      {studentName}
                     </TableCell>
                     <TableCell>
-                      {personName}
+                      {parentName}
                     </TableCell>
                     <TableCell>
                       {relationship}
