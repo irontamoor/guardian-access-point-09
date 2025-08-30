@@ -19,7 +19,7 @@ export function PickupInfoFields({
       </div>
       <div className="space-y-2">
         <Label htmlFor="parentName">Name of Person Picking/Dropping *</Label>
-        <Input id="parentName" placeholder="Enter parent/guardian name" value={parentName} onChange={e => onParentNameChange(e.target.value)} />
+        <Input id="parentName" placeholder="Name of Person Picking/Dropping" value={parentName} onChange={e => onParentNameChange(e.target.value)} />
       </div>
     </div>;
 }
