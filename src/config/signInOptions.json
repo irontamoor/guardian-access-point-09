@@ -181,12 +181,5 @@
     "applies_to": "both",
     "category": "relationship",
     "is_active": true
-  },
-  {
-    "id": "authorized_pickup",
-    "label": "Authorized Pickup Person",
-    "applies_to": "both",
-    "category": "relationship",
-    "is_active": true
   }
 ]
