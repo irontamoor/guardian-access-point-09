@@ -74,7 +74,8 @@ export default function SignInOptionsSettings({ adminData }: SignInOptionsSettin
       <CardHeader>
         <CardTitle>Admin Option Management</CardTitle>
         <p className="text-sm text-gray-600">
-          Manage options for different categories. Changes are saved automatically to local storage.
+          Manage options for different categories. Options are loaded from JSON configuration files.
+          Any additions are session-only and will be lost when you refresh the page.
         </p>
       </CardHeader>
       <CardContent>

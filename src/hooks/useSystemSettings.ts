@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import systemSettingsData from '@/config/systemSettings.json';
 
 interface SystemSettings {
@@ -15,29 +15,18 @@ interface SystemSettings {
 }
 
 export function useSystemSettings() {
+  // Read directly from JSON file, with session-only modifications
   const [settings, setSettings] = useState<SystemSettings>(systemSettingsData);
   const [loading, setLoading] = useState(false);
 
   const updateSetting = (key: string, value: any) => {
+    console.log('[useSystemSettings] Updating setting (session-only):', { key, value });
     setSettings(prev => ({
       ...prev,
       [key]: value
     }));
-    // In a real app, you might want to persist this to localStorage or a backend
-    localStorage.setItem('systemSettings', JSON.stringify({ ...settings, [key]: value }));
+    // Note: Changes are session-only and not persisted
   };
-
-  useEffect(() => {
-    // Load from localStorage if available
-    const saved = localStorage.getItem('systemSettings');
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading system settings from localStorage:', error);
-      }
-    }
-  }, []);
 
   return {
     settings,

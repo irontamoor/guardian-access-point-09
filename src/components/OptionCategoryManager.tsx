@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type AppliesTo = "both" | "student" | "staff";
 type Category = "sign_in" | "pickup_type" | "visit_type" | "relationship";
@@ -66,11 +67,19 @@ export function OptionCategoryManager({
 
   return (
     <div className="space-y-4">
+      <Alert>
+        <AlertDescription>
+          <strong>Note:</strong> Options are read from JSON configuration files. 
+          Any additions here are session-only and will be lost when you refresh the page.
+          To make permanent changes, edit the configuration files directly.
+        </AlertDescription>
+      </Alert>
+      
       <div className="flex items-center gap-2">
         <Input
           value={label}
           onChange={e => setLabel(e.target.value)}
-          placeholder={placeholder || `Add new option (${category})`}
+          placeholder={placeholder || `Add new option (${category}) - session only`}
           data-testid="option-input"
         />
         {showAppliesTo && (
@@ -91,7 +100,7 @@ export function OptionCategoryManager({
           disabled={loading || !label.trim()}
           data-testid="add-btn"
         >
-          Add
+          Add (Session)
         </Button>
       </div>
       <div>
@@ -109,15 +118,19 @@ export function OptionCategoryManager({
                   {showAppliesTo && (
                     <span className="text-xs text-gray-400 ml-2">({opt.applies_to})</span>
                   )}
+                  {opt.id.startsWith('session_') && (
+                    <span className="text-xs text-blue-500 ml-2">(Session Only)</span>
+                  )}
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-red-500 border-red-200 hover:bg-red-100"
+                  className={opt.id.startsWith('session_') ? "text-red-500 border-red-200 hover:bg-red-100" : "text-gray-400 border-gray-200 cursor-not-allowed"}
                   onClick={() => handleRemove(opt.id)}
-                  disabled={loading}
+                  disabled={loading || !opt.id.startsWith('session_')}
+                  title={opt.id.startsWith('session_') ? "Remove session option" : "Built-in options cannot be removed"}
                 >
-                  Remove
+                  {opt.id.startsWith('session_') ? "Remove" : "Built-in"}
                 </Button>
               </li>
             ))}
