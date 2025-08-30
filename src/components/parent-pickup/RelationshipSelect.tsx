@@ -29,7 +29,7 @@ export function RelationshipSelect({
         <SelectTrigger>
           <SelectValue placeholder={loading ? "Loading options..." : "Select relationship"} />
         </SelectTrigger>
-        <SelectContent className="bg-background border shadow-lg z-50">
+        <SelectContent className="bg-background border shadow-lg z-[100]">
           {relationshipOptions.map(type => <SelectItem key={type.id} value={type.label}>
               {type.label}
             </SelectItem>)}

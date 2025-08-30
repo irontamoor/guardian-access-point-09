@@ -164,39 +164,4 @@ export class VMSApi {
     });
   }
 
-  // Sign-in Options Configuration API
-  static async getSignInOptions() {
-    try {
-      const response = await fetch('/src/config/signInOptions.json');
-      if (!response.ok) throw new Error('Failed to fetch sign-in options');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching sign-in options:', error);
-      throw error;
-    }
-  }
-
-  static async updateSignInOptions(options: any[]) {
-    try {
-      // In a real application, this would be a server endpoint
-      // For now, we'll simulate the API call and store in localStorage as fallback
-      const response = await fetch('/api/sign-in-options', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(options)
-      });
-      
-      if (!response.ok) {
-        // Fallback: Store in localStorage if server endpoint doesn't exist
-        localStorage.setItem('signInOptions', JSON.stringify(options));
-        return options;
-      }
-      
-      return await response.json();
-    } catch (error) {
-      // Fallback: Store in localStorage
-      localStorage.setItem('signInOptions', JSON.stringify(options));
-      return options;
-    }
-  }
 }
