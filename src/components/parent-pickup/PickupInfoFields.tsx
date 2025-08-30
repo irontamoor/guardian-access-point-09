@@ -18,7 +18,7 @@ export function PickupInfoFields({
         <Input id="studentName" placeholder="Enter Student ID" value={studentName} onChange={e => onStudentNameChange(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="parentName">Name of Authorised Person *</Label>
+        <Label htmlFor="parentName">Name of Person Picking/Dropping *</Label>
         <Input id="parentName" placeholder="Enter parent/guardian name" value={parentName} onChange={e => onParentNameChange(e.target.value)} />
       </div>
     </div>;
