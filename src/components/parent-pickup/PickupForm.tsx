@@ -10,7 +10,6 @@ import { PickupInfoFieldsEnhanced } from './PickupInfoFieldsEnhanced';
 import { RelationshipSelectEnhanced } from './RelationshipSelectEnhanced';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
-import { ApprovalToggle } from './ApprovalToggle';
 import { SuccessBanner } from '@/components/ui/success-banner';
 
 interface PickupFormProps {
@@ -24,8 +23,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
     parentGuardianName: '',
     relationship: '',
     pickupType: '',
-    notes: '',
-    approved: false
+    notes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -74,8 +72,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
           relationship: pickupData.relationship,
           pickup_type: pickupData.pickupType,
           action_type: action,
-          notes: pickupData.notes || null,
-          approved: pickupData.approved
+          notes: pickupData.notes || null
         });
 
       if (error) {
@@ -102,8 +99,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
         parentGuardianName: '',
         relationship: '',
         pickupType: '',
-        notes: '',
-        approved: false
+        notes: ''
       });
       
       clearErrors();
@@ -163,12 +159,6 @@ export function PickupForm({ onBack }: PickupFormProps) {
         <PickupNotesInput
           value={pickupData.notes}
           onChange={(value) => handleInputChange('notes', value)}
-        />
-
-        <ApprovalToggle
-          approved={pickupData.approved}
-          onApprovalChange={(approved) => handleInputChange('approved', approved)}
-          disabled={isLoading}
         />
 
         <div className="flex space-x-3 pt-4">
