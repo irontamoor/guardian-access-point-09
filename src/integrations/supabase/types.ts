@@ -7,100 +7,124 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
-      attendance_edits: {
+      parent_pickup_records: {
         Row: {
-          admin_user_id: string
-          attendance_record_id: string
-          edit_reason: string
-          edited_at: string
+          action_time: string
+          action_type: string
+          created_at: string
           id: string
-          new_status: Database["public"]["Enums"]["attendance_status"]
-          old_status: Database["public"]["Enums"]["attendance_status"] | null
+          notes: string | null
+          parent_guardian_name: string
+          pickup_type: string | null
+          relationship: string
+          student_id: string
+          student_name: string | null
+          updated_at: string
         }
         Insert: {
-          admin_user_id: string
-          attendance_record_id: string
-          edit_reason: string
-          edited_at?: string
+          action_time?: string
+          action_type: string
+          created_at?: string
           id?: string
-          new_status: Database["public"]["Enums"]["attendance_status"]
-          old_status?: Database["public"]["Enums"]["attendance_status"] | null
+          notes?: string | null
+          parent_guardian_name: string
+          pickup_type?: string | null
+          relationship: string
+          student_id: string
+          student_name?: string | null
+          updated_at?: string
         }
         Update: {
-          admin_user_id?: string
-          attendance_record_id?: string
-          edit_reason?: string
-          edited_at?: string
+          action_time?: string
+          action_type?: string
+          created_at?: string
           id?: string
-          new_status?: Database["public"]["Enums"]["attendance_status"]
-          old_status?: Database["public"]["Enums"]["attendance_status"] | null
+          notes?: string | null
+          parent_guardian_name?: string
+          pickup_type?: string | null
+          relationship?: string
+          student_id?: string
+          student_name?: string | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_edits_attendance_record_id_fkey"
-            columns: ["attendance_record_id"]
-            isOneToOne: false
-            referencedRelation: "attendance_records"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      attendance_records: {
+      staff_attendance: {
         Row: {
           check_in_time: string | null
           check_out_time: string | null
-          company: string | null
           created_at: string
-          created_by: string | null
-          first_name: string | null
-          host_name: string | null
+          employee_id: string
+          employee_name: string
           id: string
-          last_name: string | null
           notes: string | null
-          organization: string | null
-          phone_number: string | null
-          purpose: string | null
           status: Database["public"]["Enums"]["attendance_status"]
-          user_id: string
-          visit_purpose: string | null
+          updated_at: string
         }
         Insert: {
           check_in_time?: string | null
           check_out_time?: string | null
-          company?: string | null
           created_at?: string
-          created_by?: string | null
-          first_name?: string | null
-          host_name?: string | null
+          employee_id: string
+          employee_name: string
           id?: string
-          last_name?: string | null
           notes?: string | null
-          organization?: string | null
-          phone_number?: string | null
-          purpose?: string | null
           status: Database["public"]["Enums"]["attendance_status"]
-          user_id: string
-          visit_purpose?: string | null
+          updated_at?: string
         }
         Update: {
           check_in_time?: string | null
           check_out_time?: string | null
-          company?: string | null
           created_at?: string
-          created_by?: string | null
-          first_name?: string | null
-          host_name?: string | null
+          employee_id?: string
+          employee_name?: string
           id?: string
-          last_name?: string | null
           notes?: string | null
-          organization?: string | null
-          phone_number?: string | null
-          purpose?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
-          user_id?: string
-          visit_purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_attendance: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          student_name: string
+          updated_at: string
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          student_name: string
+          updated_at?: string
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          student_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -149,6 +173,54 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_records: {
+        Row: {
+          check_in_time: string
+          check_out_time: string | null
+          created_at: string
+          first_name: string
+          host_name: string | null
+          id: string
+          last_name: string
+          notes: string | null
+          organization: string | null
+          phone_number: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+          visit_purpose: string
+        }
+        Insert: {
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          first_name: string
+          host_name?: string | null
+          id?: string
+          last_name: string
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          visit_purpose: string
+        }
+        Update: {
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          first_name?: string
+          host_name?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          visit_purpose?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -167,21 +239,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -199,14 +275,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -222,14 +300,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -245,14 +325,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -260,14 +342,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { supabase } from '@/integrations/supabase/client';
 import { StudentCodeInput } from './StudentCodeInput';
 import { NotesInput } from './NotesInput';
 import { SignInButtons } from './SignInButtons';
@@ -42,7 +43,17 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
         return;
       }
 
-      await createAttendanceRecord(student.id, "in", notes);
+      const { error } = await supabase
+        .from('student_attendance')
+        .insert({
+          student_id: student.user_code || studentCode,
+          student_name: `${student.first_name} ${student.last_name}`,
+          status: 'in',
+          check_in_time: new Date().toISOString(),
+          notes: notes || null,
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Success!",
@@ -86,7 +97,17 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       }
 
       const signedInToday = await hasTodaySignIn(student.id);
-      await createAttendanceRecord(student.id, "out", notes);
+      const { error } = await supabase
+        .from('student_attendance')
+        .insert({
+          student_id: student.user_code || studentCode,
+          student_name: `${student.first_name} ${student.last_name}`,
+          status: 'out',
+          check_out_time: new Date().toISOString(),
+          notes: notes || null,
+        });
+
+      if (error) throw error;
 
       if (!signedInToday) {
         toast({

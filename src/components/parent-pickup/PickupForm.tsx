@@ -16,8 +16,9 @@ interface PickupFormProps {
 
 export function PickupForm({ onBack }: PickupFormProps) {
   const [pickupData, setPickupData] = useState({
+    studentId: '',
     studentName: '',
-    parentName: '',
+    parentGuardianName: '',
     relationship: '',
     pickupType: '',
     notes: ''
@@ -30,7 +31,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
   };
 
   const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
-    if (!pickupData.studentName || !pickupData.parentName || !pickupData.relationship) {
+    if (!pickupData.studentId || !pickupData.parentGuardianName || !pickupData.relationship) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -41,27 +42,16 @@ export function PickupForm({ onBack }: PickupFormProps) {
 
     setIsLoading(true);
     try {
-      const now = new Date().toISOString();
-      const status = action === 'pickup' ? 'out' : 'in';
-      
-      // Create attendance record for parent pickup/dropoff with structured data
       const { error } = await supabase
-        .from('attendance_records')
+        .from('parent_pickup_records')
         .insert({
-          user_id: pickupData.studentName, // Store student ID (what user enters as "Student ID")
-          first_name: pickupData.studentName, // Store student ID for display in "Student ID / Name" column
-          last_name: pickupData.parentName, // Store parent name for display in "Person Picking/Dropping" column
-          status,
-          check_in_time: action === 'dropoff' ? now : null,
-          check_out_time: action === 'pickup' ? now : null,
-          notes: pickupData.notes.trim() || null, // Only store user-entered notes, trim whitespace
-          organization: 'Parent Pickup/Dropoff',
-          visit_purpose: action === 'pickup' ? 'Pickup' : 'Drop-off',
-          phone_number: pickupData.relationship, // Store relationship in phone_number field
-          host_name: pickupData.parentName, // Store parent name
-          purpose: `Student ${action}`,
-          created_by: null,
-          company: pickupData.pickupType || null // Store pickup type in company field
+          student_id: pickupData.studentId,
+          student_name: pickupData.studentName,
+          parent_guardian_name: pickupData.parentGuardianName,
+          relationship: pickupData.relationship,
+          pickup_type: pickupData.pickupType,
+          action_type: action,
+          notes: pickupData.notes || null,
         });
 
       if (error) {
@@ -71,14 +61,15 @@ export function PickupForm({ onBack }: PickupFormProps) {
 
       toast({
         title: `${action === 'pickup' ? 'Pickup' : 'Drop-off'} Recorded!`,
-        description: `${pickupData.studentName} has been ${action === 'pickup' ? 'picked up' : 'dropped off'} by ${pickupData.parentName}`,
+        description: `${pickupData.studentId} has been ${action === 'pickup' ? 'picked up' : 'dropped off'} by ${pickupData.parentGuardianName}`,
         variant: "default"
       });
 
       // Reset form
       setPickupData({
+        studentId: '',
         studentName: '',
-        parentName: '',
+        parentGuardianName: '',
         relationship: '',
         pickupType: '',
         notes: ''
@@ -102,10 +93,10 @@ export function PickupForm({ onBack }: PickupFormProps) {
   return (
     <CardContent className="space-y-4">
       <PickupInfoFields
-        studentName={pickupData.studentName}
-        parentName={pickupData.parentName}
-        onStudentNameChange={(value) => handleInputChange('studentName', value)}
-        onParentNameChange={(value) => handleInputChange('parentName', value)}
+        studentName={pickupData.studentId}
+        parentName={pickupData.parentGuardianName}
+        onStudentNameChange={(value) => handleInputChange('studentId', value)}
+        onParentNameChange={(value) => handleInputChange('parentGuardianName', value)}
       />
       
       <RelationshipSelect

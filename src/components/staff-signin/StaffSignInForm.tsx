@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
+import { supabase } from '@/integrations/supabase/client';
 import { EmployeeCodeInput } from './EmployeeCodeInput';
 import { StaffNotesInput } from './StaffNotesInput';
 import { StaffSignInButtons } from './StaffSignInButtons';
@@ -42,7 +43,17 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
         return;
       }
 
-      await createAttendanceRecord(staff.id, "in", notes);
+      const { error } = await supabase
+        .from('staff_attendance')
+        .insert({
+          employee_id: staff.user_code || employeeCode,
+          employee_name: `${staff.first_name} ${staff.last_name}`,
+          status: 'in',
+          check_in_time: new Date().toISOString(),
+          notes: notes || null,
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Welcome!",
@@ -86,7 +97,17 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       }
 
       const signedInToday = await hasTodaySignIn(staff.id);
-      await createAttendanceRecord(staff.id, "out", notes);
+      const { error } = await supabase
+        .from('staff_attendance')
+        .insert({
+          employee_id: staff.user_code || employeeCode,
+          employee_name: `${staff.first_name} ${staff.last_name}`,
+          status: 'out',
+          check_out_time: new Date().toISOString(),
+          notes: notes || null,
+        });
+
+      if (error) throw error;
 
       if (!signedInToday) {
         toast({

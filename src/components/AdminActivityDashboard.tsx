@@ -7,7 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
-type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'];
+type StudentAttendanceRecord = Database['public']['Tables']['student_attendance']['Row'];
+type StaffAttendanceRecord = Database['public']['Tables']['staff_attendance']['Row'];
+type VisitorRecord = Database['public']['Tables']['visitor_records']['Row'];
 
 interface UserStatus {
   id: string;
@@ -37,28 +39,50 @@ const AdminActivityDashboard = () => {
 
       if (usersError) throw usersError;
 
-      // Get recent attendance records
-      const { data: attendance, error: attendanceError } = await supabase
-        .from('attendance_records')
+      // Get recent student attendance records
+      const { data: studentAttendance, error: studentError } = await supabase
+        .from('student_attendance')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (attendanceError) throw attendanceError;
+      if (studentError) throw studentError;
+
+      // Get recent staff attendance records
+      const { data: staffAttendance, error: staffError } = await supabase
+        .from('staff_attendance')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (staffError) throw staffError;
+
+      // Get recent visitor records
+      const { data: visitorRecords, error: visitorError } = await supabase
+        .from('visitor_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (visitorError) throw visitorError;
 
       console.log("Fetched users:", users?.map(u => ({id: u.id, role: u.role, status: u.status, name: `${u.first_name} ${u.last_name}`})));
-      console.log("Fetched attendance records:", attendance?.map(a => ({
-        id: a.id,
-        user_id: a.user_id,
-        status: a.status,
-        check_in_time: a.check_in_time,
-        check_out_time: a.check_out_time
-      })));
+      console.log("Fetched student attendance records:", studentAttendance?.length);
+      console.log("Fetched staff attendance records:", staffAttendance?.length);
+      console.log("Fetched visitor records:", visitorRecords?.length);
 
-      // Map latest attendance record per user
-      const attendanceMap: Record<string, AttendanceRecord> = {};
-      attendance?.forEach((row) => {
-        if (!attendanceMap[row.user_id]) {
-          attendanceMap[row.user_id] = row;
+      // Map latest student attendance record per student
+      const studentAttendanceMap: Record<string, StudentAttendanceRecord> = {};
+      studentAttendance?.forEach((row) => {
+        const key = row.student_id;
+        if (!studentAttendanceMap[key]) {
+          studentAttendanceMap[key] = row;
+        }
+      });
+
+      // Map latest staff attendance record per staff member
+      const staffAttendanceMap: Record<string, StaffAttendanceRecord> = {};
+      staffAttendance?.forEach((row) => {
+        const key = row.employee_id;
+        if (!staffAttendanceMap[key]) {
+          staffAttendanceMap[key] = row;
         }
       });
 
@@ -66,7 +90,7 @@ const AdminActivityDashboard = () => {
       const pickupList: UserStatus[] = users
         ?.filter((u) => u.role === "student")
         .map((stu) => {
-          const att = attendanceMap[stu.id];
+          const att = studentAttendanceMap[stu.user_code || stu.id];
           const inStatus = att && att.status === "in" && !att.check_out_time;
           console.log(`Student "${stu.first_name} ${stu.last_name}" (id: ${stu.id}) attendance status:`, att?.status, "inStatus:", inStatus);
           return {
@@ -74,7 +98,7 @@ const AdminActivityDashboard = () => {
             name: `${stu.first_name} ${stu.last_name}`,
             role: "student",
             inStatus: !!inStatus,
-            departmentOrGrade: stu.id,
+            departmentOrGrade: stu.user_code || stu.id,
           };
         })
         .filter((s) => s.inStatus) || [];
@@ -85,37 +109,34 @@ const AdminActivityDashboard = () => {
       const staffInList: UserStatus[] = users
         ?.filter((u) => u.role === "staff")
         .map((staff) => {
-          const att = attendanceMap[staff.id];
+          const att = staffAttendanceMap[staff.user_code || staff.id];
           const inStatus = att && att.status === "in" && !att.check_out_time;
           return {
             id: staff.id,
             name: `${staff.first_name} ${staff.last_name}`,
             role: "staff",
             inStatus: !!inStatus,
-            departmentOrGrade: staff.id,
+            departmentOrGrade: staff.user_code || staff.id,
           };
         })
         .filter((s) => s.inStatus) || [];
 
       setStaffIn(staffInList);
 
-      // Visitors in: role: 'visitor', status: "in" and no check_out_time
-      const visitorInList: UserStatus[] = users
-        ?.filter((u) => u.role === "visitor")
+      // Visitors in: visitors with status "in" and no check_out_time
+      const visitorInList: UserStatus[] = visitorRecords
+        ?.filter((visitor) => visitor.status === "in" && !visitor.check_out_time)
         .map((visitor) => {
-          const att = attendanceMap[visitor.id];
-          const inStatus = att && att.status === "in" && !att.check_out_time;
           return {
             id: visitor.id,
             name: `${visitor.first_name} ${visitor.last_name}`,
             role: "visitor",
-            inStatus: !!inStatus,
-            company: att?.company ?? "",
-            hostName: att?.host_name ?? "",
-            purpose: att?.purpose ?? "",
+            inStatus: true,
+            company: visitor.organization || "",
+            hostName: visitor.host_name || "",
+            purpose: visitor.visit_purpose || "",
           };
-        })
-        .filter((v) => v.inStatus) || [];
+        }) || [];
 
       setVisitorIn(visitorInList);
     } catch (error) {

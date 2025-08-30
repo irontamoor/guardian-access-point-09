@@ -100,19 +100,7 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
           </Select>
         </div>
 
-        <div>
-          <Select value={formType} onValueChange={setFormType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Form Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="staff-signin">Staff Sign In</SelectItem>
-              <SelectItem value="student-signin">Student Sign In</SelectItem>
-              <SelectItem value="visitor-registration">Visitor Registration</SelectItem>
-              <SelectItem value="parent-pickup">Parent Pickup & Drop-off</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Form type dropdown removed - now handled by tabs */}
 
         <div>
           <Input

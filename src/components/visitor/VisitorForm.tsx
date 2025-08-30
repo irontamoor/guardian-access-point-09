@@ -37,23 +37,17 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
-      // Create attendance record directly with visitor data in the merged structure
       const { error: attendanceError } = await supabase
-        .from('attendance_records')
+        .from('visitor_records')
         .insert({
-          user_id: crypto.randomUUID(), // Generate a unique ID for this visitor
-          status: 'in',
-          check_in_time: new Date().toISOString(),
           first_name: visitorData.firstName,
           last_name: visitorData.lastName,
-          organization: visitorData.organization,
+          organization: visitorData.organization || null,
           visit_purpose: visitorData.visitPurpose,
-          host_name: visitorData.hostName,
-          phone_number: visitorData.phoneNumber,
-          notes: visitorData.notes,
-          // Keep legacy fields for compatibility
-          company: visitorData.organization,
-          purpose: visitorData.visitPurpose
+          host_name: visitorData.hostName || null,
+          phone_number: visitorData.phoneNumber || null,
+          notes: visitorData.notes || null,
+          status: 'in',
         });
 
       if (attendanceError) {
