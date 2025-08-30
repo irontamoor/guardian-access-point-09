@@ -155,8 +155,15 @@
     "is_active": true
   },
   {
-    "id": "parent",
-    "label": "Parent",
+    "id": "mother",
+    "label": "Mother",
+    "applies_to": "both",
+    "category": "relationship",
+    "is_active": true
+  },
+    {
+    "id": "father",
+    "label": "Father",
     "applies_to": "both",
     "category": "relationship",
     "is_active": true
