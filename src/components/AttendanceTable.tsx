@@ -42,11 +42,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
   const getName = (record: any) => {
     // Special handling for Parent Pickup/Dropoff records
     if (isPickupRecord(record)) {
-      const studentName = record.first_name && record.last_name 
-        ? `${record.first_name} ${record.last_name}` 
-        : 'Unknown Student';
-      const parentName = record.host_name || 'Unknown Parent';
-      return `${studentName} (Parent: ${parentName})`;
+      return record.first_name || 'Unknown Parent';
     }
 
     // Use merged data first (from new structure)
@@ -61,6 +57,11 @@ export const AttendanceTable: React.FC<TableProps> = ({
   };
 
   const getUserId = (record: any) => {
+    // Special handling for Parent Pickup/Dropoff records
+    if (isPickupRecord(record)) {
+      return record.user_id || 'N/A'; // Student ID is stored in user_id
+    }
+    
     if (record.system_users) {
       return record.system_users.user_code || record.system_users.admin_id || record.system_users.id.substring(0, 8);
     }
@@ -92,7 +93,27 @@ export const AttendanceTable: React.FC<TableProps> = ({
   };
 
   const getPurpose = (record: any) => {
+    // Special handling for Parent Pickup/Dropoff records
+    if (isPickupRecord(record)) {
+      return record.visit_purpose || record.purpose || '-';
+    }
     return record.visit_purpose || record.purpose || '-';
+  };
+
+  const getRelationship = (record: any) => {
+    // For pickup records, relationship is stored in last_name
+    if (isPickupRecord(record)) {
+      return record.last_name || '-';
+    }
+    return '-';
+  };
+
+  const getPickupType = (record: any) => {
+    // For pickup records, pickup type is stored in company or phone_number
+    if (isPickupRecord(record)) {
+      return record.company || record.phone_number || '-';
+    }
+    return '-';
   };
 
   const isPickupRecord = (record: any) => {
@@ -180,113 +201,189 @@ export const AttendanceTable: React.FC<TableProps> = ({
                   />
                 </TableHead>
               )}
-              <TableHead>Name</TableHead>
-              <TableHead>ID/Code</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Organization</TableHead>
-              <TableHead>Purpose</TableHead>
+              <TableHead>Student ID / Name</TableHead>
+              <TableHead>Person Picking/Dropping</TableHead>
+              <TableHead>Relationship</TableHead>
+              <TableHead>Pickup/Drop-off</TableHead>
+              <TableHead>Notes</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
-              <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {attendanceRecords.map((record) => {
-              const name = getName(record);
-              const userId = getUserId(record);
-              const role = getRole(record);
-              const organization = getOrganization(record);
-              const purpose = getPurpose(record);
+              const isPickup = isPickupRecord(record);
+              
+              if (isPickup) {
+                // Special rendering for pickup/dropoff records
+                const studentId = getUserId(record);
+                const personName = getName(record);
+                const relationship = getRelationship(record);
+                const pickupType = getPickupType(record);
+                const purpose = getPurpose(record);
 
-              return (
-                <TableRow key={record.id}>
-                  {userRole !== 'reader' && (
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedIds.includes(record.id)}
-                        aria-label="Select row"
-                        onCheckedChange={checked => onToggleSelect && onToggleSelect(record.id, Boolean(checked))}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell className="font-medium">
-                    {name}
-                  </TableCell>
-                  <TableCell>
-                    {userId}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      role === 'admin' ? 'bg-red-100 text-red-800' :
-                      role === 'staff' ? 'bg-green-100 text-green-800' :
-                      role === 'student' ? 'bg-blue-100 text-blue-800' :
-                      role === 'visitor' ? 'bg-purple-100 text-purple-800' :
-                      role === 'pickup/dropoff' ? 'bg-orange-100 text-orange-800' :
-                      role === 'reader' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {role}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {organization}
-                  </TableCell>
-                  <TableCell>
-                    {purpose}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${
-                      record.status === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {record.status === 'in' ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
-                      <span>{record.status === 'in' ? 'In' : 'Out'}</span>
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatTime(record.check_in_time)}</TableCell>
-                  <TableCell>{formatTime(record.check_out_time)}</TableCell>
-                  <TableCell>
-                    {record.notes ? (
-                      <div className="flex items-center space-x-1">
-                        <MessageSquare className="h-3 w-3" />
-                        <span className="truncate max-w-20" title={record.notes}>
-                          {record.notes}
-                        </span>
-                      </div>
-                    ) : (
-                      '-'
+                return (
+                  <TableRow key={record.id}>
+                    {userRole !== 'reader' && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(record.id)}
+                          aria-label="Select row"
+                          onCheckedChange={checked => onToggleSelect && onToggleSelect(record.id, Boolean(checked))}
+                        />
+                      </TableCell>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {canEdit(record) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingRecord(record)}
-                          disabled={editingRecord?.id === record.id}
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
+                    <TableCell className="font-medium">
+                      {studentId}
+                    </TableCell>
+                    <TableCell>
+                      {personName}
+                    </TableCell>
+                    <TableCell>
+                      {relationship}
+                    </TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        {purpose} {pickupType && `(${pickupType})`}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {record.notes ? (
+                        <div className="flex items-center space-x-1">
+                          <MessageSquare className="h-3 w-3" />
+                          <span className="truncate max-w-20" title={record.notes}>
+                            {record.notes}
+                          </span>
+                        </div>
+                      ) : (
+                        '-'
                       )}
-                      {showCompleteButton(record) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCompletePickup(record)}
-                          disabled={completingRecords.has(record.id)}
-                          className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                        >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Complete
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${
+                        record.status === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {record.status === 'in' ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
+                        <span>{record.status === 'in' ? 'In' : 'Out'}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>{formatTime(record.check_in_time)}</TableCell>
+                    <TableCell>{formatTime(record.check_out_time)}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {canEdit(record) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingRecord(record)}
+                            disabled={editingRecord?.id === record.id}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                        {showCompleteButton(record) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCompletePickup(record)}
+                            disabled={completingRecords.has(record.id)}
+                            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              } else {
+                // Regular rendering for other attendance records
+                const name = getName(record);
+                const userId = getUserId(record);
+                const role = getRole(record);
+                const organization = getOrganization(record);
+                const purpose = getPurpose(record);
+
+                return (
+                  <TableRow key={record.id}>
+                    {userRole !== 'reader' && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(record.id)}
+                          aria-label="Select row"
+                          onCheckedChange={checked => onToggleSelect && onToggleSelect(record.id, Boolean(checked))}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell className="font-medium">
+                      {name}
+                    </TableCell>
+                    <TableCell>
+                      {userId}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        role === 'admin' ? 'bg-red-100 text-red-800' :
+                        role === 'staff' ? 'bg-green-100 text-green-800' :
+                        role === 'student' ? 'bg-blue-100 text-blue-800' :
+                        role === 'visitor' ? 'bg-purple-100 text-purple-800' :
+                        role === 'pickup/dropoff' ? 'bg-orange-100 text-orange-800' :
+                        role === 'reader' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {role}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {organization}
+                    </TableCell>
+                    <TableCell>
+                      {purpose}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${
+                        record.status === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {record.status === 'in' ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
+                        <span>{record.status === 'in' ? 'In' : 'Out'}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>{formatTime(record.check_in_time)}</TableCell>
+                    <TableCell>{formatTime(record.check_out_time)}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {canEdit(record) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingRecord(record)}
+                            disabled={editingRecord?.id === record.id}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                        {showCompleteButton(record) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCompletePickup(record)}
+                            disabled={completingRecords.has(record.id)}
+                            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              }
             })}
           </TableBody>
         </Table>

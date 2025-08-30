@@ -44,23 +44,24 @@ export function PickupForm({ onBack }: PickupFormProps) {
       const now = new Date().toISOString();
       const status = action === 'pickup' ? 'out' : 'in';
       
-      // Create attendance record for parent pickup/dropoff
+      // Create attendance record for parent pickup/dropoff with structured data
       const { error } = await supabase
         .from('attendance_records')
         .insert({
-          user_id: crypto.randomUUID(), // Generate unique ID for parent pickup records
-          first_name: pickupData.studentName.split(' ')[0] || pickupData.studentName,
-          last_name: pickupData.studentName.split(' ').slice(1).join(' ') || '',
+          user_id: pickupData.studentName, // Store student ID as user_id
+          first_name: pickupData.parentName, // Store parent name as first_name
+          last_name: pickupData.relationship, // Store relationship as last_name
           status,
           check_in_time: action === 'dropoff' ? now : null,
           check_out_time: action === 'pickup' ? now : null,
-          notes: `${action === 'pickup' ? 'Picked up' : 'Dropped off'} by ${pickupData.parentName}${pickupData.relationship ? ` (${pickupData.relationship})` : ''}${pickupData.pickupType ? ` - ${pickupData.pickupType}` : ''}${pickupData.notes ? ` - ${pickupData.notes}` : ''}`,
+          notes: pickupData.notes || '',
           organization: 'Parent Pickup/Dropoff',
-          visit_purpose: `Student ${action}`,
-          phone_number: null,
+          visit_purpose: action === 'pickup' ? 'Pickup' : 'Drop-off',
+          phone_number: pickupData.pickupType || null,
           host_name: pickupData.parentName,
           purpose: `Student ${action}`,
-          created_by: null
+          created_by: null,
+          company: pickupData.pickupType // Store pickup type in company field
         });
 
       if (error) {
