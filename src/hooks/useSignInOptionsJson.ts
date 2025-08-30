@@ -4,6 +4,8 @@ import signInOptionsData from '@/config/signInOptions.json';
 
 // Custom event to trigger refresh across all hook instances
 const STORAGE_CHANGE_EVENT = 'signInOptionsUpdated';
+const STORAGE_VERSION_KEY = 'signInOptionsVersion';
+const CURRENT_VERSION = '1.0';
 
 interface SignInOption {
   id: string;
@@ -13,54 +15,69 @@ interface SignInOption {
   is_active: boolean;
 }
 
+// Initialize localStorage with defaults and custom options merged
+const initializeStorage = () => {
+  const savedOptions = localStorage.getItem('signInOptions');
+  const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+  
+  if (!savedOptions || savedVersion !== CURRENT_VERSION) {
+    console.log('[initializeStorage] Initializing localStorage with defaults');
+    localStorage.setItem('signInOptions', JSON.stringify(signInOptionsData));
+    localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
+    return signInOptionsData;
+  }
+  
+  const localStorageData = JSON.parse(savedOptions);
+  
+  // Check if we need to merge new defaults with existing custom options
+  const hasAllDefaults = signInOptionsData.every(defaultOption => 
+    localStorageData.some((localOption: SignInOption) => 
+      localOption.id === defaultOption.id ||
+      (localOption.label === defaultOption.label && 
+       localOption.category === defaultOption.category && 
+       localOption.applies_to === defaultOption.applies_to)
+    )
+  );
+  
+  if (!hasAllDefaults) {
+    console.log('[initializeStorage] Merging new defaults with existing custom options');
+    const mergedData = [...signInOptionsData];
+    
+    // Add custom options that don't exist in defaults
+    localStorageData.forEach((localOption: SignInOption) => {
+      const existsInDefaults = mergedData.some(defaultOption => 
+        defaultOption.id === localOption.id ||
+        (defaultOption.label === localOption.label && 
+         defaultOption.category === localOption.category && 
+         defaultOption.applies_to === localOption.applies_to)
+      );
+      
+      if (!existsInDefaults) {
+        console.log('[initializeStorage] Preserving custom option:', localOption);
+        mergedData.push(localOption);
+      }
+    });
+    
+    localStorage.setItem('signInOptions', JSON.stringify(mergedData));
+    localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
+    return mergedData;
+  }
+  
+  return localStorageData;
+};
+
 export function useSignInOptionsJson(appliesTo: string = 'both', category: string = 'visit_type') {
   const [options, setOptions] = useState<SignInOption[]>([]);
   const [allOptions, setAllOptions] = useState<SignInOption[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load options from localStorage or fallback to JSON file
+  // Load options from localStorage with proper initialization
   const loadOptions = useCallback(() => {
     console.log(`[useSignInOptionsJson] Loading options for appliesTo: ${appliesTo}, category: ${category}`);
     setLoading(true);
     try {
-      const savedOptions = localStorage.getItem('signInOptions');
-      console.log('[useSignInOptionsJson] Raw localStorage data:', savedOptions);
-      
-      let optionsData;
-      if (savedOptions) {
-        const localStorageData = JSON.parse(savedOptions);
-        console.log('[useSignInOptionsJson] Parsed localStorage data:', localStorageData);
-        
-        // Merge default data with localStorage data to ensure we have all defaults plus custom options
-        const mergedData = [...signInOptionsData];
-        
-        // Add custom options from localStorage that don't exist in defaults
-        localStorageData.forEach((localOption: SignInOption) => {
-          const existsInDefaults = mergedData.some(defaultOption => 
-            defaultOption.id === localOption.id || 
-            (defaultOption.label === localOption.label && 
-             defaultOption.category === localOption.category && 
-             defaultOption.applies_to === localOption.applies_to)
-          );
-          
-          if (!existsInDefaults) {
-            console.log('[useSignInOptionsJson] Adding custom option:', localOption);
-            mergedData.push(localOption);
-          }
-        });
-        
-        // Update localStorage with merged data to ensure consistency
-        localStorage.setItem('signInOptions', JSON.stringify(mergedData));
-        console.log('[useSignInOptionsJson] Updated localStorage with merged data:', mergedData);
-        
-        optionsData = mergedData;
-      } else {
-        optionsData = signInOptionsData;
-        console.log('[useSignInOptionsJson] Using default JSON data:', optionsData);
-        // Initialize localStorage with default data on first load
-        localStorage.setItem('signInOptions', JSON.stringify(optionsData));
-        console.log('[useSignInOptionsJson] Initialized localStorage with default data');
-      }
+      const optionsData = initializeStorage();
+      console.log('[useSignInOptionsJson] Loaded options data:', optionsData);
       
       setAllOptions(optionsData);
       
@@ -74,6 +91,7 @@ export function useSignInOptionsJson(appliesTo: string = 'both', category: strin
     } catch (error) {
       console.error('Error loading sign-in options:', error);
       setOptions([]);
+      setAllOptions([]);
     } finally {
       setLoading(false);
     }
