@@ -16,9 +16,12 @@ export function RelationshipSelect({
     loading
   } = useSignInOptionsJson("both", "relationship");
 
-  console.log('RelationshipSelect - Options:', relationshipOptions);
-  console.log('RelationshipSelect - Loading:', loading);
-  console.log('RelationshipSelect - Current value:', value);
+  console.log('[RelationshipSelect] Component state:', {
+    optionsCount: relationshipOptions.length,
+    loading,
+    currentValue: value,
+    availableOptions: relationshipOptions.map(opt => ({ id: opt.id, label: opt.label, applies_to: opt.applies_to }))
+  });
 
   return (
     <div className="space-y-2">
@@ -27,7 +30,7 @@ export function RelationshipSelect({
         <SelectTrigger>
           <SelectValue placeholder={loading ? "Loading options..." : "Select relationship"} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-background border shadow-lg z-50">
           {relationshipOptions.map(type => (
             <SelectItem key={type.id} value={type.label}>
               {type.label}
@@ -37,6 +40,12 @@ export function RelationshipSelect({
       </Select>
       {relationshipOptions.length === 0 && !loading && (
         <p className="text-sm text-red-600">No relationship options available. Please add them in Admin Settings.</p>
+      )}
+      {/* Debug info for development */}
+      {relationshipOptions.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {relationshipOptions.length} relationship option(s) loaded
+        </p>
       )}
     </div>
   );
