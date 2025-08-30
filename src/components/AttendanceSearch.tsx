@@ -13,7 +13,7 @@ interface AttendanceSearchProps {
 export interface SearchFilters {
   query?: string;
   status?: 'in' | 'out';
-  role?: 'admin' | 'staff' | 'student' | 'visitor';
+  formType?: 'staff-signin' | 'student-signin' | 'visitor-registration' | 'parent-pickup';
   dateFrom?: string;
   dateTo?: string;
 }
@@ -21,7 +21,7 @@ export interface SearchFilters {
 export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [status, setStatus] = useState<string>('all');
-  const [role, setRole] = useState<string>('all');
+  const [formType, setFormType] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -29,7 +29,7 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
     const filters: SearchFilters = {
       query: searchQuery.trim() || undefined,
       status: status === 'all' ? undefined : status as 'in' | 'out',
-      role: role === 'all' ? undefined : role as 'admin' | 'staff' | 'student' | 'visitor',
+      formType: formType === 'all' ? undefined : formType as 'staff-signin' | 'student-signin' | 'visitor-registration' | 'parent-pickup',
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     };
@@ -39,13 +39,13 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
   const handleClear = () => {
     setSearchQuery('');
     setStatus('all');
-    setRole('all');
+    setFormType('all');
     setDateFrom('');
     setDateTo('');
     onClear();
   };
 
-  const hasFilters = searchQuery || status !== 'all' || role !== 'all' || dateFrom || dateTo;
+  const hasFilters = searchQuery || status !== 'all' || formType !== 'all' || dateFrom || dateTo;
 
   return (
     <div className="bg-white p-4 rounded-lg border space-y-4">
@@ -87,16 +87,16 @@ export function AttendanceSearch({ onSearch, onClear }: AttendanceSearchProps) {
         </div>
 
         <div>
-          <Select value={role} onValueChange={setRole}>
+          <Select value={formType} onValueChange={setFormType}>
             <SelectTrigger>
-              <SelectValue placeholder="Forms" />
+              <SelectValue placeholder="All Forms" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Forms</SelectItem>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="visitor">Visitor</SelectItem>
+              <SelectItem value="all">All Forms</SelectItem>
+              <SelectItem value="staff-signin">Staff Sign In</SelectItem>
+              <SelectItem value="student-signin">Student Sign In</SelectItem>
+              <SelectItem value="visitor-registration">Visitor Registration</SelectItem>
+              <SelectItem value="parent-pickup">Parent Pickup & Drop-off</SelectItem>
             </SelectContent>
           </Select>
         </div>

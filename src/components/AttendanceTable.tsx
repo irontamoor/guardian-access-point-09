@@ -205,6 +205,7 @@ export const AttendanceTable: React.FC<TableProps> = ({
               <TableHead>Person Picking/Dropping</TableHead>
               <TableHead>Relationship</TableHead>
               <TableHead>Pickup/Drop-off</TableHead>
+              <TableHead>Form Submitted</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Check In</TableHead>
@@ -247,6 +248,11 @@ export const AttendanceTable: React.FC<TableProps> = ({
                     <TableCell>
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                         {purpose} {pickupType && `(${pickupType})`}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600">
+                        {formatTime(record.created_at)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -340,6 +346,11 @@ export const AttendanceTable: React.FC<TableProps> = ({
                     </TableCell>
                     <TableCell>
                       {organization}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600">
+                        {formatTime(record.created_at)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {purpose}

@@ -2,6 +2,32 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { SearchFilters } from '@/components/AttendanceSearch';
 
+// Helper function to determine form type based on record data
+const getRecordFormType = (record: any): string => {
+  // Parent Pickup/Drop-off form
+  if (record.organization === 'Parent Pickup/Dropoff' || 
+      (record.visit_purpose && record.visit_purpose.includes('pickup'))) {
+    return 'parent-pickup';
+  }
+  
+  // Check if it's a system user (staff, student, admin)
+  if (record.system_users) {
+    if (record.system_users.role === 'staff' || record.system_users.role === 'admin') {
+      return 'staff-signin';
+    }
+    if (record.system_users.role === 'student') {
+      return 'student-signin';
+    }
+  }
+  
+  // Visitor registration (has visitor data but not pickup)
+  if (record.organization || record.visit_purpose || record.phone_number) {
+    return 'visitor-registration';
+  }
+  
+  return 'unknown';
+};
+
 export function useAttendanceSearch(attendanceRecords: any[]) {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
 
@@ -39,14 +65,10 @@ export function useAttendanceSearch(attendanceRecords: any[]) {
         return false;
       }
 
-      // Role filter
-      if (searchFilters.role) {
-        const userRole = record.system_users?.role;
-        const isVisitor = record.visitor && !record.system_users;
-        
-        if (searchFilters.role === 'visitor' && !isVisitor) {
-          return false;
-        } else if (searchFilters.role !== 'visitor' && userRole !== searchFilters.role) {
+      // Form type filter
+      if (searchFilters.formType) {
+        const formType = getRecordFormType(record);
+        if (formType !== searchFilters.formType) {
           return false;
         }
       }
@@ -83,5 +105,6 @@ export function useAttendanceSearch(attendanceRecords: any[]) {
       searchFilters[key as keyof SearchFilters] !== undefined && 
       searchFilters[key as keyof SearchFilters] !== ''
     ),
+    getRecordFormType,
   };
 }
