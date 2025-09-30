@@ -6,12 +6,15 @@ import { Label } from '@/components/ui/label';
 import { LogOut, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SuccessBanner } from '@/components/ui/success-banner';
 
 export function VisitorCheckOut() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -70,9 +73,13 @@ export function VisitorCheckOut() {
 
       if (error) throw error;
 
+      const successMsg = `${visitorName} has been successfully checked out`;
+      setSuccessMessage(successMsg);
+      setShowSuccess(true);
+
       toast({
         title: "Check Out Successful",
-        description: `${visitorName} has been checked out`,
+        description: successMsg,
         variant: "default"
       });
 
@@ -91,7 +98,14 @@ export function VisitorCheckOut() {
   };
 
   return (
-    <Card className="border-l-4 border-l-orange-500">
+    <>
+      <SuccessBanner
+        show={showSuccess}
+        message="Visitor Checked Out!"
+        details={successMessage}
+        onDismiss={() => setShowSuccess(false)}
+      />
+      <Card className="border-l-4 border-l-orange-500">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <LogOut className="h-5 w-5 text-orange-600" />
@@ -160,5 +174,6 @@ export function VisitorCheckOut() {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
