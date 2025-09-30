@@ -34,6 +34,7 @@ export function VisitorForm() {
     firstName: { required: true, minLength: 1 },
     lastName: { required: true, minLength: 1 },
     visitPurpose: { required: true },
+    hostName: { required: true, minLength: 1 },
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -49,6 +50,7 @@ export function VisitorForm() {
       firstName: visitorData.firstName,
       lastName: visitorData.lastName,
       visitPurpose: visitorData.visitPurpose,
+      hostName: visitorData.hostName,
     });
 
     if (!isValid) {
@@ -152,6 +154,7 @@ export function VisitorForm() {
               firstName: getFieldError('firstName'),
               lastName: getFieldError('lastName'),
               visitPurpose: getFieldError('visitPurpose'),
+              hostName: getFieldError('hostName'),
             }}
             onBlur={handleFieldBlur}
           />

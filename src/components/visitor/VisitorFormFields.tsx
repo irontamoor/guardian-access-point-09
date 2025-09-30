@@ -121,14 +121,26 @@ export function VisitorFormFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="hostName">Host/Contact Person</Label>
-        <Input
-          id="hostName"
-          placeholder="Who are you visiting?"
-          value={visitorData.hostName}
-          onChange={(e) => onInputChange('hostName', e.target.value)}
-          disabled={loading}
-        />
+        <Label htmlFor="hostName" className={cn(getFieldError('hostName').hasError && "text-destructive")}>
+          Host/Contact Person *
+        </Label>
+        <div className="relative">
+          <Input
+            id="hostName"
+            placeholder="Who are you visiting?"
+            value={visitorData.hostName}
+            onChange={(e) => onInputChange('hostName', e.target.value)}
+            onBlur={() => onBlur?.('hostName')}
+            className={cn(getFieldError('hostName').hasError && "border-destructive focus-visible:ring-destructive")}
+            disabled={loading}
+          />
+          {getFieldError('hostName').hasError && (
+            <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
+          )}
+        </div>
+        {getFieldError('hostName').hasError && (
+          <p className="text-sm text-destructive">{getFieldError('hostName').message}</p>
+        )}
       </div>
 
       <div className="space-y-2">
