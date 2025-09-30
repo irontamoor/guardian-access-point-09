@@ -37,7 +37,7 @@ export function AdminTabs({ adminData }: AdminTabsProps) {
       
       {canAccessUsers && (
         <TabsContent value="users">
-          <AdminUserManagement />
+          <AdminUserManagement adminData={adminData} />
         </TabsContent>
       )}
       

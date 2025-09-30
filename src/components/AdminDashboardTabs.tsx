@@ -83,7 +83,7 @@ const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsP
           {!isReader && (
             <>
               <TabsContent value="users">
-                <UserManagement />
+                <UserManagement adminData={adminData} />
               </TabsContent>
 
               <TabsContent value="settings">

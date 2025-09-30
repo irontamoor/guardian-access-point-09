@@ -11,8 +11,11 @@ import type { Database } from '@/integrations/supabase/types';
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 
+// Safe user type (subset of SystemUser for display/identification only)
+type SafeSystemUser = Pick<SystemUser, 'id' | 'first_name' | 'last_name'>;
+
 interface UserPasswordResetModalProps {
-  user: SystemUser | null;
+  user: SafeSystemUser | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;

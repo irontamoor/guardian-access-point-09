@@ -20,11 +20,22 @@ type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
 type UserStatus = Database['public']['Enums']['user_status'];
 
-const UserManagement = () => {
-  const [users, setUsers] = useState<SystemUser[]>([]);
+// Safe user type returned from RPC (without sensitive fields by default, but compatible with full type)
+type SafeSystemUser = Pick<SystemUser, 'id' | 'admin_id' | 'user_code' | 'first_name' | 'last_name' | 'role' | 'status' | 'created_at' | 'updated_at'> & {
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+};
+
+interface UserManagementProps {
+  adminData: any;
+}
+
+const UserManagement = ({ adminData }: UserManagementProps) => {
+  const [users, setUsers] = useState<SafeSystemUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  const [passwordResetUser, setPasswordResetUser] = useState<SystemUser | null>(null);
+  const [editingUser, setEditingUser] = useState<SafeSystemUser | null>(null);
+  const [passwordResetUser, setPasswordResetUser] = useState<SafeSystemUser | null>(null);
   const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
   const { values: allRoles, loading: loadingRoles } = useEnumValues("app_role");
   const [formData, setFormData] = useState({
@@ -51,12 +62,14 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      // SECURITY: This component is admin-only (requires authentication)
-      // Admin users need full access to manage user data including passwords
+      const adminId = adminData?.admin_id || adminData?.user_code;
+      if (!adminId) {
+        throw new Error("Admin ID not found");
+      }
+
+      // Use secure RPC function that bypasses RLS with SECURITY DEFINER
       const { data, error } = await supabase
-        .from('system_users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_safe_user_data', { p_admin_id: adminId });
 
       if (error) throw error;
       setUsers(data || []);
@@ -198,7 +211,7 @@ const UserManagement = () => {
     setShowPassword(false);
   };
 
-  const handleEdit = (user: SystemUser) => {
+  const handleEdit = (user: SafeSystemUser) => {
     setEditingUser(user);
     setFormData({
       first_name: user.first_name,
@@ -213,12 +226,12 @@ const UserManagement = () => {
     setIsOpen(true);
   };
 
-  const handlePasswordReset = (user: SystemUser) => {
+  const handlePasswordReset = (user: SafeSystemUser) => {
     setPasswordResetUser(user);
     setIsPasswordResetOpen(true);
   };
 
-  const handleDelete = async (user: SystemUser) => {
+  const handleDelete = async (user: SafeSystemUser) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
@@ -250,7 +263,7 @@ const UserManagement = () => {
       ? users
       : users.filter((u) => u.role === selectedRole);
 
-  const handleStatusToggle = async (user: SystemUser, checked: boolean) => {
+  const handleStatusToggle = async (user: SafeSystemUser, checked: boolean) => {
     setAttendanceLoading(user.id);
     try {
       const newStatus = checked ? "present" : "absent";
