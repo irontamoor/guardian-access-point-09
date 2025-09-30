@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { VisitorFormFields } from './VisitorFormFields';
 import { VisitorFormActions } from './VisitorFormActions';
 import { SuccessBanner } from '@/components/ui/success-banner';
+import { BadgePrintPreview } from './BadgePrintPreview';
+import { BadgeTemplate } from './BadgeTemplate';
 
 export function VisitorForm() {
   const [visitorData, setVisitorData] = useState({
@@ -22,6 +24,8 @@ export function VisitorForm() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [registeredVisitorData, setRegisteredVisitorData] = useState<any>(null);
   
   const { toast } = useToast();
   const { options: visitTypes, loading: visitTypesLoading } = useSignInOptionsJson("both", "visit_type");
@@ -86,6 +90,19 @@ export function VisitorForm() {
         variant: "default"
       });
 
+      // Store registered visitor data for printing
+      setRegisteredVisitorData({
+        first_name: visitorData.firstName,
+        last_name: visitorData.lastName,
+        organization: visitorData.organization,
+        visit_purpose: visitorData.visitPurpose,
+        host_name: visitorData.hostName,
+        check_in_time: new Date().toISOString()
+      });
+
+      // Show print preview
+      setShowPrintPreview(true);
+
       setVisitorData({
         firstName: '',
         lastName: '',
@@ -144,6 +161,22 @@ export function VisitorForm() {
           />
         </CardContent>
       </Card>
+
+      {/* Hidden badge template for printing */}
+      {registeredVisitorData && (
+        <div className="hidden print:block">
+          <BadgeTemplate visitorData={registeredVisitorData} />
+        </div>
+      )}
+
+      {/* Print Preview Modal */}
+      {registeredVisitorData && (
+        <BadgePrintPreview
+          open={showPrintPreview}
+          onClose={() => setShowPrintPreview(false)}
+          visitorData={registeredVisitorData}
+        />
+      )}
     </>
   );
 }
