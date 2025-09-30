@@ -244,7 +244,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      verify_admin_credentials: {
+        Args: { p_admin_id: string; p_password: string }
+        Returns: {
+          admin_id: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_code: string
+        }[]
+      }
     }
     Enums: {
       attendance_status: "in" | "out"

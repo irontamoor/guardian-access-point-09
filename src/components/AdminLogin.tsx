@@ -31,30 +31,14 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     setIsLoading(true);
 
     try {
-      // First try to find user by admin_id
-      let { data, error } = await supabase
-        .from('system_users')
-        .select('*')
-        .eq('admin_id', adminId)
-        .in('role', ['admin', 'reader'])
-        .eq('status', 'active')
-        .single();
+      // Use secure authentication function (server-side credential verification)
+      const { data, error } = await supabase
+        .rpc('verify_admin_credentials', {
+          p_admin_id: adminId,
+          p_password: password
+        });
 
-      // If not found by admin_id, try user_code
-      if (error || !data) {
-        const { data: userData, error: userError } = await supabase
-          .from('system_users')
-          .select('*')
-          .eq('user_code', adminId)
-          .in('role', ['admin', 'reader'])
-          .eq('status', 'active')
-          .single();
-        
-        data = userData;
-        error = userError;
-      }
-
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         toast({
           title: "Login Failed",
           description: "Invalid Admin ID or password",
@@ -64,29 +48,22 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         return;
       }
 
-      if (data.password !== password) {
-        toast({
-          title: "Login Failed",
-          description: "Invalid Admin ID or password",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
+      // Get the first result (function returns array)
+      const adminData = data[0];
 
       toast({
         title: "Login Successful",
-        description: `Welcome, ${data.first_name}!`,
+        description: `Welcome, ${adminData.first_name}!`,
         variant: "default"
       });
 
       setTimeout(() => {
         onLogin({
-          id: data.id,
-          admin_id: data.admin_id || data.user_code,
-          email: data.email,
-          role: data.role,
-          first_name: data.first_name,
+          id: adminData.id,
+          admin_id: adminData.admin_id || adminData.user_code,
+          email: adminData.email,
+          role: adminData.role,
+          first_name: adminData.first_name,
         });
         setIsLoading(false);
       }, 500);
