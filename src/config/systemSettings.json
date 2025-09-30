@@ -6,7 +6,7 @@
     "showVisitorRegistration": true,
     "showParentPickup": true
   },
-  "school_name": "School VMS",
+  "school_name": "Jamia Al-Hudaa",
   "max_visitors_per_day": 100,
   "auto_signout_hours": 8
 }

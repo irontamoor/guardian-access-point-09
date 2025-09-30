@@ -13,7 +13,7 @@ export function HomeHeader({ currentTime }: HomeHeaderProps) {
           <div className="flex items-center space-x-3">
             <Shield className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">School VMS</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Jamia Al-Hudaa</h1>
               <p className="text-sm text-gray-500">Visitor Management System</p>
             </div>
           </div>
