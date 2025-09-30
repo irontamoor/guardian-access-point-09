@@ -56,9 +56,11 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
   const [selectedRole, setSelectedRole] = useState<string>("all");
 
   useEffect(() => {
-    loadUsers();
-    loadAttendanceStatus();
-  }, []);
+    if (adminData?.admin_id || adminData?.user_code) {
+      loadUsers();
+      loadAttendanceStatus();
+    }
+  }, [adminData]);
 
   const loadUsers = async () => {
     try {
@@ -71,6 +73,7 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
       const { data, error } = await supabase
         .rpc('get_safe_user_data', { p_admin_id: adminId });
 
+      console.log('get_safe_user_data result', { adminId, error, count: data?.length });
       if (error) throw error;
       setUsers(data || []);
     } catch (error: any) {
@@ -294,6 +297,14 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
       setAttendanceLoading(null);
     }
   };
+
+  if (!(adminData?.admin_id || adminData?.user_code)) {
+    return (
+      <div className="space-y-6">
+        <div className="text-sm text-gray-500">Loading admin context…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
