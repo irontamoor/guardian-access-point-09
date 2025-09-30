@@ -244,6 +244,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_safe_user_data: {
+        Args: { p_admin_id: string; p_role?: string }
+        Returns: {
+          admin_id: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+          user_code: string
+        }[]
+      }
+      get_visitor_records: {
+        Args: { p_admin_id: string; p_date?: string }
+        Returns: {
+          check_in_time: string
+          check_out_time: string
+          created_at: string
+          first_name: string
+          host_name: string
+          id: string
+          last_name: string
+          notes: string
+          organization: string
+          phone_number: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+          visit_purpose: string
+        }[]
+      }
       verify_admin_credentials: {
         Args: { p_admin_id: string; p_password: string }
         Returns: {
