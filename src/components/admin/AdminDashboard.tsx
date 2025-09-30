@@ -1,7 +1,8 @@
 
 import { useVMSData } from "@/hooks/useVMSData";
 import { AdminMetrics } from "./AdminMetrics";
-import { DashboardActivity } from "../dashboard/DashboardActivity";
+import { DashboardCheckInActivity } from "../dashboard/DashboardCheckInActivity";
+import { DashboardCheckOutActivity } from "../dashboard/DashboardCheckOutActivity";
 import { DashboardLiveStatusBoard } from "../dashboard/DashboardLiveStatusBoard";
 
 interface AdminDashboardProps {
@@ -24,9 +25,11 @@ export function AdminDashboard({ adminData }: AdminDashboardProps) {
       <AdminMetrics students={students} staff={staff} />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashboardActivity recentActivity={recentActivity} />
-        <DashboardLiveStatusBoard students={students} staff={staff} />
+        <DashboardCheckInActivity recentActivity={recentActivity} />
+        <DashboardCheckOutActivity recentActivity={recentActivity} />
       </div>
+      
+      <DashboardLiveStatusBoard students={students} staff={staff} />
     </div>
   );
 }

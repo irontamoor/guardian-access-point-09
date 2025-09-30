@@ -4,7 +4,8 @@ import { useVMSData } from '@/hooks/useVMSData';
 import { DashboardLayout } from "./dashboard/DashboardLayout";
 import DashboardHeader from "./dashboard/DashboardHeader";
 import { DashboardMetrics } from "./dashboard/DashboardMetrics";
-import { DashboardActivity } from "./dashboard/DashboardActivity";
+import { DashboardCheckInActivity } from "./dashboard/DashboardCheckInActivity";
+import { DashboardCheckOutActivity } from "./dashboard/DashboardCheckOutActivity";
 import { DashboardLiveStatusBoard } from "./dashboard/DashboardLiveStatusBoard";
 
 interface DashboardProps {
@@ -70,7 +71,8 @@ const Dashboard = ({ onBack, onLogout, adminData }: DashboardProps) => {
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashboardActivity recentActivity={recentActivity} />
+        <DashboardCheckInActivity recentActivity={recentActivity} />
+        <DashboardCheckOutActivity recentActivity={recentActivity} />
       </div>
       
       <DashboardLiveStatusBoard staff={staff} students={students} />
