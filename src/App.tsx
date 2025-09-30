@@ -61,7 +61,11 @@ function App() {
                     <span className="text-3xl text-white">🏫</span>
                   </div>
                   <div className="text-left">
-                    <h1 className="text-5xl font-bold text-gray-800 mb-2">Jamia Al-Hudaa Visitor Management System</h1>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-2">
+                      <span className="md:hidden">Jamia Al-Hudaa</span>
+                      <span className="hidden md:inline lg:hidden">Jamia Al-Hudaa VMS</span>
+                      <span className="hidden lg:inline">Jamia Al-Hudaa Visitor Management System</span>
+                    </h1>
                     <p className="text-xl text-gray-600">
                       Safe, secure, and efficient visitor tracking
                     </p>
