@@ -241,7 +241,90 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      system_users_safe: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          updated_at: string | null
+          user_code: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_code?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_code?: string | null
+        }
+        Relationships: []
+      }
+      visitor_records_safe: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string | null
+          first_name: string | null
+          host_name: string | null
+          id: string | null
+          last_name: string | null
+          notes: string | null
+          organization: string | null
+          phone_number: string | null
+          status: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at: string | null
+          visit_purpose: string | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          host_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at?: string | null
+          visit_purpose?: string | null
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          host_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at?: string | null
+          visit_purpose?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_safe_user_data: {
