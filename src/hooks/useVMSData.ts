@@ -116,8 +116,67 @@ export function useVMSData() {
       setStudents(enrichedStudents);
       setStaff(enrichedStaff);
 
-      // Set empty recent activity for now (this could be enhanced later to combine recent records from all tables)
-      setRecentActivity([]);
+      // Fetch recent activity from all tables
+      const [studentRecords, staffRecords, visitorRecords, pickupRecords] = await Promise.all([
+        supabase
+          .from('student_attendance')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('staff_attendance')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('visitor_records')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('parent_pickup_records')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ]);
+
+      // Combine and format all activity
+      const combinedActivity = [
+        ...(studentRecords.data || []).map(r => ({
+          id: r.id,
+          type: 'student',
+          name: r.student_name,
+          action: r.status === 'in' ? 'Check In' : 'Check Out',
+          time: new Date(r.created_at).toLocaleString(),
+          timestamp: new Date(r.created_at).getTime()
+        })),
+        ...(staffRecords.data || []).map(r => ({
+          id: r.id,
+          type: 'staff',
+          name: r.employee_name,
+          action: r.status === 'in' ? 'Check In' : 'Check Out',
+          time: new Date(r.created_at).toLocaleString(),
+          timestamp: new Date(r.created_at).getTime()
+        })),
+        ...(visitorRecords.data || []).map(r => ({
+          id: r.id,
+          type: 'visitor',
+          name: `${r.first_name} ${r.last_name}`,
+          action: r.status === 'in' ? 'Check In' : 'Check Out',
+          time: new Date(r.created_at).toLocaleString(),
+          timestamp: new Date(r.created_at).getTime()
+        })),
+        ...(pickupRecords.data || []).map(r => ({
+          id: r.id,
+          type: 'pickup',
+          name: r.student_name || r.student_id,
+          action: `${r.action_type} by ${r.parent_guardian_name}`,
+          time: new Date(r.created_at).toLocaleString(),
+          timestamp: new Date(r.created_at).getTime()
+        }))
+      ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
+
+      setRecentActivity(combinedActivity);
       
       console.log('useVMSData: Data loading completed successfully');
     } catch (err: any) {
