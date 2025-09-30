@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-const APP_ROLES = ['admin', 'staff', 'student', 'parent', 'visitor', 'reader'];
+const APP_ROLES = ['admin', 'staff_admin', 'staff', 'student', 'parent', 'visitor', 'reader'];
 
 export function useEnumValues(enumName: "app_role") {
   const [values, setValues] = useState<string[]>([]);

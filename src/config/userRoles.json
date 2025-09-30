@@ -4,6 +4,10 @@
     "label": "Administrator",
     "permissions": ["read", "write", "delete", "admin"]
   },
+  "staff_admin": {
+    "label": "Staff Administrator",
+    "permissions": ["read", "write", "delete", "admin"]
+  },
   "staff": {
     "label": "Staff Member",
     "permissions": ["read", "write"]

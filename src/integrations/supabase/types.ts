@@ -292,7 +292,14 @@ export type Database = {
     }
     Enums: {
       attendance_status: "in" | "out"
-      user_role: "admin" | "staff" | "student" | "parent" | "visitor" | "reader"
+      user_role:
+        | "admin"
+        | "staff"
+        | "student"
+        | "parent"
+        | "visitor"
+        | "reader"
+        | "staff_admin"
       user_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
@@ -422,7 +429,15 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["in", "out"],
-      user_role: ["admin", "staff", "student", "parent", "visitor", "reader"],
+      user_role: [
+        "admin",
+        "staff",
+        "student",
+        "parent",
+        "visitor",
+        "reader",
+        "staff_admin",
+      ],
       user_status: ["active", "inactive", "suspended"],
     },
   },
