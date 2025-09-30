@@ -6,7 +6,10 @@ type UserRole = Database['public']['Enums']['user_role'];
 export class VMSApi {
   // Users API
   static async getUsers(role?: string) {
-    let query = supabase.from('system_users').select('*');
+    // Exclude sensitive columns (password, email, phone) from public queries
+    let query = supabase
+      .from('system_users')
+      .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at');
     
     if (role) {
       // Type cast the role parameter to the enum type

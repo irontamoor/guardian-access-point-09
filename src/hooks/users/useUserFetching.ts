@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 export function useUserFetching() {
   const fetchStudentUser = useCallback(async (userCode: string) => {
     try {
+      // Exclude sensitive columns for security
       const { data, error } = await supabase
         .from('system_users')
-        .select('*')
+        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
         .eq('user_code', userCode)
         .eq('role', 'student')
         .eq('status', 'active')
@@ -26,9 +27,10 @@ export function useUserFetching() {
 
   const fetchStaffUser = useCallback(async (userCode: string) => {
     try {
+      // Exclude sensitive columns for security
       const { data, error } = await supabase
         .from('system_users')
-        .select('*')
+        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
         .eq('user_code', userCode)
         .eq('role', 'staff')
         .eq('status', 'active')

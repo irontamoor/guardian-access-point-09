@@ -31,10 +31,10 @@ const AdminActivityDashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // Get all users
+      // Get all users (exclude sensitive data)
       const { data: users, error: usersError } = await supabase
         .from('system_users')
-        .select('*')
+        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
         .eq('status', 'active');
 
       if (usersError) throw usersError;

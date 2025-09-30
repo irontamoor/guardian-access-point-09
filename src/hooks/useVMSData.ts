@@ -17,11 +17,11 @@ export function useVMSData() {
     setError(null);
     
     try {
-      // Load students with current status
+      // Load students with current status (exclude sensitive data)
       console.log('useVMSData: Loading students...');
       const { data: studentsData, error: studentsError } = await supabase
         .from('system_users')
-        .select('*')
+        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
         .eq('role', 'student')
         .eq('status', 'active');
 
@@ -32,11 +32,11 @@ export function useVMSData() {
 
       console.log('useVMSData: Students loaded:', studentsData?.length || 0);
 
-      // Load staff with current status
+      // Load staff with current status (exclude sensitive data)
       console.log('useVMSData: Loading staff...');
       const { data: staffData, error: staffError } = await supabase
         .from('system_users')
-        .select('*')
+        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
         .eq('role', 'staff')
         .eq('status', 'active');
 

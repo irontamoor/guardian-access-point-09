@@ -51,6 +51,8 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
+      // SECURITY: This component is admin-only (requires authentication)
+      // Admin users need full access to manage user data including passwords
       const { data, error } = await supabase
         .from('system_users')
         .select('*')
