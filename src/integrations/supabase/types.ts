@@ -74,6 +74,42 @@ export type Database = {
         }
         Relationships: []
       }
+      staff: {
+        Row: {
+          created_at: string
+          department: string | null
+          employee_id: string
+          first_name: string
+          id: string
+          last_name: string
+          position: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          employee_id: string
+          first_name: string
+          id?: string
+          last_name: string
+          position?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          employee_id?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          position?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_attendance: {
         Row: {
           check_in_time: string | null
@@ -142,6 +178,39 @@ export type Database = {
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
           student_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          created_at: string
+          first_name: string
+          grade: string | null
+          id: string
+          last_name: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          grade?: string | null
+          id?: string
+          last_name: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          grade?: string | null
+          id?: string
+          last_name?: string
+          status?: string
+          student_id?: string
           updated_at?: string
         }
         Relationships: []
