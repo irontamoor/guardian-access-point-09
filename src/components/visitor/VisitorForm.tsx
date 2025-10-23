@@ -54,7 +54,8 @@ export function VisitorForm() {
   const handleCameraCapture = (photo: Blob) => {
     setCapturedPhoto(photo);
     setPhotoPreview(URL.createObjectURL(photo));
-    handleRegisterVisitor();
+    setCameraOpen(false);
+    handleRegisterVisitor(photo);
   };
 
   const handleRegisterClick = () => {
@@ -77,7 +78,7 @@ export function VisitorForm() {
     setCameraOpen(true);
   };
 
-  const handleRegisterVisitor = async () => {
+  const handleRegisterVisitor = async (photoBlob?: Blob) => {
     const isValid = validate({
       firstName: visitorData.firstName,
       lastName: visitorData.lastName,
@@ -97,8 +98,9 @@ export function VisitorForm() {
     setLoading(true);
     try {
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'visitors', visitorData.firstName + visitorData.lastName, 'check_in');
+      const photoToUpload = photoBlob || capturedPhoto;
+      if (photoToUpload) {
+        photoUrl = await uploadPhoto(photoToUpload, 'visitors', visitorData.firstName + visitorData.lastName, 'check_in');
       }
 
       const { error: attendanceError } = await supabase
