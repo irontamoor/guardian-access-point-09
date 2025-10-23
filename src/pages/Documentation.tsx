@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Users, UserCheck, Car, Shield, Settings } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, UserCheck, Car, Shield, Settings, KeyRound, AlertTriangle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface DocumentationProps {
@@ -231,6 +231,108 @@ const Documentation = ({ onBack }: DocumentationProps) => {
                   <li><strong>Attendance:</strong> View/edit all attendance records</li>
                   <li><strong>Users:</strong> Manage students, staff, and admin users</li>
                   <li><strong>Settings:</strong> Configure system settings, notifications, photo requirements</li>
+                </ul>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Admin Password Reset */}
+          <AccordionItem value="admin-password-reset" className="bg-white rounded-lg px-6">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center">
+                <KeyRound className="h-5 w-5 mr-2 text-red-600" />
+                Admin Password Reset (Forgotten Password)
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 text-sm">
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-amber-900 mb-1">Security Warning</h4>
+                    <p className="text-amber-800 text-xs">
+                      Password resets require direct database access. Only authorized database administrators should perform these operations. All passwords are encrypted using bcrypt hashing.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Method 1: Using Supabase Dashboard (Recommended)</h4>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  <li>Log in to your Supabase dashboard at <a href="https://supabase.com" className="text-blue-600 underline" target="_blank">supabase.com</a></li>
+                  <li>Select your project and navigate to <strong>SQL Editor</strong></li>
+                  <li>Run the following SQL command (replace values with actual data):</li>
+                </ol>
+                <div className="mt-2 bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                  <pre className="text-xs font-mono">
+{`-- Reset password for an admin user
+UPDATE system_users
+SET password = crypt('NEW_PASSWORD_HERE', gen_salt('bf', 10))
+WHERE admin_id = 'ADMIN_ID_HERE'
+  AND role IN ('admin', 'reader', 'staff_admin');
+
+-- Verify the update
+SELECT admin_id, email, role, first_name, last_name
+FROM system_users
+WHERE admin_id = 'ADMIN_ID_HERE';`}
+                  </pre>
+                </div>
+                <div className="mt-2 bg-blue-50 border border-blue-200 p-3 rounded">
+                  <p className="text-xs text-blue-900">
+                    <strong>Example:</strong> If admin ID is "ADMIN001" and new password is "SecurePass123", replace 'ADMIN_ID_HERE' with 'ADMIN001' and 'NEW_PASSWORD_HERE' with 'SecurePass123'.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Method 2: Using SQL Client (pgAdmin, DBeaver, etc.)</h4>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  <li>Connect to your PostgreSQL database using your SQL client</li>
+                  <li>Use the connection details from your Supabase project settings</li>
+                  <li>Execute the same SQL command as Method 1</li>
+                  <li>Verify the password was updated successfully</li>
+                </ol>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Method 3: Using Another Admin Account</h4>
+                <p className="text-muted-foreground mb-2">
+                  If another admin has access to the Admin Dashboard:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Log in to Admin Dashboard</li>
+                  <li>Navigate to <strong>Users</strong> tab</li>
+                  <li>Find the admin user in the list</li>
+                  <li>Click <strong>Reset Password</strong> button</li>
+                  <li>Enter and confirm the new password</li>
+                  <li>Save changes</li>
+                </ol>
+              </div>
+
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-red-900 mb-1">Important Security Notes</h4>
+                    <ul className="list-disc list-inside space-y-1 text-red-800 text-xs">
+                      <li>Always use strong passwords (minimum 8 characters, mix of letters, numbers, symbols)</li>
+                      <li>Never share database credentials</li>
+                      <li>The system automatically hashes passwords using bcrypt with 10 rounds</li>
+                      <li>Password changes take effect immediately</li>
+                      <li>Users will need to log in again with the new password</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Troubleshooting:</h4>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li><strong>Still can't login:</strong> Verify the admin_id is correct (check for spaces/typos)</li>
+                  <li><strong>SQL error:</strong> Ensure pgcrypto extension is enabled: <code className="bg-gray-100 px-2 py-1 rounded text-xs">CREATE EXTENSION IF NOT EXISTS pgcrypto;</code></li>
+                  <li><strong>No database access:</strong> Contact your hosting provider or system administrator</li>
+                  <li><strong>Password not working:</strong> Clear browser cache and try again</li>
                 </ul>
               </div>
             </AccordionContent>

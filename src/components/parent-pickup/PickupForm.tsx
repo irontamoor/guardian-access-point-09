@@ -239,7 +239,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
           </div>
         )}
 
-        <div className="flex space-x-3 pt-4">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
           <Button 
             onClick={handlePickupClick}
             disabled={isLoading}

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, User, KeyRound } from 'lucide-react';
+import { Shield, User, KeyRound, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -138,6 +138,18 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
               </>
             )}
           </Button>
+
+          <div className="border-t pt-4 mt-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => window.location.href = '/docs'}
+              type="button"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              View Documentation
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -34,18 +34,18 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Search className="w-5 h-5" />
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             Check Pickup Status
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 p-1">
           <div className="space-y-2">
-            <Label htmlFor="student-id">Student ID</Label>
-            <div className="flex gap-2">
+            <Label htmlFor="student-id" className="text-sm sm:text-base">Student ID</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 id="student-id"
                 placeholder="Enter student ID"
@@ -53,11 +53,12 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
                 onChange={(e) => setStudentId(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base"
               />
               <Button 
                 onClick={handleLookup} 
                 disabled={isLoading || !studentId.trim()}
+                className="w-full sm:w-auto"
               >
                 {isLoading ? 'Checking...' : 'Check'}
               </Button>
@@ -66,8 +67,8 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
 
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-md bg-muted border">
-              <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <p className="text-sm text-muted-foreground">{error}</p>
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground mt-0.5" />
+              <p className="text-xs sm:text-sm text-muted-foreground">{error}</p>
             </div>
           )}
 
@@ -81,10 +82,10 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
             }[statusConfig.icon];
             
             return (
-              <div className="space-y-3 p-4 rounded-lg border bg-card">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Pickup Details</h3>
-                  <div className="flex flex-col items-end gap-1">
+              <div className="space-y-3 p-3 sm:p-4 rounded-lg border bg-card">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h3 className="font-semibold text-sm sm:text-base">Pickup Details</h3>
+                  <div className="flex flex-col items-start sm:items-end gap-1">
                     <Badge className={statusConfig.color}>
                       <IconComponent className="w-3 h-3 mr-1" />
                       {statusConfig.label}
@@ -93,7 +94,7 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
                   </div>
                 </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs sm:text-sm">
                 <div>
                   <span className="text-muted-foreground">Student ID:</span>
                   <span className="ml-2 font-medium">{result.student_id}</span>

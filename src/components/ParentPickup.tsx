@@ -7,7 +7,7 @@ interface ParentPickupProps {
 
 const ParentPickup = ({ onBack }: ParentPickupProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <ParentPickupCard onBack={onBack} />
       </div>
