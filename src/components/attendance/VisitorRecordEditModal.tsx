@@ -25,7 +25,8 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
       host_name: record.host_name,
       phone_number: record.phone_number,
       status: record.status,
-      notes: record.notes
+      notes: record.notes,
+      check_out_time: record.check_out_time
     } : {}
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +47,19 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
 
     setIsLoading(true);
     try {
-      await onSave(record.id, formData);
+      const updates = { ...formData };
+      
+      // Auto-set checkout time if status is "out" and no checkout time exists
+      if (updates.status === 'out' && !updates.check_out_time) {
+        updates.check_out_time = new Date().toISOString();
+      }
+      
+      // Clear checkout time if status changed back to "in"
+      if (updates.status === 'in') {
+        updates.check_out_time = null;
+      }
+      
+      await onSave(record.id, updates);
       toast({
         title: "Success",
         description: "Visitor record updated successfully",
@@ -71,7 +84,7 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
         <DialogHeader>
           <DialogTitle>Edit Visitor Record</DialogTitle>
           <DialogDescription>
-            Update the visitor information. Check-in/out times cannot be modified.
+            Update visitor information. Checkout time can be modified when status is 'Checked Out'.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -135,7 +148,16 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
             <Label htmlFor="status">Status *</Label>
             <Select
               value={formData.status || ''}
-              onValueChange={(value: 'in' | 'out') => setFormData(prev => ({ ...prev, status: value }))}
+              onValueChange={(value: 'in' | 'out') => {
+                const updates: any = { status: value };
+                
+                // Auto-populate checkout time if changing to "out"
+                if (value === 'out' && !record?.check_out_time && !formData.check_out_time) {
+                  updates.check_out_time = new Date().toISOString();
+                }
+                
+                setFormData(prev => ({ ...prev, ...updates }));
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
@@ -146,6 +168,17 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
               </SelectContent>
             </Select>
           </div>
+          {formData.status === 'out' && (
+            <div className="space-y-2">
+              <Label htmlFor="check_out_time">Checkout Time</Label>
+              <Input
+                id="check_out_time"
+                type="datetime-local"
+                value={formData.check_out_time ? new Date(formData.check_out_time).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, check_out_time: e.target.value ? new Date(e.target.value).toISOString() : '' }))}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
