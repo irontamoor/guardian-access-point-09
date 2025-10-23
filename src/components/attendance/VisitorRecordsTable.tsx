@@ -151,6 +151,7 @@ export function VisitorRecordsTable({ userRole }: VisitorRecordsTableProps) {
               <TableHead>Visit Purpose</TableHead>
               <TableHead>Host</TableHead>
               <TableHead>Phone</TableHead>
+              <TableHead>Vehicle Reg</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Check-in Time</TableHead>
               <TableHead>Check-out Time</TableHead>
@@ -190,6 +191,7 @@ export function VisitorRecordsTable({ userRole }: VisitorRecordsTableProps) {
                   <TableCell>{record.visit_purpose}</TableCell>
                   <TableCell>{record.host_name || '-'}</TableCell>
                   <TableCell>{record.phone_number || '-'}</TableCell>
+                  <TableCell>{record.car_registration || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={record.status === 'in' ? 'default' : 'secondary'}>
                       {record.status === 'in' ? 'Checked In' : 'Checked Out'}

@@ -24,6 +24,7 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
       visit_purpose: record.visit_purpose,
       host_name: record.host_name,
       phone_number: record.phone_number,
+      car_registration: record.car_registration,
       status: record.status,
       notes: record.notes,
       check_out_time: record.check_out_time
@@ -142,6 +143,15 @@ export function VisitorRecordEditModal({ record, onClose, onSave }: VisitorRecor
               value={formData.phone_number || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
               placeholder="Enter phone number"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="car_registration">Vehicle Registration</Label>
+            <Input
+              id="car_registration"
+              value={formData.car_registration || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, car_registration: e.target.value }))}
+              placeholder="Enter license plate number"
             />
           </div>
           <div className="space-y-2">

@@ -155,6 +155,20 @@ export function VisitorFormFields({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="carRegistration">Vehicle Registration (Optional)</Label>
+        <Input
+          id="carRegistration"
+          placeholder="Enter license plate number"
+          value={visitorData.carRegistration}
+          onChange={(e) => onInputChange('carRegistration', e.target.value)}
+          disabled={loading}
+        />
+        <p className="text-xs text-muted-foreground">
+          Enter vehicle/car registration if parking on premises
+        </p>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="notes">Additional Notes</Label>
         <Textarea
           id="notes"

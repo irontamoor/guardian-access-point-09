@@ -286,6 +286,7 @@ export type Database = {
       }
       visitor_records: {
         Row: {
+          car_registration: string | null
           check_in_photo_url: string | null
           check_in_time: string
           check_out_photo_url: string | null
@@ -303,6 +304,7 @@ export type Database = {
           visit_purpose: string
         }
         Insert: {
+          car_registration?: string | null
           check_in_photo_url?: string | null
           check_in_time?: string
           check_out_photo_url?: string | null
@@ -320,6 +322,7 @@ export type Database = {
           visit_purpose: string
         }
         Update: {
+          car_registration?: string | null
           check_in_photo_url?: string | null
           check_in_time?: string
           check_out_photo_url?: string | null

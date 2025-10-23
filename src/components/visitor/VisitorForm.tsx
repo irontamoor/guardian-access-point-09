@@ -22,7 +22,8 @@ export function VisitorForm() {
     visitPurpose: '',
     hostName: '',
     phoneNumber: '',
-    notes: ''
+    notes: '',
+    carRegistration: ''
   });
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -113,6 +114,7 @@ export function VisitorForm() {
           host_name: visitorData.hostName || null,
           phone_number: visitorData.phoneNumber || null,
           notes: visitorData.notes || null,
+          car_registration: visitorData.carRegistration || null,
           status: 'in',
           check_in_photo_url: photoUrl,
         });
@@ -152,7 +154,8 @@ export function VisitorForm() {
         visitPurpose: '',
         hostName: '',
         phoneNumber: '',
-        notes: ''
+        notes: '',
+        carRegistration: ''
       });
       
       setCapturedPhoto(null);

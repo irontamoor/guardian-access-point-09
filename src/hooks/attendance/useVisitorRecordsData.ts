@@ -9,6 +9,7 @@ export interface VisitorRecord {
   visit_purpose: string;
   host_name?: string;
   phone_number?: string;
+  car_registration?: string;
   notes?: string;
   check_in_time: string;
   check_out_time?: string;
