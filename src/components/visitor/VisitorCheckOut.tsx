@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { LogOut, Search, Camera } from 'lucide-react';
+import { LogOut, Search, Camera, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SuccessBanner } from '@/components/ui/success-banner';
 import { CameraCapture } from '@/components/shared/CameraCapture';
 import { uploadPhoto } from '@/utils/photoUploadService';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export function VisitorCheckOut() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +21,8 @@ export function VisitorCheckOut() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [customCheckoutTime, setCustomCheckoutTime] = useState<string>('');
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -67,8 +70,9 @@ export function VisitorCheckOut() {
 
   const handleCameraCapture = async (photo: Blob) => {
     setCapturedPhoto(photo);
+    setCameraOpen(false);
     if (selectedVisitor) {
-      await handleCheckOut(selectedVisitor.id, selectedVisitor.name);
+      await handleCheckOut(selectedVisitor.id, selectedVisitor.name, photo);
     }
   };
 
@@ -79,22 +83,41 @@ export function VisitorCheckOut() {
       firstName: visitor.first_name,
       lastName: visitor.last_name
     });
+    
+    // Set default checkout time to now
+    const now = new Date();
+    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    setCustomCheckoutTime(localDateTime);
+    
+    setCheckoutDialogOpen(true);
+  };
+
+  const handleProceedToCamera = () => {
+    setCheckoutDialogOpen(false);
     setCameraOpen(true);
   };
 
-  const handleCheckOut = async (visitorId: string, visitorName: string) => {
+  const handleCheckOut = async (visitorId: string, visitorName: string, photoBlob?: Blob) => {
     setCheckingOut(true);
     try {
       let photoUrl = null;
-      if (capturedPhoto && selectedVisitor) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'visitors', selectedVisitor.firstName + selectedVisitor.lastName, 'check_out');
+      const photoToUpload = photoBlob || capturedPhoto;
+      if (photoToUpload && selectedVisitor) {
+        photoUrl = await uploadPhoto(photoToUpload, 'visitors', selectedVisitor.firstName + selectedVisitor.lastName, 'check_out');
       }
+
+      // Use custom checkout time or current time
+      const checkoutTime = customCheckoutTime 
+        ? new Date(customCheckoutTime).toISOString()
+        : new Date().toISOString();
 
       const { error } = await supabase
         .from('visitor_records')
         .update({
           status: 'out',
-          check_out_time: new Date().toISOString(),
+          check_out_time: checkoutTime,
           check_out_photo_url: photoUrl
         })
         .eq('id', visitorId);
@@ -115,6 +138,7 @@ export function VisitorCheckOut() {
       setSearchResults(prev => prev.filter(v => v.id !== visitorId));
       setCapturedPhoto(null);
       setSelectedVisitor(null);
+      setCustomCheckoutTime('');
     } catch (error: any) {
       console.error('Error checking out visitor:', error);
       toast({
@@ -205,11 +229,51 @@ export function VisitorCheckOut() {
       </CardContent>
     </Card>
 
-    <CameraCapture
-      open={cameraOpen}
-      onOpenChange={setCameraOpen}
-      onCapture={handleCameraCapture}
-    />
+      <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check Out: {selectedVisitor?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="checkout-time" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Checkout Time
+              </Label>
+              <Input
+                id="checkout-time"
+                type="datetime-local"
+                value={customCheckoutTime}
+                onChange={(e) => setCustomCheckoutTime(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Adjust the time if checking out retroactively
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCheckoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleProceedToCamera}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Capture Photo & Check Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
     </>
   );
 }
