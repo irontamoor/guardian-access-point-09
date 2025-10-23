@@ -53,11 +53,12 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   const handleCameraCapture = (photo: Blob) => {
     setCapturedPhoto(photo);
     setPhotoPreview(URL.createObjectURL(photo));
+    setCameraOpen(false);
     
     if (pendingAction === 'in') {
-      handleSignIn();
+      handleSignIn(photo);
     } else if (pendingAction === 'out') {
-      handleSignOut();
+      handleSignOut(photo);
     }
   };
 
@@ -71,7 +72,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
     setCameraOpen(true);
   };
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (photoBlob?: Blob) => {
     const isValid = validate({ studentCode });
     if (!isValid) {
       toast({
@@ -95,8 +96,9 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       }
 
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'students', student.user_code || studentCode, 'check_in');
+      const photo = photoBlob || capturedPhoto;
+      if (photo) {
+        photoUrl = await uploadPhoto(photo, 'students', student.user_code || studentCode, 'check_in');
       }
 
       const { error } = await supabase
@@ -140,7 +142,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
     }
   };
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (photoBlob?: Blob) => {
     const isValid = validate({ studentCode });
     if (!isValid) {
       toast({
@@ -164,8 +166,9 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       }
 
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'students', student.user_code || studentCode, 'check_out');
+      const photo = photoBlob || capturedPhoto;
+      if (photo) {
+        photoUrl = await uploadPhoto(photo, 'students', student.user_code || studentCode, 'check_out');
       }
 
       const signedInToday = await hasTodaySignIn(student.id);

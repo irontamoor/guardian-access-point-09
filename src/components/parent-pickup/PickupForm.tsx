@@ -53,8 +53,9 @@ export function PickupForm({ onBack }: PickupFormProps) {
   const handleCameraCapture = (photo: Blob) => {
     setCapturedPhoto(photo);
     setPhotoPreview(URL.createObjectURL(photo));
+    setCameraOpen(false);
     if (pendingAction) {
-      savePickupRecord(pendingAction);
+      savePickupRecord(pendingAction, photo);
     }
   };
 
@@ -98,7 +99,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
     setCameraOpen(true);
   };
 
-  const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
+  const savePickupRecord = async (action: 'pickup' | 'dropoff', photoBlob?: Blob) => {
     const isValid = validate({
       studentId: pickupData.studentId,
       parentGuardianName: pickupData.parentGuardianName,
@@ -117,8 +118,9 @@ export function PickupForm({ onBack }: PickupFormProps) {
     setIsLoading(true);
     try {
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'parent-pickup', pickupData.studentId, 'check_in');
+      const photo = photoBlob || capturedPhoto;
+      if (photo) {
+        photoUrl = await uploadPhoto(photo, 'parent-pickup', pickupData.studentId, 'check_in');
       }
 
       const { error } = await supabase

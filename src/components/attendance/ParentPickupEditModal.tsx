@@ -24,7 +24,8 @@ export function ParentPickupEditModal({ record, onClose, onSave }: ParentPickupE
       relationship: record.relationship,
       pickup_type: record.pickup_type,
       action_type: record.action_type,
-      notes: record.notes
+      notes: record.notes,
+      action_time: record.action_time
     } : {}
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +46,14 @@ export function ParentPickupEditModal({ record, onClose, onSave }: ParentPickupE
 
     setIsLoading(true);
     try {
-      await onSave(record.id, formData);
+      const updates = { ...formData };
+      
+      // Auto-set action time if not provided
+      if (!updates.action_time) {
+        updates.action_time = new Date().toISOString();
+      }
+      
+      await onSave(record.id, updates);
       toast({
         title: "Success",
         description: "Parent pickup record updated successfully",
@@ -70,7 +78,7 @@ export function ParentPickupEditModal({ record, onClose, onSave }: ParentPickupE
         <DialogHeader>
           <DialogTitle>Edit Parent Pickup Record</DialogTitle>
           <DialogDescription>
-            Update the pickup/drop-off information. Time and date cannot be modified.
+            Update pickup/drop-off information. Action time can be modified.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -133,6 +141,15 @@ export function ParentPickupEditModal({ record, onClose, onSave }: ParentPickupE
                 <SelectItem value="dropoff">Drop-off</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="action_time">Action Time</Label>
+            <Input
+              id="action_time"
+              type="datetime-local"
+              value={formData.action_time ? new Date(formData.action_time).toISOString().slice(0, 16) : ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, action_time: e.target.value ? new Date(e.target.value).toISOString() : '' }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>

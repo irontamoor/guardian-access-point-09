@@ -54,11 +54,12 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   const handleCameraCapture = (photo: Blob) => {
     setCapturedPhoto(photo);
     setPhotoPreview(URL.createObjectURL(photo));
+    setCameraOpen(false);
     
     if (pendingAction === 'in') {
-      handleSignIn();
+      handleSignIn(photo);
     } else if (pendingAction === 'out') {
-      handleSignOut();
+      handleSignOut(photo);
     }
   };
 
@@ -72,7 +73,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
     setCameraOpen(true);
   };
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (photoBlob?: Blob) => {
     const isValid = validate({ employeeCode });
     if (!isValid) {
       toast({
@@ -96,8 +97,9 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       }
 
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'staff', staff.user_code || employeeCode, 'check_in');
+      const photo = photoBlob || capturedPhoto;
+      if (photo) {
+        photoUrl = await uploadPhoto(photo, 'staff', staff.user_code || employeeCode, 'check_in');
       }
 
       const { error } = await supabase
@@ -141,7 +143,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
     }
   };
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (photoBlob?: Blob) => {
     const isValid = validate({ employeeCode });
     if (!isValid) {
       toast({
@@ -165,8 +167,9 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       }
 
       let photoUrl = null;
-      if (capturedPhoto) {
-        photoUrl = await uploadPhoto(capturedPhoto, 'staff', staff.user_code || employeeCode, 'check_out');
+      const photo = photoBlob || capturedPhoto;
+      if (photo) {
+        photoUrl = await uploadPhoto(photo, 'staff', staff.user_code || employeeCode, 'check_out');
       }
 
       const signedInToday = await hasTodaySignIn(staff.id);
