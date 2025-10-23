@@ -1,7 +1,7 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PickupInfoFieldsEnhancedProps {
   studentId: string;
@@ -24,16 +24,16 @@ export function PickupInfoFieldsEnhanced({
   onParentGuardianNameChange,
   loading,
   errors = {},
-  onBlur
+  onBlur,
 }: PickupInfoFieldsEnhancedProps) {
-  const getFieldError = (fieldName: string) => errors[fieldName] || { message: '', hasError: false };
+  const getFieldError = (fieldName: string) => errors[fieldName] || { message: "", hasError: false };
 
   return (
     <>
       {/* Student ID and Parent/Guardian Name on same row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="studentId" className={cn(getFieldError('studentId').hasError && "text-destructive")}>
+          <Label htmlFor="studentId" className={cn(getFieldError("studentId").hasError && "text-destructive")}>
             Student ID *
           </Label>
           <div className="relative">
@@ -42,23 +42,24 @@ export function PickupInfoFieldsEnhanced({
               placeholder="Enter student ID"
               value={studentId}
               onChange={(e) => onStudentIdChange(e.target.value)}
-              onBlur={() => onBlur?.('studentId')}
-              className={cn(
-                getFieldError('studentId').hasError && "border-destructive focus-visible:ring-destructive"
-              )}
+              onBlur={() => onBlur?.("studentId")}
+              className={cn(getFieldError("studentId").hasError && "border-destructive focus-visible:ring-destructive")}
               disabled={loading}
             />
-            {getFieldError('studentId').hasError && (
+            {getFieldError("studentId").hasError && (
               <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
             )}
           </div>
-          {getFieldError('studentId').hasError && (
-            <p className="text-sm text-destructive">{getFieldError('studentId').message}</p>
+          {getFieldError("studentId").hasError && (
+            <p className="text-sm text-destructive">{getFieldError("studentId").message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="parentGuardianName" className={cn(getFieldError('parentGuardianName').hasError && "text-destructive")}>
+          <Label
+            htmlFor="parentGuardianName"
+            className={cn(getFieldError("parentGuardianName").hasError && "text-destructive")}
+          >
             Parent/Guardian Name *
           </Label>
           <div className="relative">
@@ -67,18 +68,18 @@ export function PickupInfoFieldsEnhanced({
               placeholder="Enter parent/guardian name"
               value={parentGuardianName}
               onChange={(e) => onParentGuardianNameChange(e.target.value)}
-              onBlur={() => onBlur?.('parentGuardianName')}
+              onBlur={() => onBlur?.("parentGuardianName")}
               className={cn(
-                getFieldError('parentGuardianName').hasError && "border-destructive focus-visible:ring-destructive"
+                getFieldError("parentGuardianName").hasError && "border-destructive focus-visible:ring-destructive",
               )}
               disabled={loading}
             />
-            {getFieldError('parentGuardianName').hasError && (
+            {getFieldError("parentGuardianName").hasError && (
               <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
             )}
           </div>
-          {getFieldError('parentGuardianName').hasError && (
-            <p className="text-sm text-destructive">{getFieldError('parentGuardianName').message}</p>
+          {getFieldError("parentGuardianName").hasError && (
+            <p className="text-sm text-destructive">{getFieldError("parentGuardianName").message}</p>
           )}
         </div>
       </div>
@@ -88,7 +89,7 @@ export function PickupInfoFieldsEnhanced({
         <Label htmlFor="studentName">Student Name</Label>
         <Input
           id="studentName"
-          placeholder="Enter student name (optional)"
+          placeholder="Enter student name"
           value={studentName}
           onChange={(e) => onStudentNameChange(e.target.value)}
           disabled={loading}
