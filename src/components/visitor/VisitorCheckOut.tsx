@@ -273,6 +273,8 @@ export function VisitorCheckOut() {
         open={cameraOpen}
         onOpenChange={setCameraOpen}
         onCapture={handleCameraCapture}
+        autoCapture={true}
+        autoCaptureDelay={3000}
       />
     </>
   );

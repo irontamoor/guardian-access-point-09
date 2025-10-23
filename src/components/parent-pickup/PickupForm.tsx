@@ -263,6 +263,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
         open={cameraOpen}
         onOpenChange={setCameraOpen}
         onCapture={handleCameraCapture}
+        autoCapture={true}
+        autoCaptureDelay={3000}
       />
     </>
   );

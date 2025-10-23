@@ -12,15 +12,18 @@ interface CameraCaptureProps {
   onCapture: (photoBlob: Blob) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  autoCapture?: boolean;
+  autoCaptureDelay?: number;
 }
 
-export function CameraCapture({ onCapture, open, onOpenChange }: CameraCaptureProps) {
+export function CameraCapture({ onCapture, open, onOpenChange, autoCapture = false, autoCaptureDelay = 3000 }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const startCamera = async () => {
     try {
@@ -98,6 +101,27 @@ export function CameraCapture({ onCapture, open, onOpenChange }: CameraCapturePr
     return () => stopCamera();
   }, [open, facingMode]);
 
+  useEffect(() => {
+    if (open && !capturedPhoto && stream && autoCapture && videoRef.current?.readyState === 4) {
+      const delay = autoCaptureDelay;
+      let countdownValue = Math.ceil(delay / 1000);
+      setCountdown(countdownValue);
+
+      const countdownInterval = setInterval(() => {
+        countdownValue -= 1;
+        if (countdownValue <= 0) {
+          clearInterval(countdownInterval);
+          setCountdown(null);
+          capturePhoto();
+        } else {
+          setCountdown(countdownValue);
+        }
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    }
+  }, [open, capturedPhoto, stream, autoCapture, autoCaptureDelay, videoRef.current?.readyState]);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
@@ -123,6 +147,13 @@ export function CameraCapture({ onCapture, open, onOpenChange }: CameraCapturePr
                 className="w-full"
               />
               <canvas ref={canvasRef} className="hidden" />
+              {countdown !== null && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="text-white text-8xl font-bold animate-pulse">
+                    {countdown}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -144,10 +175,12 @@ export function CameraCapture({ onCapture, open, onOpenChange }: CameraCapturePr
                   <RotateCw className="h-4 w-4 mr-2" />
                   Switch
                 </Button>
-                <Button onClick={capturePhoto} className="bg-blue-600 hover:bg-blue-700">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Capture
-                </Button>
+                {!autoCapture && (
+                  <Button onClick={capturePhoto} className="bg-blue-600 hover:bg-blue-700">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Capture
+                  </Button>
+                )}
               </>
             )}
             <Button onClick={handleClose} variant="outline">

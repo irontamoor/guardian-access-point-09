@@ -275,6 +275,8 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
         open={cameraOpen}
         onOpenChange={setCameraOpen}
         onCapture={handleCameraCapture}
+        autoCapture={true}
+        autoCaptureDelay={3000}
       />
     </>
   );

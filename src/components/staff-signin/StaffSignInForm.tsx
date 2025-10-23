@@ -276,6 +276,8 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
         open={cameraOpen}
         onOpenChange={setCameraOpen}
         onCapture={handleCameraCapture}
+        autoCapture={true}
+        autoCaptureDelay={3000}
       />
     </>
   );
