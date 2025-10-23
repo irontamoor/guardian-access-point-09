@@ -108,14 +108,6 @@ function App() {
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">Parent Pickup</h3>
                     <p className="text-gray-600 text-base leading-relaxed">Student pickup and drop-off tracking</p>
                   </div>
-
-                  <div onClick={() => setCurrentView('pickup-status')} className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                      <span className="text-2xl text-white">📋</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Pickup Status</h3>
-                    <p className="text-gray-600 text-base leading-relaxed">View live pickup approval status</p>
-                  </div>
                 </div>
               </div>
             </div>}
@@ -138,8 +130,6 @@ function App() {
           {currentView === 'attendance-management' && <AttendanceManagement />}
           
           {currentView === 'reader-dashboard' && <ReaderDashboard />}
-
-          {currentView === 'pickup-status' && <PublicPickupDashboard onBack={() => setCurrentView('home')} />}
         </div>
       </main>
     </div>;
