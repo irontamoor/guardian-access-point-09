@@ -28,13 +28,13 @@ export function ParentPickupHeader({ onBack }: ParentPickupHeaderProps) {
             <CardTitle className="text-3xl font-bold text-gray-900">Parent Pickup & Drop-off</CardTitle>
           </div>
           <Button 
-            variant="ghost" 
-            size="icon"
             onClick={() => setShowHelp(true)}
-            className="hover:bg-orange-100 text-orange-600"
-            title="How to use this page"
+            className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-xl transition-all flex items-center gap-2 px-4 py-2"
+            title="Learn how to use parent pickup"
           >
-            <HelpCircle className="h-6 w-6" />
+            <HelpCircle className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">Need Help?</span>
+            <span className="sm:hidden font-semibold">Help</span>
           </Button>
         </div>
         <p className="text-gray-600">Secure student pickup and drop-off management</p>
