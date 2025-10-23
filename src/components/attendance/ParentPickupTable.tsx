@@ -10,6 +10,8 @@ import { AttendanceFilters } from './AttendanceFilters';
 import { AttendanceSearch } from '../AttendanceSearch';
 import { ParentPickupEditModal } from './ParentPickupEditModal';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoViewer } from '@/components/shared/PhotoViewer';
+import { Camera } from 'lucide-react';
 
 interface ParentPickupTableProps {
   userRole: string;
@@ -21,6 +23,7 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filteredRecords, setFilteredRecords] = useState<ParentPickupRecord[]>(records);
   const [editingRecord, setEditingRecord] = useState<ParentPickupRecord | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<{ photo: string | null; title: string } | null>(null);
   const { toast } = useToast();
 
   // Sync filtered records when records change
@@ -150,6 +153,7 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
               <TableHead>Approved</TableHead>
               <TableHead>Action Time</TableHead>
               <TableHead>Notes</TableHead>
+              <TableHead>Photo</TableHead>
               <TableHead>Date</TableHead>
               {userRole !== 'reader' && <TableHead>Actions</TableHead>}
             </TableRow>
@@ -157,14 +161,14 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 10 : 12} className="text-center py-8">
+                <TableCell colSpan={userRole === 'reader' ? 11 : 13} className="text-center py-8">
                   <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
                   Loading parent pickup records...
                 </TableCell>
               </TableRow>
             ) : filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 10 : 12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === 'reader' ? 11 : 13} className="text-center py-8 text-muted-foreground">
                   No parent pickup records found
                 </TableCell>
               </TableRow>
@@ -224,6 +228,25 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                   </TableCell>
                   <TableCell>{formatTime(record.action_time)}</TableCell>
                   <TableCell>{record.notes || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {record.photo_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewingPhoto({
+                            photo: record.photo_url,
+                            title: `${record.parent_guardian_name} - ${record.student_name}`
+                          })}
+                        >
+                          <Camera className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No photo</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{formatDate(record.created_at)}</TableCell>
                   {userRole !== 'reader' && (
                     <TableCell>
@@ -257,6 +280,15 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
         onClose={() => setEditingRecord(null)}
         onSave={handleEdit}
       />
+
+      {viewingPhoto && (
+        <PhotoViewer
+          photoUrl={viewingPhoto.photo}
+          title={viewingPhoto.title}
+          isOpen={!!viewingPhoto}
+          onClose={() => setViewingPhoto(null)}
+        />
+      )}
     </div>
   );
 }

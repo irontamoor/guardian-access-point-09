@@ -10,6 +10,7 @@ export interface ParentPickupRecord {
   pickup_type?: string;
   action_type: 'pickup' | 'dropoff';
   notes?: string;
+  photo_url?: string | null;
   action_time: string;
   approved: boolean;
   created_at: string;

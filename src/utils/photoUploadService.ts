@@ -21,11 +21,14 @@ export const uploadPhoto = async (
 
     if (error) throw error;
 
-    const { data: urlData } = supabase.storage
+    // Create signed URL for private bucket (valid for 1 year)
+    const { data: signedUrlData, error: urlError } = await supabase.storage
       .from('attendance-photos')
-      .getPublicUrl(data.path);
+      .createSignedUrl(data.path, 31536000); // 1 year in seconds
 
-    return urlData.publicUrl;
+    if (urlError) throw urlError;
+
+    return signedUrlData.signedUrl;
   } catch (error) {
     console.error('Photo upload error:', error);
     throw new Error('Failed to upload photo');

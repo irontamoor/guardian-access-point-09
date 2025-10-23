@@ -366,6 +366,7 @@ export type Database = {
           visit_purpose: string
         }[]
       }
+      is_backend_user: { Args: { _user_id: string }; Returns: boolean }
       verify_admin_credentials: {
         Args: { p_admin_id: string; p_password: string }
         Returns: {

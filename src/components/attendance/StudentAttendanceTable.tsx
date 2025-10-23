@@ -9,6 +9,8 @@ import { AttendanceFilters } from './AttendanceFilters';
 import { AttendanceSearch } from '../AttendanceSearch';
 import { StudentAttendanceEditModal } from './StudentAttendanceEditModal';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoViewer } from '@/components/shared/PhotoViewer';
+import { Camera } from 'lucide-react';
 
 interface StudentAttendanceTableProps {
   userRole: string;
@@ -20,6 +22,7 @@ export function StudentAttendanceTable({ userRole }: StudentAttendanceTableProps
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filteredRecords, setFilteredRecords] = useState<StudentAttendanceRecord[]>(records);
   const [editingRecord, setEditingRecord] = useState<StudentAttendanceRecord | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<{ checkIn: string | null; checkOut: string | null; title: string } | null>(null);
   const { toast } = useToast();
 
   // Sync filtered records when records change
@@ -146,6 +149,7 @@ export function StudentAttendanceTable({ userRole }: StudentAttendanceTableProps
               <TableHead>Check-in Time</TableHead>
               <TableHead>Check-out Time</TableHead>
               <TableHead>Notes</TableHead>
+              <TableHead>Photos</TableHead>
               <TableHead>Date</TableHead>
               {userRole !== 'reader' && <TableHead>Actions</TableHead>}
             </TableRow>
@@ -153,14 +157,14 @@ export function StudentAttendanceTable({ userRole }: StudentAttendanceTableProps
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 7 : 9} className="text-center py-8">
+                <TableCell colSpan={userRole === 'reader' ? 8 : 10} className="text-center py-8">
                   <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
                   Loading student attendance records...
                 </TableCell>
               </TableRow>
             ) : filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 7 : 9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === 'reader' ? 8 : 10} className="text-center py-8 text-muted-foreground">
                   No student attendance records found
                 </TableCell>
               </TableRow>
@@ -185,6 +189,26 @@ export function StudentAttendanceTable({ userRole }: StudentAttendanceTableProps
                   <TableCell>{formatTime(record.check_in_time)}</TableCell>
                   <TableCell>{formatTime(record.check_out_time)}</TableCell>
                   <TableCell>{record.notes || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {record.check_in_photo_url || record.check_out_photo_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewingPhoto({
+                            checkIn: record.check_in_photo_url,
+                            checkOut: record.check_out_photo_url,
+                            title: `${record.student_name} Photos`
+                          })}
+                        >
+                          <Camera className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No photos</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{formatDate(record.created_at)}</TableCell>
                   {userRole !== 'reader' && (
                     <TableCell>
@@ -218,6 +242,16 @@ export function StudentAttendanceTable({ userRole }: StudentAttendanceTableProps
         onClose={() => setEditingRecord(null)}
         onSave={handleEdit}
       />
+
+      {viewingPhoto && (
+        <PhotoViewer
+          photoUrl={viewingPhoto.checkIn}
+          checkOutPhotoUrl={viewingPhoto.checkOut}
+          title={viewingPhoto.title}
+          isOpen={!!viewingPhoto}
+          onClose={() => setViewingPhoto(null)}
+        />
+      )}
     </div>
   );
 }

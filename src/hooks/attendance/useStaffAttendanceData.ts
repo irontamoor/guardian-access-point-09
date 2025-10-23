@@ -8,6 +8,8 @@ export interface StaffAttendanceRecord {
   status: 'in' | 'out';
   check_in_time?: string;
   check_out_time?: string;
+  check_in_photo_url?: string | null;
+  check_out_photo_url?: string | null;
   notes?: string;
   created_at: string;
   updated_at: string;

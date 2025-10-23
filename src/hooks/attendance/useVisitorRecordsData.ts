@@ -12,6 +12,8 @@ export interface VisitorRecord {
   notes?: string;
   check_in_time: string;
   check_out_time?: string;
+  check_in_photo_url?: string | null;
+  check_out_photo_url?: string | null;
   status: 'in' | 'out';
   created_at: string;
   updated_at: string;
