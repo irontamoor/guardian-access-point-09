@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -9,6 +10,8 @@ import { StudentCodeInput } from './StudentCodeInput';
 import { NotesInput } from './NotesInput';
 import { SignInButtons } from './SignInButtons';
 import { SuccessBanner } from '@/components/ui/success-banner';
+import { CameraCapture } from '@/components/shared/CameraCapture';
+import { uploadPhoto } from '@/utils/photoUploadService';
 
 interface StudentSignInFormProps {
   onSuccess?: () => void;
@@ -19,6 +22,10 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   const [notes, setNotes] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<'in' | 'out' | null>(null);
   
   const {
     loading, setLoading,
@@ -41,10 +48,27 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
 
   const handleFieldBlur = (field: string) => {
     setFieldTouched(field);
-    if (field === 'studentCode') {
-      const isValid = validate({ studentCode });
-      // Don't show validation errors during blur, just mark as touched
+  };
+
+  const handleCameraCapture = (photo: Blob) => {
+    setCapturedPhoto(photo);
+    setPhotoPreview(URL.createObjectURL(photo));
+    
+    if (pendingAction === 'in') {
+      handleSignIn();
+    } else if (pendingAction === 'out') {
+      handleSignOut();
     }
+  };
+
+  const handleSignInClick = () => {
+    setPendingAction('in');
+    setCameraOpen(true);
+  };
+
+  const handleSignOutClick = () => {
+    setPendingAction('out');
+    setCameraOpen(true);
   };
 
   const handleSignIn = async () => {
@@ -70,6 +94,11 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
         return;
       }
 
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'students', student.user_code || studentCode, 'check_in');
+      }
+
       const { error } = await supabase
         .from('student_attendance')
         .insert({
@@ -77,6 +106,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
           student_name: `${student.first_name} ${student.last_name}`,
           status: 'in',
           check_in_time: new Date().toISOString(),
+          check_in_photo_url: photoUrl,
           notes: notes || null,
         });
 
@@ -94,6 +124,9 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       
       setStudentCode('');
       setNotes('');
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
+      setPendingAction(null);
       clearErrors();
       onSuccess?.();
     } catch (err: any) {
@@ -130,6 +163,11 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
         return;
       }
 
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'students', student.user_code || studentCode, 'check_out');
+      }
+
       const signedInToday = await hasTodaySignIn(student.id);
       const { error } = await supabase
         .from('student_attendance')
@@ -138,6 +176,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
           student_name: `${student.first_name} ${student.last_name}`,
           status: 'out',
           check_out_time: new Date().toISOString(),
+          check_out_photo_url: photoUrl,
           notes: notes || null,
         });
 
@@ -166,6 +205,9 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
       
       setStudentCode('');
       setNotes('');
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
+      setPendingAction(null);
       clearErrors();
       onSuccess?.();
     } catch (err: any) {
@@ -201,12 +243,36 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
           disabled={loading}
           quickReasons={quickReasons}
         />
+        
+        {photoPreview && (
+          <div className="relative">
+            <img src={photoPreview} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="absolute top-2 right-2"
+              onClick={() => {
+                setCapturedPhoto(null);
+                setPhotoPreview(null);
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        )}
+
         <SignInButtons
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
+          onSignIn={handleSignInClick}
+          onSignOut={handleSignOutClick}
           loading={loading}
         />
       </CardContent>
+
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
     </>
   );
 }

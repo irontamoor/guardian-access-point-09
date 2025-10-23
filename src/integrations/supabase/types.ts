@@ -38,6 +38,7 @@ export type Database = {
           id: string
           notes: string | null
           parent_guardian_name: string
+          photo_url: string | null
           pickup_type: string | null
           relationship: string
           student_id: string
@@ -52,6 +53,7 @@ export type Database = {
           id?: string
           notes?: string | null
           parent_guardian_name: string
+          photo_url?: string | null
           pickup_type?: string | null
           relationship: string
           student_id: string
@@ -66,6 +68,7 @@ export type Database = {
           id?: string
           notes?: string | null
           parent_guardian_name?: string
+          photo_url?: string | null
           pickup_type?: string | null
           relationship?: string
           student_id?: string
@@ -112,7 +115,9 @@ export type Database = {
       }
       staff_attendance: {
         Row: {
+          check_in_photo_url: string | null
           check_in_time: string | null
+          check_out_photo_url: string | null
           check_out_time: string | null
           created_at: string
           employee_id: string
@@ -123,7 +128,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          check_in_photo_url?: string | null
           check_in_time?: string | null
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           employee_id: string
@@ -134,7 +141,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          check_in_photo_url?: string | null
           check_in_time?: string | null
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           employee_id?: string
@@ -148,7 +157,9 @@ export type Database = {
       }
       student_attendance: {
         Row: {
+          check_in_photo_url: string | null
           check_in_time: string | null
+          check_out_photo_url: string | null
           check_out_time: string | null
           created_at: string
           id: string
@@ -159,7 +170,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          check_in_photo_url?: string | null
           check_in_time?: string | null
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           id?: string
@@ -170,7 +183,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          check_in_photo_url?: string | null
           check_in_time?: string | null
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           id?: string
@@ -262,7 +277,9 @@ export type Database = {
       }
       visitor_records: {
         Row: {
+          check_in_photo_url: string | null
           check_in_time: string
+          check_out_photo_url: string | null
           check_out_time: string | null
           created_at: string
           first_name: string
@@ -277,7 +294,9 @@ export type Database = {
           visit_purpose: string
         }
         Insert: {
+          check_in_photo_url?: string | null
           check_in_time?: string
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           first_name: string
@@ -292,7 +311,9 @@ export type Database = {
           visit_purpose: string
         }
         Update: {
+          check_in_photo_url?: string | null
           check_in_time?: string
+          check_out_photo_url?: string | null
           check_out_time?: string | null
           created_at?: string
           first_name?: string

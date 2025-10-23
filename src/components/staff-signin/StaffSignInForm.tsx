@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -9,6 +11,8 @@ import { EmployeeCodeInput } from './EmployeeCodeInput';
 import { StaffNotesInput } from './StaffNotesInput';
 import { StaffSignInButtons } from './StaffSignInButtons';
 import { SuccessBanner } from '@/components/ui/success-banner';
+import { CameraCapture } from '@/components/shared/CameraCapture';
+import { uploadPhoto } from '@/utils/photoUploadService';
 
 interface StaffSignInFormProps {
   onSuccess?: () => void;
@@ -19,6 +23,10 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   const [notes, setNotes] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<'in' | 'out' | null>(null);
   
   const {
     loading, setLoading,
@@ -41,6 +49,27 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
 
   const handleFieldBlur = (field: string) => {
     setFieldTouched(field);
+  };
+
+  const handleCameraCapture = (photo: Blob) => {
+    setCapturedPhoto(photo);
+    setPhotoPreview(URL.createObjectURL(photo));
+    
+    if (pendingAction === 'in') {
+      handleSignIn();
+    } else if (pendingAction === 'out') {
+      handleSignOut();
+    }
+  };
+
+  const handleSignInClick = () => {
+    setPendingAction('in');
+    setCameraOpen(true);
+  };
+
+  const handleSignOutClick = () => {
+    setPendingAction('out');
+    setCameraOpen(true);
   };
 
   const handleSignIn = async () => {
@@ -66,6 +95,11 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
         return;
       }
 
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'staff', staff.user_code || employeeCode, 'check_in');
+      }
+
       const { error } = await supabase
         .from('staff_attendance')
         .insert({
@@ -73,6 +107,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
           employee_name: `${staff.first_name} ${staff.last_name}`,
           status: 'in',
           check_in_time: new Date().toISOString(),
+          check_in_photo_url: photoUrl,
           notes: notes || null,
         });
 
@@ -90,6 +125,9 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       
       setEmployeeCode('');
       setNotes('');
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
+      setPendingAction(null);
       clearErrors();
       onSuccess?.();
     } catch (err: any) {
@@ -126,6 +164,11 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
         return;
       }
 
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'staff', staff.user_code || employeeCode, 'check_out');
+      }
+
       const signedInToday = await hasTodaySignIn(staff.id);
       const { error } = await supabase
         .from('staff_attendance')
@@ -134,6 +177,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
           employee_name: `${staff.first_name} ${staff.last_name}`,
           status: 'out',
           check_out_time: new Date().toISOString(),
+          check_out_photo_url: photoUrl,
           notes: notes || null,
         });
 
@@ -162,6 +206,9 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
       
       setEmployeeCode('');
       setNotes('');
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
+      setPendingAction(null);
       clearErrors();
       onSuccess?.();
     } catch (err: any) {
@@ -197,12 +244,36 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
           disabled={loading}
           quickReasons={quickReasons}
         />
+        
+        {photoPreview && (
+          <div className="relative">
+            <img src={photoPreview} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="absolute top-2 right-2"
+              onClick={() => {
+                setCapturedPhoto(null);
+                setPhotoPreview(null);
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        )}
+
         <StaffSignInButtons
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
+          onSignIn={handleSignInClick}
+          onSignOut={handleSignOutClick}
           loading={loading}
         />
       </CardContent>
+
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
     </>
   );
 }

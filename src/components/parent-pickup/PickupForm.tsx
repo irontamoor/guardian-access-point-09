@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,8 @@ import { RelationshipSelectEnhanced } from './RelationshipSelectEnhanced';
 import { PickupTypeSelect } from './PickupTypeSelect';
 import { PickupNotesInput } from './PickupNotesInput';
 import { SuccessBanner } from '@/components/ui/success-banner';
+import { CameraCapture } from '@/components/shared/CameraCapture';
+import { uploadPhoto } from '@/utils/photoUploadService';
 
 interface PickupFormProps {
   onBack: () => void;
@@ -28,6 +29,10 @@ export function PickupForm({ onBack }: PickupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<'pickup' | 'dropoff' | null>(null);
   
   const { toast } = useToast();
 
@@ -43,6 +48,54 @@ export function PickupForm({ onBack }: PickupFormProps) {
 
   const handleFieldBlur = (field: string) => {
     setFieldTouched(field);
+  };
+
+  const handleCameraCapture = (photo: Blob) => {
+    setCapturedPhoto(photo);
+    setPhotoPreview(URL.createObjectURL(photo));
+    if (pendingAction) {
+      savePickupRecord(pendingAction);
+    }
+  };
+
+  const handlePickupClick = () => {
+    const isValid = validate({
+      studentId: pickupData.studentId,
+      parentGuardianName: pickupData.parentGuardianName,
+      relationship: pickupData.relationship,
+    });
+
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setPendingAction('pickup');
+    setCameraOpen(true);
+  };
+
+  const handleDropoffClick = () => {
+    const isValid = validate({
+      studentId: pickupData.studentId,
+      parentGuardianName: pickupData.parentGuardianName,
+      relationship: pickupData.relationship,
+    });
+
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setPendingAction('dropoff');
+    setCameraOpen(true);
   };
 
   const savePickupRecord = async (action: 'pickup' | 'dropoff') => {
@@ -63,6 +116,11 @@ export function PickupForm({ onBack }: PickupFormProps) {
 
     setIsLoading(true);
     try {
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'parent-pickup', pickupData.studentId, 'check_in');
+      }
+
       const { error } = await supabase
         .from('parent_pickup_records')
         .insert({
@@ -72,7 +130,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
           relationship: pickupData.relationship,
           pickup_type: pickupData.pickupType,
           action_type: action,
-          notes: pickupData.notes || null
+          notes: pickupData.notes || null,
+          photo_url: photoUrl
         });
 
       if (error) {
@@ -102,6 +161,9 @@ export function PickupForm({ onBack }: PickupFormProps) {
         notes: ''
       });
       
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
+      setPendingAction(null);
       clearErrors();
 
     } catch (error: any) {
@@ -115,9 +177,6 @@ export function PickupForm({ onBack }: PickupFormProps) {
       setIsLoading(false);
     }
   };
-
-  const handlePickup = () => savePickupRecord('pickup');
-  const handleDropoff = () => savePickupRecord('dropoff');
 
   return (
     <>
@@ -161,9 +220,26 @@ export function PickupForm({ onBack }: PickupFormProps) {
           onChange={(value) => handleInputChange('notes', value)}
         />
 
+        {photoPreview && (
+          <div className="relative">
+            <img src={photoPreview} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="absolute top-2 right-2"
+              onClick={() => {
+                setCapturedPhoto(null);
+                setPhotoPreview(null);
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        )}
+
         <div className="flex space-x-3 pt-4">
           <Button 
-            onClick={handlePickup}
+            onClick={handlePickupClick}
             disabled={isLoading}
             className="flex-1 bg-red-600 hover:bg-red-700"
           >
@@ -171,7 +247,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
             {isLoading ? 'Recording...' : 'Record Pickup'}
           </Button>
           <Button 
-            onClick={handleDropoff}
+            onClick={handleDropoffClick}
             disabled={isLoading}
             className="flex-1 bg-green-600 hover:bg-green-700"
           >
@@ -180,6 +256,12 @@ export function PickupForm({ onBack }: PickupFormProps) {
           </Button>
         </div>
       </CardContent>
+
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
     </>
   );
 }

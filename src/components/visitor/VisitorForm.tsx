@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptionsJson } from '@/hooks/useSignInOptionsJson';
@@ -10,6 +11,8 @@ import { VisitorFormActions } from './VisitorFormActions';
 import { SuccessBanner } from '@/components/ui/success-banner';
 import { BadgePrintPreview } from './BadgePrintPreview';
 import { BadgeTemplate } from './BadgeTemplate';
+import { CameraCapture } from '@/components/shared/CameraCapture';
+import { uploadPhoto } from '@/utils/photoUploadService';
 
 export function VisitorForm() {
   const [visitorData, setVisitorData] = useState({
@@ -26,6 +29,9 @@ export function VisitorForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [registeredVisitorData, setRegisteredVisitorData] = useState<any>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { options: visitTypes, loading: visitTypesLoading } = useSignInOptionsJson("both", "visit_type");
@@ -43,6 +49,32 @@ export function VisitorForm() {
 
   const handleFieldBlur = (field: string) => {
     setFieldTouched(field);
+  };
+
+  const handleCameraCapture = (photo: Blob) => {
+    setCapturedPhoto(photo);
+    setPhotoPreview(URL.createObjectURL(photo));
+    handleRegisterVisitor();
+  };
+
+  const handleRegisterClick = () => {
+    const isValid = validate({
+      firstName: visitorData.firstName,
+      lastName: visitorData.lastName,
+      visitPurpose: visitorData.visitPurpose,
+      hostName: visitorData.hostName,
+    });
+
+    if (!isValid) {
+      toast({
+        title: "Please fix the errors below",
+        description: "Fill in all required fields correctly",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCameraOpen(true);
   };
 
   const handleRegisterVisitor = async () => {
@@ -64,6 +96,11 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
+      let photoUrl = null;
+      if (capturedPhoto) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'visitors', visitorData.firstName + visitorData.lastName, 'check_in');
+      }
+
       const { error: attendanceError } = await supabase
         .from('visitor_records')
         .insert({
@@ -75,6 +112,7 @@ export function VisitorForm() {
           phone_number: visitorData.phoneNumber || null,
           notes: visitorData.notes || null,
           status: 'in',
+          check_in_photo_url: photoUrl,
         });
 
       if (attendanceError) {
@@ -115,6 +153,8 @@ export function VisitorForm() {
         notes: ''
       });
       
+      setCapturedPhoto(null);
+      setPhotoPreview(null);
       clearErrors();
     } catch (error: any) {
       console.error('Error registering visitor:', error);
@@ -158,12 +198,36 @@ export function VisitorForm() {
             }}
             onBlur={handleFieldBlur}
           />
+          
+          {photoPreview && (
+            <div className="relative">
+              <img src={photoPreview} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
+              <Button
+                size="sm"
+                variant="outline"
+                className="absolute top-2 right-2"
+                onClick={() => {
+                  setCapturedPhoto(null);
+                  setPhotoPreview(null);
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+
           <VisitorFormActions
-            onRegister={handleRegisterVisitor}
+            onRegister={handleRegisterClick}
             loading={loading}
           />
         </CardContent>
       </Card>
+
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
 
       {/* Hidden badge template for printing */}
       {registeredVisitorData && (

@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { LogOut, Search } from 'lucide-react';
+import { LogOut, Search, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SuccessBanner } from '@/components/ui/success-banner';
+import { CameraCapture } from '@/components/shared/CameraCapture';
+import { uploadPhoto } from '@/utils/photoUploadService';
 
 export function VisitorCheckOut() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +17,9 @@ export function VisitorCheckOut() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -60,14 +65,37 @@ export function VisitorCheckOut() {
     }
   };
 
+  const handleCameraCapture = async (photo: Blob) => {
+    setCapturedPhoto(photo);
+    if (selectedVisitor) {
+      await handleCheckOut(selectedVisitor.id, selectedVisitor.name);
+    }
+  };
+
+  const handleCheckOutClick = (visitor: any) => {
+    setSelectedVisitor({
+      id: visitor.id,
+      name: `${visitor.first_name} ${visitor.last_name}`,
+      firstName: visitor.first_name,
+      lastName: visitor.last_name
+    });
+    setCameraOpen(true);
+  };
+
   const handleCheckOut = async (visitorId: string, visitorName: string) => {
     setCheckingOut(true);
     try {
+      let photoUrl = null;
+      if (capturedPhoto && selectedVisitor) {
+        photoUrl = await uploadPhoto(capturedPhoto, 'visitors', selectedVisitor.firstName + selectedVisitor.lastName, 'check_out');
+      }
+
       const { error } = await supabase
         .from('visitor_records')
         .update({
           status: 'out',
-          check_out_time: new Date().toISOString()
+          check_out_time: new Date().toISOString(),
+          check_out_photo_url: photoUrl
         })
         .eq('id', visitorId);
 
@@ -85,6 +113,8 @@ export function VisitorCheckOut() {
 
       // Remove from search results
       setSearchResults(prev => prev.filter(v => v.id !== visitorId));
+      setCapturedPhoto(null);
+      setSelectedVisitor(null);
     } catch (error: any) {
       console.error('Error checking out visitor:', error);
       toast({
@@ -160,11 +190,11 @@ export function VisitorCheckOut() {
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => handleCheckOut(visitor.id, `${visitor.first_name} ${visitor.last_name}`)}
+                    onClick={() => handleCheckOutClick(visitor)}
                     disabled={checkingOut}
                     className="bg-orange-600 hover:bg-orange-700"
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
+                    <Camera className="h-4 w-4 mr-2" />
                     Check Out
                   </Button>
                 </div>
@@ -174,6 +204,12 @@ export function VisitorCheckOut() {
         )}
       </CardContent>
     </Card>
+
+    <CameraCapture
+      open={cameraOpen}
+      onOpenChange={setCameraOpen}
+      onCapture={handleCameraCapture}
+    />
     </>
   );
 }
