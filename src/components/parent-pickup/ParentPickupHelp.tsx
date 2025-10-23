@@ -140,8 +140,7 @@ export function ParentPickupHelp({ open, onOpenChange }: ParentPickupHelpProps) 
             <h3 className="font-semibold mb-2">Drop-off Process</h3>
             <p className="text-sm text-gray-700">
               For drop-offs, follow the same process. Enter the student information and 
-              select "Drop-off" as the action type. Office approval may still be required 
-              for security purposes.
+              select &quot;Drop-off&quot; as the action type.
             </p>
           </div>
 
