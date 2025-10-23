@@ -122,19 +122,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Documentation Link */}
-              <div className="text-center">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setCurrentView('documentation');
-                    window.history.pushState({}, '', '/docs');
-                  }}
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  View Documentation
-                </Button>
-              </div>
             </div>}
 
           {currentView === 'staff-signin' && <StaffSignIn onBack={() => setCurrentView('home')} />}
