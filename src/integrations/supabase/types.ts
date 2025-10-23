@@ -29,6 +29,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          notify_parent_pickup: boolean | null
+          notify_staff_check_in: boolean | null
+          notify_staff_check_out: boolean | null
+          notify_student_check_in: boolean | null
+          notify_student_check_out: boolean | null
+          notify_visitor_check_in: boolean | null
+          notify_visitor_check_out: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notify_parent_pickup?: boolean | null
+          notify_staff_check_in?: boolean | null
+          notify_staff_check_out?: boolean | null
+          notify_student_check_in?: boolean | null
+          notify_student_check_out?: boolean | null
+          notify_visitor_check_in?: boolean | null
+          notify_visitor_check_out?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notify_parent_pickup?: boolean | null
+          notify_staff_check_in?: boolean | null
+          notify_staff_check_out?: boolean | null
+          notify_student_check_in?: boolean | null
+          notify_student_check_out?: boolean | null
+          notify_visitor_check_in?: boolean | null
+          notify_visitor_check_out?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "system_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_pickup_records: {
         Row: {
           action_time: string

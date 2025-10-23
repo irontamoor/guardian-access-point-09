@@ -7,16 +7,22 @@ import Dashboard from './Dashboard';
 import UserManagement from './UserManagement';
 import AttendanceManagement from './AttendanceManagement';
 import SystemSettings from './SystemSettings';
+import { useSessionRefresh } from '@/hooks/useSessionRefresh';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 interface AdminDashboardTabsProps {
   onBack: () => void;
   onLogout: () => void;
-  adminData: { username?: string; role: string; first_name?: string; [key: string]: any };
+  adminData: { username?: string; role: string; first_name?: string; id?: string; [key: string]: any };
 }
 
 const AdminDashboardTabs = ({ onBack, onLogout, adminData }: AdminDashboardTabsProps) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const isReader = adminData.role === 'reader';
+  
+  // Keep session alive and enable notifications
+  useSessionRefresh(true);
+  useRealtimeNotifications(adminData.id || null, true);
 
   return (
     <div className="min-h-screen bg-gray-50">

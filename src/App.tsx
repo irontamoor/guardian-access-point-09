@@ -9,10 +9,16 @@ import ReaderDashboard from './components/ReaderDashboard';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboardTabs from './components/AdminDashboardTabs';
 import { PublicPickupDashboard } from './components/PublicPickupDashboard';
+import Documentation from './pages/Documentation';
+import { useAdminSession } from './hooks/useAdminSession';
+import { BookOpen } from 'lucide-react';
+import { Button } from './components/ui/button';
+
 function App() {
   const [currentView, setCurrentView] = useState('home');
   const [session, setSession] = useState(null);
-  const [adminUser, setAdminUser] = useState(null);
+  const { adminUser, saveSession, clearSession, isAuthenticated } = useAdminSession();
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({
@@ -32,23 +38,28 @@ function App() {
       setSession(session);
     });
 
-    // Check URL for admin route
+    // Check URL for routes
     const path = window.location.pathname;
-    if (path === '/admin') {
+    if (path === '/docs' || path === '/documentation') {
+      setCurrentView('documentation');
+    } else if (path === '/admin' && isAuthenticated) {
+      setCurrentView('admin-dashboard');
+    } else if (path === '/admin') {
       setCurrentView('admin-login');
     }
+    
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
+
   const handleAdminLogin = adminData => {
-    setAdminUser(adminData);
+    saveSession(adminData);
     setCurrentView('admin-dashboard');
-    // Update URL without page reload
     window.history.pushState({}, '', '/admin');
   };
+
   const handleAdminLogout = () => {
-    setAdminUser(null);
+    clearSession();
     setCurrentView('home');
-    // Return to home URL
     window.history.pushState({}, '', '/');
   };
   return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -110,6 +121,20 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Documentation Link */}
+              <div className="text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setCurrentView('documentation');
+                    window.history.pushState({}, '', '/docs');
+                  }}
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  View Documentation
+                </Button>
+              </div>
             </div>}
 
           {currentView === 'staff-signin' && <StaffSignIn onBack={() => setCurrentView('home')} />}
@@ -130,6 +155,13 @@ function App() {
           {currentView === 'attendance-management' && <AttendanceManagement />}
           
           {currentView === 'reader-dashboard' && <ReaderDashboard />}
+
+          {currentView === 'documentation' && (
+            <Documentation onBack={() => {
+              setCurrentView('home');
+              window.history.pushState({}, '', '/');
+            }} />
+          )}
         </div>
       </main>
     </div>;

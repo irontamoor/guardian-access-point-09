@@ -6,11 +6,44 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { supabase } from '@/integrations/supabase/client';
+
+interface NotificationPreferences {
+  notify_student_check_in: boolean;
+  notify_student_check_out: boolean;
+  notify_staff_check_in: boolean;
+  notify_staff_check_out: boolean;
+  notify_visitor_check_in: boolean;
+  notify_visitor_check_out: boolean;
+  notify_parent_pickup: boolean;
+}
 
 export function SystemSettingsContent() {
   const { settings, loading, updateSetting } = useSystemSettings();
   const [error, setError] = useState<string | null>(null);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences | null>(null);
   const { toast } = useToast();
+
+  // Load notification preferences
+  useEffect(() => {
+    const loadNotificationPrefs = async () => {
+      const sessionData = localStorage.getItem('admin_session');
+      if (!sessionData) return;
+      
+      const session = JSON.parse(sessionData);
+      const { data } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', session.id)
+        .single();
+      
+      if (data) {
+        setNotificationPrefs(data);
+      }
+    };
+
+    loadNotificationPrefs();
+  }, []);
 
   const updateVisibilitySetting = async (key: keyof typeof settings.dashboard_visibility, value: boolean) => {
     try {
@@ -49,6 +82,36 @@ export function SystemSettingsContent() {
       toast({
         title: "Error",
         description: "Failed to update photo setting.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateNotificationPref = async (key: keyof NotificationPreferences, value: boolean) => {
+    try {
+      const sessionData = localStorage.getItem('admin_session');
+      if (!sessionData || !notificationPrefs) return;
+      
+      const session = JSON.parse(sessionData);
+      
+      const { error } = await supabase
+        .from('notification_preferences')
+        .update({ [key]: value })
+        .eq('user_id', session.id);
+
+      if (error) throw error;
+
+      setNotificationPrefs({ ...notificationPrefs, [key]: value });
+      
+      toast({
+        title: "Notification Updated",
+        description: `Notification preference saved successfully.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating notification preference:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update notification preference.",
         variant: "destructive"
       });
     }
@@ -142,6 +205,72 @@ export function SystemSettingsContent() {
               onCheckedChange={(checked) => updatePhotoSetting('requireStaffPhoto', checked)}
               disabled={loading}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Preferences</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <Label>Student Check-In</Label>
+              <Switch
+                checked={notificationPrefs?.notify_student_check_in || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_student_check_in', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Student Check-Out</Label>
+              <Switch
+                checked={notificationPrefs?.notify_student_check_out || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_student_check_out', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Staff Check-In</Label>
+              <Switch
+                checked={notificationPrefs?.notify_staff_check_in || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_staff_check_in', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Staff Check-Out</Label>
+              <Switch
+                checked={notificationPrefs?.notify_staff_check_out || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_staff_check_out', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Visitor Check-In</Label>
+              <Switch
+                checked={notificationPrefs?.notify_visitor_check_in || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_visitor_check_in', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Visitor Check-Out</Label>
+              <Switch
+                checked={notificationPrefs?.notify_visitor_check_out || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_visitor_check_out', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Parent Pickup/Dropoff</Label>
+              <Switch
+                checked={notificationPrefs?.notify_parent_pickup || false}
+                onCheckedChange={(checked) => updateNotificationPref('notify_parent_pickup', checked)}
+                disabled={!notificationPrefs}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
