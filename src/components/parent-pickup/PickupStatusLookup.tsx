@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Search, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { usePickupStatusLookup } from '@/hooks/usePickupStatusLookup';
+import { Search, CheckCircle2, Clock, AlertCircle, AlertTriangle } from 'lucide-react';
+import { usePickupStatusLookup, getStatusConfig } from '@/hooks/usePickupStatusLookup';
 import { format } from 'date-fns';
 
 interface PickupStatusLookupProps {
@@ -71,22 +71,27 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
             </div>
           )}
 
-          {result && (
-            <div className="space-y-3 p-4 rounded-lg border bg-card">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Pickup Details</h3>
-                {result.approved ? (
-                  <Badge className="bg-green-500 hover:bg-green-600">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Approved
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    <Clock className="w-3 h-3 mr-1" />
-                    Pending
-                  </Badge>
-                )}
-              </div>
+          {result && (() => {
+            const statusConfig = getStatusConfig(result.pickup_status);
+            const IconComponent = {
+              'Clock': Clock,
+              'AlertCircle': AlertCircle,
+              'CheckCircle2': CheckCircle2,
+              'AlertTriangle': AlertTriangle
+            }[statusConfig.icon];
+            
+            return (
+              <div className="space-y-3 p-4 rounded-lg border bg-card">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Pickup Details</h3>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge className={statusConfig.color}>
+                      <IconComponent className="w-3 h-3 mr-1" />
+                      {statusConfig.label}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">{statusConfig.description}</p>
+                  </div>
+                </div>
 
               <div className="space-y-2 text-sm">
                 <div>
@@ -127,15 +132,16 @@ export function PickupStatusLookup({ open, onOpenChange }: PickupStatusLookupPro
                 )}
               </div>
 
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleCheckAnother}
-              >
-                Check Another Student
-              </Button>
-            </div>
-          )}
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleCheckAnother}
+                >
+                  Check Another Student
+                </Button>
+              </div>
+            );
+          })()}
         </div>
       </DialogContent>
     </Dialog>

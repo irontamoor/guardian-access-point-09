@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export type PickupStatus = 'pending_approval' | 'getting_ready' | 'approved_to_leave' | 'issue_call_supervisor';
+
 export interface PickupStatusResult {
   id: string;
   student_id: string;
@@ -9,8 +11,46 @@ export interface PickupStatusResult {
   relationship: string;
   action_time: string;
   approved: boolean;
+  pickup_status: PickupStatus;
   pickup_type?: string;
   notes?: string;
+}
+
+export interface StatusConfig {
+  color: string;
+  icon: string;
+  label: string;
+  description: string;
+}
+
+export function getStatusConfig(status: PickupStatus): StatusConfig {
+  const configs: Record<PickupStatus, StatusConfig> = {
+    'pending_approval': {
+      color: 'bg-purple-500 hover:bg-purple-600',
+      icon: 'Clock',
+      label: 'Pending Approval',
+      description: 'Awaiting staff approval'
+    },
+    'getting_ready': {
+      color: 'bg-amber-500 hover:bg-amber-600',
+      icon: 'AlertCircle',
+      label: 'Getting Ready',
+      description: 'Student is being prepared / waiting permission to leave'
+    },
+    'approved_to_leave': {
+      color: 'bg-green-500 hover:bg-green-600',
+      icon: 'CheckCircle2',
+      label: 'Approved - Student Coming',
+      description: 'Student is approved and coming to pickup area'
+    },
+    'issue_call_supervisor': {
+      color: 'bg-red-500 hover:bg-red-600',
+      icon: 'AlertTriangle',
+      label: 'Issue - Call Supervisor',
+      description: 'Problem detected, supervisor assistance needed'
+    }
+  };
+  return configs[status];
 }
 
 export function usePickupStatusLookup() {
@@ -35,7 +75,7 @@ export function usePickupStatusLookup() {
 
       const { data, error: queryError } = await supabase
         .from('parent_pickup_records')
-        .select('id, student_id, student_name, parent_guardian_name, relationship, action_time, approved, pickup_type, notes')
+        .select('id, student_id, student_name, parent_guardian_name, relationship, action_time, approved, pickup_status, pickup_type, notes')
         .eq('student_id', studentId.trim())
         .eq('action_type', 'pickup')
         .gte('created_at', startOfDay)

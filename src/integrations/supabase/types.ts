@@ -39,6 +39,9 @@ export type Database = {
           notes: string | null
           parent_guardian_name: string
           photo_url: string | null
+          pickup_status:
+            | Database["public"]["Enums"]["pickup_status_enum"]
+            | null
           pickup_type: string | null
           relationship: string
           student_id: string
@@ -54,6 +57,9 @@ export type Database = {
           notes?: string | null
           parent_guardian_name: string
           photo_url?: string | null
+          pickup_status?:
+            | Database["public"]["Enums"]["pickup_status_enum"]
+            | null
           pickup_type?: string | null
           relationship: string
           student_id: string
@@ -69,6 +75,9 @@ export type Database = {
           notes?: string | null
           parent_guardian_name?: string
           photo_url?: string | null
+          pickup_status?:
+            | Database["public"]["Enums"]["pickup_status_enum"]
+            | null
           pickup_type?: string | null
           relationship?: string
           student_id?: string
@@ -383,6 +392,11 @@ export type Database = {
     }
     Enums: {
       attendance_status: "in" | "out"
+      pickup_status_enum:
+        | "pending_approval"
+        | "getting_ready"
+        | "approved_to_leave"
+        | "issue_call_supervisor"
       user_role:
         | "admin"
         | "staff"
@@ -520,6 +534,12 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["in", "out"],
+      pickup_status_enum: [
+        "pending_approval",
+        "getting_ready",
+        "approved_to_leave",
+        "issue_call_supervisor",
+      ],
       user_role: [
         "admin",
         "staff",
