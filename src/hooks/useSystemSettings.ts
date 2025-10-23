@@ -9,6 +9,10 @@ interface SystemSettings {
     showVisitorRegistration: boolean;
     showParentPickup: boolean;
   };
+  photo_capture_settings: {
+    requireStudentPhoto: boolean;
+    requireStaffPhoto: boolean;
+  };
   school_name: string;
   max_visitors_per_day: number;
   auto_signout_hours: number;

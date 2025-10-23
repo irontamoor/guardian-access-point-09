@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useStudentAttendance } from '@/hooks/useStudentAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { StudentCodeInput } from './StudentCodeInput';
 import { NotesInput } from './NotesInput';
@@ -32,6 +33,8 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
     isValidCode, fetchStudentUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStudentAttendance();
   const { options: quickReasons } = useSignInOptions("student", "sign_in");
+  const { settings } = useSystemSettings();
+  const requirePhoto = settings.photo_capture_settings.requireStudentPhoto;
 
   const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
     studentCode: { 
@@ -63,13 +66,21 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
   };
 
   const handleSignInClick = () => {
-    setPendingAction('in');
-    setCameraOpen(true);
+    if (requirePhoto) {
+      setPendingAction('in');
+      setCameraOpen(true);
+    } else {
+      handleSignIn();
+    }
   };
 
   const handleSignOutClick = () => {
-    setPendingAction('out');
-    setCameraOpen(true);
+    if (requirePhoto) {
+      setPendingAction('out');
+      setCameraOpen(true);
+    } else {
+      handleSignOut();
+    }
   };
 
   const handleSignIn = async (photoBlob?: Blob) => {
@@ -97,7 +108,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
 
       let photoUrl = null;
       const photo = photoBlob || capturedPhoto;
-      if (photo) {
+      if (photo && requirePhoto) {
         photoUrl = await uploadPhoto(photo, 'students', student.user_code || studentCode, 'check_in');
       }
 
@@ -167,7 +178,7 @@ export function StudentSignInForm({ onSuccess }: StudentSignInFormProps) {
 
       let photoUrl = null;
       const photo = photoBlob || capturedPhoto;
-      if (photo) {
+      if (photo && requirePhoto) {
         photoUrl = await uploadPhoto(photo, 'students', student.user_code || studentCode, 'check_out');
       }
 

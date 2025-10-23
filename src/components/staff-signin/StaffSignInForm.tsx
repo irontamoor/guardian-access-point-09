@@ -6,6 +6,7 @@ import { Camera } from 'lucide-react';
 import { useStaffAttendance } from '@/hooks/useStaffAttendance';
 import { useSignInOptions } from '@/hooks/useSignInOptions';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { EmployeeCodeInput } from './EmployeeCodeInput';
 import { StaffNotesInput } from './StaffNotesInput';
@@ -33,6 +34,8 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
     isValidCode, fetchStaffUser, hasTodaySignIn, createAttendanceRecord, toast
   } = useStaffAttendance();
   const { options: quickReasons } = useSignInOptions("staff", "sign_in");
+  const { settings } = useSystemSettings();
+  const requirePhoto = settings.photo_capture_settings.requireStaffPhoto;
 
   const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
     employeeCode: { 
@@ -64,13 +67,21 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
   };
 
   const handleSignInClick = () => {
-    setPendingAction('in');
-    setCameraOpen(true);
+    if (requirePhoto) {
+      setPendingAction('in');
+      setCameraOpen(true);
+    } else {
+      handleSignIn();
+    }
   };
 
   const handleSignOutClick = () => {
-    setPendingAction('out');
-    setCameraOpen(true);
+    if (requirePhoto) {
+      setPendingAction('out');
+      setCameraOpen(true);
+    } else {
+      handleSignOut();
+    }
   };
 
   const handleSignIn = async (photoBlob?: Blob) => {
@@ -98,7 +109,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
 
       let photoUrl = null;
       const photo = photoBlob || capturedPhoto;
-      if (photo) {
+      if (photo && requirePhoto) {
         photoUrl = await uploadPhoto(photo, 'staff', staff.user_code || employeeCode, 'check_in');
       }
 
@@ -168,7 +179,7 @@ export function StaffSignInForm({ onSuccess }: StaffSignInFormProps) {
 
       let photoUrl = null;
       const photo = photoBlob || capturedPhoto;
-      if (photo) {
+      if (photo && requirePhoto) {
         photoUrl = await uploadPhoto(photo, 'staff', staff.user_code || employeeCode, 'check_out');
       }
 

@@ -33,6 +33,27 @@ export function SystemSettingsContent() {
     }
   };
 
+  const updatePhotoSetting = async (key: keyof typeof settings.photo_capture_settings, value: boolean) => {
+    try {
+      setError(null);
+      const newPhotoSettings = { ...settings.photo_capture_settings, [key]: value };
+      updateSetting('photo_capture_settings', newPhotoSettings);
+
+      toast({
+        title: "Setting Updated",
+        description: `Photo capture ${value ? 'enabled' : 'disabled'} successfully.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating photo setting:', error);
+      setError('Failed to update photo setting.');
+      toast({
+        title: "Error",
+        description: "Failed to update photo setting.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {error && (
@@ -82,6 +103,43 @@ export function SystemSettingsContent() {
               id="parent-pickup"
               checked={settings.dashboard_visibility.showParentPickup}
               onCheckedChange={(checked) => updateVisibilitySetting('showParentPickup', checked)}
+              disabled={loading}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Photo Capture Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="student-photo">Student Photo Required</Label>
+              <p className="text-sm text-muted-foreground">
+                Require photo capture for student sign-in/out
+              </p>
+            </div>
+            <Switch
+              id="student-photo"
+              checked={settings.photo_capture_settings.requireStudentPhoto}
+              onCheckedChange={(checked) => updatePhotoSetting('requireStudentPhoto', checked)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="staff-photo">Staff Photo Required</Label>
+              <p className="text-sm text-muted-foreground">
+                Require photo capture for staff sign-in/out
+              </p>
+            </div>
+            <Switch
+              id="staff-photo"
+              checked={settings.photo_capture_settings.requireStaffPhoto}
+              onCheckedChange={(checked) => updatePhotoSetting('requireStaffPhoto', checked)}
               disabled={loading}
             />
           </div>
