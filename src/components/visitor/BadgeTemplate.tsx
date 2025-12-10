@@ -67,20 +67,27 @@ export function BadgeTemplate({ visitorData }: BadgeTemplateProps) {
 
       <style>{`
         @media print {
-          body * {
-            visibility: hidden;
+          @page {
+            size: 4in 6in;
+            margin: 0;
           }
           
-          #visitor-badge,
-          #visitor-badge * {
-            visibility: visible;
+          body > *:not(#visitor-badge) {
+            display: none !important;
           }
           
           #visitor-badge {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 4in !important;
+            height: 6in !important;
+            margin: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            page-break-inside: avoid !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
 
