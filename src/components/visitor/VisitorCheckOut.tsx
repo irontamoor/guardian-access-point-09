@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { LogOut, Search, Camera, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { SuccessBanner } from '@/components/ui/success-banner';
 import { CameraCapture } from '@/components/shared/CameraCapture';
@@ -24,6 +25,7 @@ export function VisitorCheckOut() {
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [customCheckoutTime, setCustomCheckoutTime] = useState<string>('');
   const { toast } = useToast();
+  const { settings } = useSystemSettings();
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -94,9 +96,18 @@ export function VisitorCheckOut() {
     setCheckoutDialogOpen(true);
   };
 
-  const handleProceedToCamera = () => {
+  const handleProceedToCheckout = () => {
     setCheckoutDialogOpen(false);
-    setCameraOpen(true);
+    
+    // Check if photo is required
+    if (settings.photo_capture_settings.requireVisitorPhoto) {
+      setCameraOpen(true);
+    } else {
+      // Check out without photo
+      if (selectedVisitor) {
+        handleCheckOut(selectedVisitor.id, selectedVisitor.name);
+      }
+    }
   };
 
   const handleCheckOut = async (visitorId: string, visitorName: string, photoBlob?: Blob) => {
@@ -259,11 +270,20 @@ export function VisitorCheckOut() {
               Cancel
             </Button>
             <Button
-              onClick={handleProceedToCamera}
+              onClick={handleProceedToCheckout}
               className="bg-orange-600 hover:bg-orange-700"
             >
-              <Camera className="h-4 w-4 mr-2" />
-              Capture Photo & Check Out
+              {settings.photo_capture_settings.requireVisitorPhoto ? (
+                <>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Capture Photo & Check Out
+                </>
+              ) : (
+                <>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Check Out
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -206,6 +206,21 @@ export function SystemSettingsContent() {
               disabled={loading}
             />
           </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="visitor-photo">Visitor Photo Required</Label>
+              <p className="text-sm text-muted-foreground">
+                Require photo capture for visitor check-in/out
+              </p>
+            </div>
+            <Switch
+              id="visitor-photo"
+              checked={settings.photo_capture_settings.requireVisitorPhoto}
+              onCheckedChange={(checked) => updatePhotoSetting('requireVisitorPhoto', checked)}
+              disabled={loading}
+            />
+          </div>
         </CardContent>
       </Card>
 
