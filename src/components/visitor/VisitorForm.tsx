@@ -5,6 +5,7 @@ import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSignInOptionsJson } from '@/hooks/useSignInOptionsJson';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { VisitorFormFields } from './VisitorFormFields';
 import { VisitorFormActions } from './VisitorFormActions';
@@ -36,6 +37,7 @@ export function VisitorForm() {
   
   const { toast } = useToast();
   const { options: visitTypes, loading: visitTypesLoading } = useSignInOptionsJson("both", "visit_type");
+  const { settings } = useSystemSettings();
 
   const { validate, getFieldError, setFieldTouched, clearErrors } = useFormValidation({
     firstName: { required: true, minLength: 1 },
@@ -76,7 +78,13 @@ export function VisitorForm() {
       return;
     }
 
-    setCameraOpen(true);
+    // Check if photo is required
+    if (settings.photo_capture_settings.requireVisitorPhoto) {
+      setCameraOpen(true);
+    } else {
+      // Register without photo
+      handleRegisterVisitor();
+    }
   };
 
   const handleRegisterVisitor = async (photoBlob?: Blob) => {

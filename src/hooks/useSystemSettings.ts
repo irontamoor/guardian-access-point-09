@@ -12,6 +12,7 @@ interface SystemSettings {
   photo_capture_settings: {
     requireStudentPhoto: boolean;
     requireStaffPhoto: boolean;
+    requireVisitorPhoto: boolean;
   };
   school_name: string;
   max_visitors_per_day: number;

@@ -8,7 +8,8 @@
   },
   "photo_capture_settings": {
     "requireStudentPhoto": true,
-    "requireStaffPhoto": true
+    "requireStaffPhoto": true,
+    "requireVisitorPhoto": true
   },
   "school_name": "Jamia Al-Hudaa",
   "max_visitors_per_day": 100,
