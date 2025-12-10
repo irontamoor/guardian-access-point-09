@@ -175,12 +175,10 @@ export function CameraCapture({ onCapture, open, onOpenChange, autoCapture = fal
                   <RotateCw className="h-4 w-4 mr-2" />
                   Switch
                 </Button>
-                {!autoCapture && (
-                  <Button onClick={capturePhoto} className="bg-blue-600 hover:bg-blue-700">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Capture
-                  </Button>
-                )}
+                <Button onClick={capturePhoto} className="bg-green-600 hover:bg-green-700">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Capture
+                </Button>
               </>
             )}
             <Button onClick={handleClose} variant="outline">
