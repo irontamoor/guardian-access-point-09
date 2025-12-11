@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 interface PickupInfoFieldsEnhancedProps {
   studentId: string;
   onStudentIdChange: (value: string) => void;
-  studentName: string;
-  onStudentNameChange: (value: string) => void;
   parentGuardianName: string;
   onParentGuardianNameChange: (value: string) => void;
   loading: boolean;
@@ -18,8 +16,6 @@ interface PickupInfoFieldsEnhancedProps {
 export function PickupInfoFieldsEnhanced({
   studentId,
   onStudentIdChange,
-  studentName,
-  onStudentNameChange,
   parentGuardianName,
   onParentGuardianNameChange,
   loading,
@@ -82,18 +78,6 @@ export function PickupInfoFieldsEnhanced({
             <p className="text-sm text-destructive">{getFieldError("parentGuardianName").message}</p>
           )}
         </div>
-      </div>
-
-      {/* Student Name on its own row */}
-      <div className="space-y-2">
-        <Label htmlFor="studentName">Student Name</Label>
-        <Input
-          id="studentName"
-          placeholder="Enter student name"
-          value={studentName}
-          onChange={(e) => onStudentNameChange(e.target.value)}
-          disabled={loading}
-        />
       </div>
     </>
   );
