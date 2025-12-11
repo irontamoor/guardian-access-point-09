@@ -7,8 +7,6 @@ import { useFormValidation } from '@/hooks/useFormValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { PickupInfoFieldsEnhanced } from './PickupInfoFieldsEnhanced';
 import { RelationshipSelectEnhanced } from './RelationshipSelectEnhanced';
-import { PickupTypeSelect } from './PickupTypeSelect';
-import { PickupNotesInput } from './PickupNotesInput';
 import { SuccessBanner } from '@/components/ui/success-banner';
 import { CameraCapture } from '@/components/shared/CameraCapture';
 import { uploadPhoto } from '@/utils/photoUploadService';
@@ -20,11 +18,8 @@ interface PickupFormProps {
 export function PickupForm({ onBack }: PickupFormProps) {
   const [pickupData, setPickupData] = useState({
     studentId: '',
-    studentName: '',
     parentGuardianName: '',
     relationship: '',
-    pickupType: '',
-    notes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -127,12 +122,9 @@ export function PickupForm({ onBack }: PickupFormProps) {
         .from('parent_pickup_records')
         .insert({
           student_id: pickupData.studentId,
-          student_name: pickupData.studentName,
           parent_guardian_name: pickupData.parentGuardianName,
           relationship: pickupData.relationship,
-          pickup_type: pickupData.pickupType,
           action_type: action,
-          notes: pickupData.notes || null,
           photo_url: photoUrl
         });
 
@@ -142,7 +134,7 @@ export function PickupForm({ onBack }: PickupFormProps) {
       }
 
       const actionText = action === 'pickup' ? 'picked up' : 'dropped off';
-      const successMsg = `${pickupData.parentGuardianName} has ${actionText} ${pickupData.studentId}${pickupData.studentName ? ` (${pickupData.studentName})` : ''}`;
+      const successMsg = `${pickupData.parentGuardianName} has ${actionText} ${pickupData.studentId}`;
       
       setSuccessMessage(successMsg);
       setShowSuccess(true);
@@ -156,11 +148,8 @@ export function PickupForm({ onBack }: PickupFormProps) {
       // Reset form
       setPickupData({
         studentId: '',
-        studentName: '',
         parentGuardianName: '',
         relationship: '',
-        pickupType: '',
-        notes: ''
       });
       
       setCapturedPhoto(null);
@@ -192,8 +181,6 @@ export function PickupForm({ onBack }: PickupFormProps) {
         <PickupInfoFieldsEnhanced
           studentId={pickupData.studentId}
           onStudentIdChange={(value) => handleInputChange('studentId', value)}
-          studentName={pickupData.studentName}
-          onStudentNameChange={(value) => handleInputChange('studentName', value)}
           parentGuardianName={pickupData.parentGuardianName}  
           onParentGuardianNameChange={(value) => handleInputChange('parentGuardianName', value)}
           loading={isLoading}
@@ -210,16 +197,6 @@ export function PickupForm({ onBack }: PickupFormProps) {
           loading={isLoading}
           error={getFieldError('relationship').hasError ? getFieldError('relationship').message : undefined}
           onBlur={() => handleFieldBlur('relationship')}
-        />
-        
-        <PickupTypeSelect
-          value={pickupData.pickupType}
-          onChange={(value) => handleInputChange('pickupType', value)}
-        />
-
-        <PickupNotesInput
-          value={pickupData.notes}
-          onChange={(value) => handleInputChange('notes', value)}
         />
 
         {photoPreview && (
