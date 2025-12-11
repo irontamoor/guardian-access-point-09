@@ -145,14 +145,11 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                 </TableHead>
               )}
               <TableHead>Student ID</TableHead>
-              <TableHead>Student Name</TableHead>
               <TableHead>Parent/Guardian Name</TableHead>
               <TableHead>Relationship</TableHead>
               <TableHead>Pickup Type</TableHead>
-              <TableHead>Action Type</TableHead>
               <TableHead>Approved</TableHead>
               <TableHead>Action Time</TableHead>
-              <TableHead>Notes</TableHead>
               <TableHead>Photo</TableHead>
               <TableHead>Date</TableHead>
               {userRole !== 'reader' && <TableHead>Actions</TableHead>}
@@ -161,14 +158,14 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 11 : 13} className="text-center py-8">
+                <TableCell colSpan={userRole === 'reader' ? 8 : 10} className="text-center py-8">
                   <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
                   Loading parent pickup records...
                 </TableCell>
               </TableRow>
             ) : filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userRole === 'reader' ? 11 : 13} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === 'reader' ? 8 : 10} className="text-center py-8 text-muted-foreground">
                   No parent pickup records found
                 </TableCell>
               </TableRow>
@@ -184,15 +181,9 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                     </TableCell>
                   )}
                   <TableCell className="font-medium">{record.student_id}</TableCell>
-                  <TableCell>{record.student_name || '-'}</TableCell>
                   <TableCell>{record.parent_guardian_name}</TableCell>
                   <TableCell>{record.relationship}</TableCell>
                   <TableCell>{record.pickup_type || '-'}</TableCell>
-                  <TableCell>
-                    <Badge variant={record.action_type === 'pickup' ? 'default' : 'secondary'}>
-                      {record.action_type === 'pickup' ? 'Pickup' : 'Drop-off'}
-                    </Badge>
-                  </TableCell>
                   <TableCell>
                     {userRole !== 'reader' ? (
                       <div className="flex items-center space-x-2">
@@ -227,7 +218,6 @@ export function ParentPickupTable({ userRole }: ParentPickupTableProps) {
                     )}
                   </TableCell>
                   <TableCell>{formatTime(record.action_time)}</TableCell>
-                  <TableCell>{record.notes || '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       {record.photo_url ? (
