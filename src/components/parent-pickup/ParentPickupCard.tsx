@@ -3,6 +3,18 @@ import { Card } from '@/components/ui/card';
 import { ParentPickupHeader } from './ParentPickupHeader';
 import { PickupForm } from './PickupForm';
 import { PickupStatusLookup } from './PickupStatusLookup';
+import { FingerprintScanButton } from './FingerprintScanButton';
+import { FingerprintScanDialog } from './FingerprintScanDialog';
+import { FingerprintRegistrationForm } from './FingerprintRegistrationForm';
+import { StudentSelectionDialog } from './StudentSelectionDialog';
+
+interface ParentFingerprint {
+  id: string;
+  parent_guardian_name: string;
+  relationship: string;
+  fingerprint_template: string;
+  is_approved: boolean;
+}
 
 interface ParentPickupCardProps {
   onBack?: () => void;
@@ -10,6 +22,11 @@ interface ParentPickupCardProps {
 
 export function ParentPickupCard({ onBack }: ParentPickupCardProps) {
   const [showStatusLookup, setShowStatusLookup] = useState(false);
+  const [showFingerprintScan, setShowFingerprintScan] = useState(false);
+  const [showFingerprintRegistration, setShowFingerprintRegistration] = useState(false);
+  const [showStudentSelection, setShowStudentSelection] = useState(false);
+  const [matchedParent, setMatchedParent] = useState<ParentFingerprint | null>(null);
+  const [matchedStudentIds, setMatchedStudentIds] = useState<string[]>([]);
 
   const handleBack = () => {
     if (onBack) {
@@ -17,12 +34,32 @@ export function ParentPickupCard({ onBack }: ParentPickupCardProps) {
     }
   };
 
+  const handleMatchFound = (parentData: ParentFingerprint, studentIds: string[]) => {
+    setMatchedParent(parentData);
+    setMatchedStudentIds(studentIds);
+    setShowStudentSelection(true);
+  };
+
+  const handleRegisterNew = () => {
+    setShowFingerprintRegistration(true);
+  };
+
+  const handleStudentSelectionComplete = () => {
+    setMatchedParent(null);
+    setMatchedStudentIds([]);
+  };
+
   return (
     <>
       <Card className="border-l-4 border-l-orange-500">
         <ParentPickupHeader onBack={handleBack} />
         
-        {/* Pickup Status - Moved to Top */}
+        {/* Fingerprint Scan - Primary Action */}
+        <div className="p-4 sm:p-6 border-b">
+          <FingerprintScanButton onClick={() => setShowFingerprintScan(true)} />
+        </div>
+
+        {/* Pickup Status */}
         <div className="p-4 sm:p-6 border-b">
           <div 
             onClick={() => setShowStatusLookup(true)}
@@ -47,6 +84,30 @@ export function ParentPickupCard({ onBack }: ParentPickupCardProps) {
         open={showStatusLookup} 
         onOpenChange={setShowStatusLookup}
       />
+
+      <FingerprintScanDialog
+        open={showFingerprintScan}
+        onOpenChange={setShowFingerprintScan}
+        onMatchFound={handleMatchFound}
+        onRegisterNew={handleRegisterNew}
+      />
+
+      <FingerprintRegistrationForm
+        open={showFingerprintRegistration}
+        onOpenChange={setShowFingerprintRegistration}
+        onSuccess={() => {}}
+      />
+
+      {matchedParent && (
+        <StudentSelectionDialog
+          open={showStudentSelection}
+          onOpenChange={setShowStudentSelection}
+          parentName={matchedParent.parent_guardian_name}
+          relationship={matchedParent.relationship}
+          studentIds={matchedStudentIds}
+          onComplete={handleStudentSelectionComplete}
+        />
+      )}
     </>
   );
 }

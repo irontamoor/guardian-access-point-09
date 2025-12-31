@@ -79,6 +79,50 @@ export type Database = {
           },
         ]
       }
+      parent_fingerprints: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          fingerprint_template: string
+          id: string
+          is_approved: boolean | null
+          parent_guardian_name: string
+          relationship: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          fingerprint_template: string
+          id?: string
+          is_approved?: boolean | null
+          parent_guardian_name: string
+          relationship: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          fingerprint_template?: string
+          id?: string
+          is_approved?: boolean | null
+          parent_guardian_name?: string
+          relationship?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_fingerprints_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "system_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_pickup_records: {
         Row: {
           action_time: string
@@ -135,6 +179,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      parent_student_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          parent_fingerprint_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          parent_fingerprint_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          parent_fingerprint_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_student_links_parent_fingerprint_id_fkey"
+            columns: ["parent_fingerprint_id"]
+            isOneToOne: false
+            referencedRelation: "parent_fingerprints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff: {
         Row: {
