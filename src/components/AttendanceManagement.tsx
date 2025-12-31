@@ -4,6 +4,7 @@ import { StudentAttendanceTable } from './attendance/StudentAttendanceTable';
 import { StaffAttendanceTable } from './attendance/StaffAttendanceTable';
 import { VisitorRecordsTable } from './attendance/VisitorRecordsTable';
 import { ParentPickupTable } from './attendance/ParentPickupTable';
+import { FingerprintApprovals } from './admin/FingerprintApprovals';
 
 interface AttendanceManagementProps {
   userRole?: string;
@@ -23,8 +24,9 @@ const AttendanceManagement = ({ userRole = 'admin' }: AttendanceManagementProps)
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pickup" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="pickup">Parent Pickup/Drop-off</TabsTrigger>
+              <TabsTrigger value="fingerprints">Fingerprint Approvals</TabsTrigger>
               <TabsTrigger value="student">Student Attendance</TabsTrigger>
               <TabsTrigger value="staff">Staff Attendance</TabsTrigger>
               <TabsTrigger value="visitor">Visitor Records</TabsTrigger>
@@ -32,6 +34,10 @@ const AttendanceManagement = ({ userRole = 'admin' }: AttendanceManagementProps)
             
             <TabsContent value="pickup" className="space-y-4">
               <ParentPickupTable userRole={userRole} />
+            </TabsContent>
+            
+            <TabsContent value="fingerprints" className="space-y-4">
+              <FingerprintApprovals />
             </TabsContent>
             
             <TabsContent value="student" className="space-y-4">
