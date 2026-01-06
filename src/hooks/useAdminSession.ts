@@ -10,7 +10,8 @@ interface AdminSession {
 }
 
 const SESSION_KEY = 'admin_session';
-const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes idle timeout
 
 export const useAdminSession = () => {
   const [adminUser, setAdminUser] = useState<AdminSession | null>(null);
