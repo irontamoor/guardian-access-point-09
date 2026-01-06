@@ -17,12 +17,11 @@ export function useVMSData() {
     setError(null);
     
     try {
-      // Load students with current status (exclude sensitive data)
+      // Load students from dedicated students table (public kiosk-safe)
       console.log('useVMSData: Loading students...');
       const { data: studentsData, error: studentsError } = await supabase
-        .from('system_users')
-        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
-        .eq('role', 'student')
+        .from('students')
+        .select('id, student_id, first_name, last_name, grade, status')
         .eq('status', 'active');
 
       if (studentsError) {
@@ -30,14 +29,23 @@ export function useVMSData() {
         throw studentsError;
       }
 
-      console.log('useVMSData: Students loaded:', studentsData?.length || 0);
+      // Map students to common format
+      const mappedStudents = (studentsData || []).map(s => ({
+        id: s.id,
+        user_code: s.student_id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        role: 'student' as const,
+        status: s.status
+      }));
 
-      // Load staff with current status (exclude sensitive data)
+      console.log('useVMSData: Students loaded:', mappedStudents.length);
+
+      // Load staff from dedicated staff table (public kiosk-safe)
       console.log('useVMSData: Loading staff...');
       const { data: staffData, error: staffError } = await supabase
-        .from('system_users')
-        .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at')
-        .eq('role', 'staff')
+        .from('staff')
+        .select('id, employee_id, first_name, last_name, department, position, status')
         .eq('status', 'active');
 
       if (staffError) {
@@ -45,7 +53,17 @@ export function useVMSData() {
         throw staffError;
       }
 
-      console.log('useVMSData: Staff loaded:', staffData?.length || 0);
+      // Map staff to common format
+      const mappedStaff = (staffData || []).map(s => ({
+        id: s.id,
+        user_code: s.employee_id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        role: 'staff' as const,
+        status: s.status
+      }));
+
+      console.log('useVMSData: Staff loaded:', mappedStaff.length);
 
       // Get today's attendance from dedicated tables
       const today = new Date().toISOString().split('T')[0];
@@ -97,7 +115,7 @@ export function useVMSData() {
       }
 
       // Enrich students with status
-      const enrichedStudents = (studentsData || []).map(student => ({
+      const enrichedStudents = mappedStudents.map(student => ({
         ...student,
         name: `${student.first_name} ${student.last_name}`,
         grade: student.user_code || 'N/A',
@@ -106,7 +124,7 @@ export function useVMSData() {
       }));
 
       // Enrich staff with status
-      const enrichedStaff = (staffData || []).map(staff => ({
+      const enrichedStaff = mappedStaff.map(staff => ({
         ...staff,
         name: `${staff.first_name} ${staff.last_name}`,
         status: userStatusMap.get(staff.user_code || staff.id)?.status || 'absent',

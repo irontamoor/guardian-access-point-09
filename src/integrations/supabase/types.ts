@@ -525,6 +525,17 @@ export type Database = {
         }[]
       }
       is_backend_user: { Args: { _user_id: string }; Returns: boolean }
+      lookup_user_for_checkin: {
+        Args: { p_user_code: string }
+        Returns: {
+          first_name: string
+          id: string
+          last_name: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["user_status"]
+          user_code: string
+        }[]
+      }
       reject_fingerprint: {
         Args: { p_admin_id: string; p_fingerprint_id: string }
         Returns: boolean

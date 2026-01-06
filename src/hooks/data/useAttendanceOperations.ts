@@ -1,24 +1,23 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export function useAttendanceOperations() {
-  // Update student attendance - now uses dedicated student_attendance table
+  // Update student attendance - uses dedicated students table for lookup
   const updateStudentStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
     const timestamp = time || new Date().toISOString();
     const attendanceStatus = status === "present" ? "in" : "out";
     const timeField = status === "present" ? "check_in_time" : "check_out_time";
     
-    // Get student data from system_users
+    // Get student data from students table (public kiosk-safe)
     const { data: studentData, error: userError } = await supabase
-      .from('system_users')
-      .select('user_code, first_name, last_name')
+      .from('students')
+      .select('student_id, first_name, last_name')
       .eq('id', userId)
       .single();
 
     if (userError) throw userError;
 
     const insertData: any = {
-      student_id: studentData.user_code || userId,
+      student_id: studentData.student_id || userId,
       student_name: `${studentData.first_name} ${studentData.last_name}`,
       status: attendanceStatus,
     };
@@ -31,23 +30,23 @@ export function useAttendanceOperations() {
     if (error) throw error;
   };
 
-  // Update staff attendance - now uses dedicated staff_attendance table
+  // Update staff attendance - uses dedicated staff table for lookup
   const updateStaffStatus = async (userId: string, status: 'present' | 'absent', time?: string) => {
     const timestamp = time || new Date().toISOString();
     const attendanceStatus = status === "present" ? "in" : "out";
     const timeField = status === "present" ? "check_in_time" : "check_out_time";
     
-    // Get staff data from system_users
+    // Get staff data from staff table (public kiosk-safe)
     const { data: staffData, error: userError } = await supabase
-      .from('system_users')
-      .select('user_code, first_name, last_name')
+      .from('staff')
+      .select('employee_id, first_name, last_name')
       .eq('id', userId)
       .single();
 
     if (userError) throw userError;
 
     const insertData: any = {
-      employee_id: staffData.user_code || userId,
+      employee_id: staffData.employee_id || userId,
       employee_name: `${staffData.first_name} ${staffData.last_name}`,
       status: attendanceStatus,
     };
