@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Get admin_id from localStorage session for secure RPC calls
+const getAdminId = (): string | null => {
+  try {
+    const sessionData = localStorage.getItem('admin_session');
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      return session.admin_id || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 export interface StaffAttendanceRecord {
   id: string;
   employee_id: string;
@@ -66,10 +80,15 @@ export function useStaffAttendanceData() {
 
   const deleteRecord = useCallback(async (id: string) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('staff_attendance')
-        .delete()
-        .eq('id', id);
+      const adminId = getAdminId();
+      if (!adminId) {
+        throw new Error('Admin credentials required to delete records');
+      }
+
+      const { error: deleteError } = await supabase.rpc('admin_delete_staff_attendance', {
+        p_admin_id: adminId,
+        p_record_id: id
+      });
 
       if (deleteError) throw deleteError;
       
