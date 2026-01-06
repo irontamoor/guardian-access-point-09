@@ -469,6 +469,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_fingerprint: {
+        Args: { p_admin_id: string; p_fingerprint_id: string }
+        Returns: boolean
+      }
+      get_all_fingerprints: {
+        Args: { p_admin_id: string }
+        Returns: {
+          approved_at: string
+          approved_by: string
+          created_at: string
+          id: string
+          is_approved: boolean
+          parent_guardian_name: string
+          relationship: string
+        }[]
+      }
+      get_fingerprint_student_links: {
+        Args: { p_admin_id: string }
+        Returns: {
+          parent_fingerprint_id: string
+          student_id: string
+        }[]
+      }
       get_safe_user_data: {
         Args: { p_admin_id: string; p_role?: string }
         Returns: {
@@ -502,6 +525,10 @@ export type Database = {
         }[]
       }
       is_backend_user: { Args: { _user_id: string }; Returns: boolean }
+      reject_fingerprint: {
+        Args: { p_admin_id: string; p_fingerprint_id: string }
+        Returns: boolean
+      }
       verify_admin_credentials: {
         Args: { p_admin_id: string; p_password: string }
         Returns: {
