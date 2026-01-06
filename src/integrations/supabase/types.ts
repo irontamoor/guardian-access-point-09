@@ -85,6 +85,7 @@ export type Database = {
           approved_by: string | null
           created_at: string | null
           fingerprint_template: string
+          fingerprint_template_encrypted: string | null
           id: string
           is_approved: boolean | null
           parent_guardian_name: string
@@ -96,6 +97,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           fingerprint_template: string
+          fingerprint_template_encrypted?: string | null
           id?: string
           is_approved?: boolean | null
           parent_guardian_name: string
@@ -107,6 +109,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           fingerprint_template?: string
+          fingerprint_template_encrypted?: string | null
           id?: string
           is_approved?: boolean | null
           parent_guardian_name?: string
@@ -469,9 +472,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_parent_pickup_record: {
+        Args: { p_admin_id: string; p_record_id: string }
+        Returns: boolean
+      }
+      admin_delete_staff_attendance: {
+        Args: { p_admin_id: string; p_record_id: string }
+        Returns: boolean
+      }
+      admin_delete_student_attendance: {
+        Args: { p_admin_id: string; p_record_id: string }
+        Returns: boolean
+      }
+      admin_delete_visitor_record: {
+        Args: { p_admin_id: string; p_record_id: string }
+        Returns: boolean
+      }
       approve_fingerprint: {
         Args: { p_admin_id: string; p_fingerprint_id: string }
         Returns: boolean
+      }
+      decrypt_fingerprint_template: {
+        Args: { p_encrypted: string }
+        Returns: string
+      }
+      encrypt_fingerprint_template: {
+        Args: { p_template: string }
+        Returns: string
       }
       get_all_fingerprints: {
         Args: { p_admin_id: string }
@@ -485,11 +512,36 @@ export type Database = {
           relationship: string
         }[]
       }
+      get_approved_fingerprints_for_matching: {
+        Args: never
+        Returns: {
+          fingerprint_template: string
+          id: string
+          parent_guardian_name: string
+          relationship: string
+        }[]
+      }
       get_fingerprint_student_links: {
         Args: { p_admin_id: string }
         Returns: {
           parent_fingerprint_id: string
           student_id: string
+        }[]
+      }
+      get_notification_preferences: {
+        Args: { p_admin_id: string; p_user_id?: string }
+        Returns: {
+          created_at: string
+          id: string
+          notify_parent_pickup: boolean
+          notify_staff_check_in: boolean
+          notify_staff_check_out: boolean
+          notify_student_check_in: boolean
+          notify_student_check_out: boolean
+          notify_visitor_check_in: boolean
+          notify_visitor_check_out: boolean
+          updated_at: string
+          user_id: string
         }[]
       }
       get_safe_user_data: {

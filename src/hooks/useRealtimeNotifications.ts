@@ -12,22 +12,38 @@ interface NotificationPreferences {
   notify_parent_pickup: boolean;
 }
 
+// Get admin_id from localStorage session for secure RPC calls
+const getAdminId = (): string | null => {
+  try {
+    const sessionData = localStorage.getItem('admin_session');
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      return session.admin_id || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 export const useRealtimeNotifications = (userId: string | null, enabled: boolean = true) => {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
 
-  // Load notification preferences
+  // Load notification preferences via secure RPC
   useEffect(() => {
     if (!userId || !enabled) return;
 
     const loadPreferences = async () => {
-      const { data, error } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      const adminId = getAdminId();
+      if (!adminId) return;
 
-      if (data) {
-        setPreferences(data);
+      const { data, error } = await supabase.rpc('get_notification_preferences', {
+        p_admin_id: adminId,
+        p_user_id: userId
+      });
+
+      if (data && data.length > 0) {
+        setPreferences(data[0]);
       }
     };
 
