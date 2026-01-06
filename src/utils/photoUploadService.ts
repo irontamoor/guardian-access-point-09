@@ -21,10 +21,10 @@ export const uploadPhoto = async (
 
     if (error) throw error;
 
-    // Create signed URL for private bucket (valid for 1 year)
+    // Create signed URL for private bucket (valid for 1 hour for security)
     const { data: signedUrlData, error: urlError } = await supabase.storage
       .from('attendance-photos')
-      .createSignedUrl(data.path, 31536000); // 1 year in seconds
+      .createSignedUrl(data.path, 3600); // 1 hour in seconds
 
     if (urlError) throw urlError;
 

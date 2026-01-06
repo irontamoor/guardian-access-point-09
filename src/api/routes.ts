@@ -4,22 +4,63 @@ import type { Database } from '@/integrations/supabase/types';
 type UserRole = Database['public']['Enums']['user_role'];
 
 export class VMSApi {
-  // Users API
-  static async getUsers(role?: string) {
-    // Exclude sensitive columns (password, email, phone) from public queries
-    let query = supabase
-      .from('system_users')
-      .select('id, admin_id, user_code, first_name, last_name, role, status, created_at, updated_at');
-    
-    if (role) {
-      // Type cast the role parameter to the enum type
-      query = query.eq('role', role as UserRole);
+  // Users API - uses RPC function for secure access
+  static async getUsers(role?: string, adminId?: string) {
+    // If adminId provided, use secure RPC function
+    if (adminId) {
+      const { data, error } = await supabase
+        .rpc('get_safe_user_data', { 
+          p_admin_id: adminId, 
+          p_role: role || null 
+        });
+      
+      if (error) throw error;
+      return data || [];
     }
     
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // For public kiosk access, use dedicated tables
+    if (role === 'student') {
+      const { data, error } = await supabase
+        .from('students')
+        .select('id, student_id, first_name, last_name, status, created_at, updated_at')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return (data || []).map(s => ({
+        id: s.id,
+        user_code: s.student_id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        role: 'student',
+        status: s.status,
+        created_at: s.created_at,
+        updated_at: s.updated_at
+      }));
+    }
     
-    if (error) throw error;
-    return data || [];
+    if (role === 'staff') {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('id, employee_id, first_name, last_name, status, created_at, updated_at')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return (data || []).map(s => ({
+        id: s.id,
+        user_code: s.employee_id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        role: 'staff',
+        status: s.status,
+        created_at: s.created_at,
+        updated_at: s.updated_at
+      }));
+    }
+    
+    // For other roles without adminId, return empty (requires admin access)
+    return [];
   }
 
   static async createUser(userData: any) {
