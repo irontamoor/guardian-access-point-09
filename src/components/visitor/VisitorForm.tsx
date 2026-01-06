@@ -14,6 +14,8 @@ import { BadgePrintPreview } from './BadgePrintPreview';
 import { BadgeTemplate } from './BadgeTemplate';
 import { CameraCapture } from '@/components/shared/CameraCapture';
 import { uploadPhoto } from '@/utils/photoUploadService';
+import { visitorSchema } from '@/utils/inputValidation';
+import { sanitizeError } from '@/utils/errorHandler';
 
 export function VisitorForm() {
   const [visitorData, setVisitorData] = useState({
@@ -106,29 +108,53 @@ export function VisitorForm() {
 
     setLoading(true);
     try {
+      // Server-side validation using Zod schema
+      const validationResult = visitorSchema.safeParse({
+        firstName: visitorData.firstName,
+        lastName: visitorData.lastName,
+        phoneNumber: visitorData.phoneNumber,
+        organization: visitorData.organization,
+        visitPurpose: visitorData.visitPurpose,
+        hostName: visitorData.hostName,
+        notes: visitorData.notes,
+        carRegistration: visitorData.carRegistration,
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError?.message || "Please check your input",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      const validated = validationResult.data;
+
       let photoUrl = null;
       const photoToUpload = photoBlob || capturedPhoto;
       if (photoToUpload) {
-        photoUrl = await uploadPhoto(photoToUpload, 'visitors', visitorData.firstName + visitorData.lastName, 'check_in');
+        photoUrl = await uploadPhoto(photoToUpload, 'visitors', validated.firstName + validated.lastName, 'check_in');
       }
 
       const { error: attendanceError } = await supabase
         .from('visitor_records')
         .insert({
-          first_name: visitorData.firstName,
-          last_name: visitorData.lastName,
-          organization: visitorData.organization || null,
-          visit_purpose: visitorData.visitPurpose,
-          host_name: visitorData.hostName || null,
-          phone_number: visitorData.phoneNumber || null,
-          notes: visitorData.notes || null,
-          car_registration: visitorData.carRegistration || null,
+          first_name: validated.firstName,
+          last_name: validated.lastName,
+          organization: validated.organization || null,
+          visit_purpose: validated.visitPurpose,
+          host_name: validated.hostName || null,
+          phone_number: validated.phoneNumber || null,
+          notes: validated.notes || null,
+          car_registration: validated.carRegistration || null,
           status: 'in',
           check_in_photo_url: photoUrl,
         });
 
       if (attendanceError) {
-        console.error('Attendance record error:', attendanceError);
         throw attendanceError;
       }
 
@@ -169,11 +195,10 @@ export function VisitorForm() {
       setCapturedPhoto(null);
       setPhotoPreview(null);
       clearErrors();
-    } catch (error: any) {
-      console.error('Error registering visitor:', error);
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to register visitor",
+        description: sanitizeError(error),
         variant: "destructive"
       });
     } finally {

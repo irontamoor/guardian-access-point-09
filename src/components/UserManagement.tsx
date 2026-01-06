@@ -15,6 +15,7 @@ import { useEnumValues } from "@/hooks/useEnumValues";
 import { useVMSData } from "@/hooks/useVMSData";
 import { Switch } from "@/components/ui/switch";
 import { UserPasswordResetModal } from './UserPasswordResetModal';
+import { sanitizeError } from '@/utils/errorHandler';
 
 type SystemUser = Database['public']['Tables']['system_users']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
@@ -73,13 +74,12 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
       const { data, error } = await supabase
         .rpc('get_safe_user_data', { p_admin_id: adminId });
 
-      console.log('get_safe_user_data result', { adminId, error, count: data?.length });
       if (error) throw error;
       setUsers(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: "Failed to load users: " + error.message,
+        description: sanitizeError(error),
         variant: "destructive"
       });
     }
@@ -190,10 +190,10 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
       setIsOpen(false);
       resetForm();
       loadUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: "Failed to save user: " + error.message,
+        description: sanitizeError(error),
         variant: "destructive"
       });
     }
@@ -252,10 +252,10 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
       });
       
       loadUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: "Failed to delete user: " + error.message,
+        description: sanitizeError(error),
         variant: "destructive"
       });
     }
@@ -287,10 +287,10 @@ const UserManagement = ({ adminData }: UserManagementProps) => {
         title: "Attendance updated", 
         description: `${user.first_name} ${user.last_name} is now marked as ${newStatus}` 
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast({ 
         title: "Error", 
-        description: "Failed to update attendance: " + e.message, 
+        description: sanitizeError(e), 
         variant: "destructive" 
       });
     } finally {
