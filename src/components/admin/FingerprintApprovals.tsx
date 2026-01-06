@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Fingerprint, CheckCircle, XCircle, Loader2, Clock, User, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAdminSession } from '@/hooks/useAdminSession';
 import { format } from 'date-fns';
 
 interface FingerprintRecord {
@@ -23,22 +24,25 @@ export function FingerprintApprovals() {
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { adminUser } = useAdminSession();
 
   const fetchRecords = async () => {
+    if (!adminUser) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Fetch fingerprints with their linked students
+      // Use RPC function to fetch all fingerprints (including pending)
       const { data: fingerprints, error: fingerprintsError } = await supabase
-        .from('parent_fingerprints')
-        .select('id, parent_guardian_name, relationship, is_approved, created_at, approved_at')
-        .order('created_at', { ascending: false });
+        .rpc('get_all_fingerprints', { p_admin_id: adminUser.admin_id });
 
       if (fingerprintsError) throw fingerprintsError;
 
-      // Fetch all student links
+      // Fetch all student links using RPC
       const { data: links, error: linksError } = await supabase
-        .from('parent_student_links')
-        .select('parent_fingerprint_id, student_id');
+        .rpc('get_fingerprint_student_links', { p_admin_id: adminUser.admin_id });
 
       if (linksError) throw linksError;
 
@@ -65,18 +69,18 @@ export function FingerprintApprovals() {
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+  }, [adminUser]);
 
   const handleApprove = async (id: string) => {
+    if (!adminUser) return;
+    
     setProcessingId(id);
     try {
       const { error } = await supabase
-        .from('parent_fingerprints')
-        .update({
-          is_approved: true,
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', id);
+        .rpc('approve_fingerprint', { 
+          p_admin_id: adminUser.admin_id,
+          p_fingerprint_id: id 
+        });
 
       if (error) throw error;
 
@@ -99,13 +103,15 @@ export function FingerprintApprovals() {
   };
 
   const handleReject = async (id: string) => {
+    if (!adminUser) return;
+    
     setProcessingId(id);
     try {
-      // Delete fingerprint (cascade will delete links)
       const { error } = await supabase
-        .from('parent_fingerprints')
-        .delete()
-        .eq('id', id);
+        .rpc('reject_fingerprint', { 
+          p_admin_id: adminUser.admin_id,
+          p_fingerprint_id: id 
+        });
 
       if (error) throw error;
 
